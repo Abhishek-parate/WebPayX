@@ -1,0 +1,502 @@
+{% extends 'layout/layout.html' %}
+
+{% block content %}
+<style>
+  .role-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .role-super-admin { background: #dc3545; color: white; }
+  .role-admin { background: #fd7e14; color: white; }
+  .role-white-label { background: #6f42c1; color: white; }
+  .role-master-distributor { background: #0d6efd; color: white; }
+  .role-distributor { background: #198754; color: white; }
+  .role-retailer { background: #6c757d; color: white; }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+</style>
+
+<!-- User List Page -->
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 dark:text-white">User List</h1>
+      <p class="text-neutral-600 dark:text-neutral-300">Manage all users in your hierarchy</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="{{ url_for('user_management.create_user_page') }}" 
+         class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 flex items-center gap-2">
+        <iconify-icon icon="material-symbols:person-add" class="text-lg"></iconify-icon>
+        Create User
+      </a>
+      <button onclick="exportUsers()" 
+              class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-4 py-2 flex items-center gap-2">
+        <iconify-icon icon="material-symbols:download" class="text-lg"></iconify-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg mb-6">
+    <div class="card-body p-6">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Search</label>
+          <input type="text" id="searchInput" placeholder="Search users..."
+                 class="form-input w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800 py-2 px-3 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Role</label>
+          <select id="roleFilter" class="form-select w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800 py-2 px-3 text-sm">
+            <option value="">All Roles</option>
+            <option value="SUPER_ADMIN">Super Admin</option>
+            <option value="ADMIN">Admin</option>
+            <option value="WHITE_LABEL">White Label</option>
+            <option value="MASTER_DISTRIBUTOR">Master Distributor</option>
+            <option value="DISTRIBUTOR">Distributor</option>
+            <option value="RETAILER">Retailer</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Status</label>
+          <select id="statusFilter" class="form-select w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800 py-2 px-3 text-sm">
+            <option value="">All Status</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">KYC Status</label>
+          <select id="kycFilter" class="form-select w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800 py-2 px-3 text-sm">
+            <option value="">All KYC</option>
+            <option value="NOT_SUBMITTED">Not Submitted</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button onclick="loadUsers()" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 w-full">
+            Filter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
+    <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
+      <div class="flex justify-between items-center">
+        <h6 class="card-title text-lg font-semibold">Users</h6>
+        <div class="flex items-center gap-3">
+          <select id="perPageSelect" class="form-select rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800 py-2 px-3 text-sm">
+            <option value="25">25 per page</option>
+            <option value="50" selected>50 per page</option>
+            <option value="100">100 per page</option>
+          </select>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="selectAll" class="form-checkbox">
+            <label for="selectAll" class="text-sm">Select All</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-body p-0">
+      <!-- Loading State -->
+      <div id="loadingState" class="text-center py-12">
+        <iconify-icon icon="material-symbols:sync" class="text-4xl text-primary-600 animate-spin mb-4"></iconify-icon>
+        <p class="text-neutral-600 dark:text-neutral-400">Loading users...</p>
+      </div>
+
+      <!-- Users Table -->
+      <div id="usersTableContainer" class="hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full" id="usersTable">
+            <thead class="bg-neutral-50 dark:bg-neutral-800">
+              <tr>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">
+                  <input type="checkbox" id="selectAllHeader" class="form-checkbox">
+                </th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">User</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Role</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Status</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Wallet</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">KYC</th>
+                <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Created</th>
+                <th class="text-right py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Users will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-12">
+        <iconify-icon icon="material-symbols:group-off" class="text-6xl text-neutral-400 mb-4"></iconify-icon>
+        <p class="text-xl font-medium text-neutral-600 dark:text-neutral-400 mb-2">No users found</p>
+        <p class="text-neutral-500 mb-6">Try adjusting your search filters or create a new user</p>
+        <a href="{{ url_for('user_management.create_user_page') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-6 py-3">
+          Create First User
+        </a>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer p-6 border-t border-neutral-200 dark:border-neutral-600">
+      <div class="flex justify-between items-center">
+        <div class="text-sm text-neutral-600 dark:text-neutral-400" id="paginationInfo">
+          <!-- Pagination info will be loaded here -->
+        </div>
+        <div class="flex items-center gap-2" id="paginationControls">
+          <!-- Pagination controls will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions -->
+  <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-4 border border-neutral-200 dark:border-neutral-600 hidden">
+    <div class="flex items-center gap-4">
+      <span class="text-sm font-medium" id="selectedCount">0 users selected</span>
+      <div class="flex gap-2">
+        <button onclick="bulkAction('activate')" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-3 py-2 text-sm">
+          Activate
+        </button>
+        <button onclick="bulkAction('deactivate')" class="btn bg-warning-600 hover:bg-warning-700 text-white rounded-lg px-3 py-2 text-sm">
+          Deactivate
+        </button>
+        <button onclick="clearSelection()" class="btn bg-neutral-500 hover:bg-neutral-600 text-white rounded-lg px-3 py-2 text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let selectedUsers = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadUsers();
+  
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('input', debounce(loadUsers, 500));
+  document.getElementById('perPageSelect').addEventListener('change', loadUsers);
+  document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+});
+
+function loadUsers() {
+  const searchInput = document.getElementById('searchInput').value;
+  const roleFilter = document.getElementById('roleFilter').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+  const kycFilter = document.getElementById('kycFilter').value;
+  const perPage = document.getElementById('perPageSelect').value;
+
+  const params = new URLSearchParams({
+    page: currentPage,
+    per_page: perPage
+  });
+
+  if (searchInput) params.append('search', searchInput);
+  if (roleFilter) params.append('role', roleFilter);
+  if (statusFilter) params.append('status', statusFilter);
+  if (kycFilter) params.append('kyc_status', kycFilter);
+
+  // Show loading
+  document.getElementById('loadingState').classList.remove('hidden');
+  document.getElementById('usersTableContainer').classList.add('hidden');
+  document.getElementById('emptyState').classList.add('hidden');
+
+  fetch(`/user-management/api/users?${params}`)
+    .then(response => response.json())
+    .then(data => {
+      // Hide loading
+      document.getElementById('loadingState').classList.add('hidden');
+      
+      if (data.users && data.users.length > 0) {
+        displayUsers(data.users);
+        displayPagination(data.pagination);
+        document.getElementById('usersTableContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('emptyState').classList.remove('hidden');
+      }
+    })
+    .catch(error => {
+      console.error('Error loading users:', error);
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('emptyState').classList.remove('hidden');
+    });
+}
+
+function displayUsers(users) {
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = '';
+
+  users.forEach(user => {
+    const row = document.createElement('tr');
+    row.className = 'border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800';
+    
+    row.innerHTML = `
+      <td class="py-4 px-6">
+        <input type="checkbox" class="form-checkbox user-checkbox" data-user-id="${user.id}" 
+               onchange="updateSelection('${user.id}', this.checked)">
+      </td>
+      <td class="py-4 px-6">
+        <div class="flex items-center gap-3">
+          <div class="user-avatar">
+            ${user.full_name?.charAt(0) || 'U'}
+          </div>
+          <div>
+            <p class="font-medium text-neutral-800 dark:text-white">${user.full_name}</p>
+            <p class="text-sm text-neutral-500">${user.user_code} • ${user.username}</p>
+            <p class="text-xs text-neutral-400">${user.email}</p>
+          </div>
+        </div>
+      </td>
+      <td class="py-4 px-6">
+        <span class="role-badge role-${user.role?.toLowerCase().replace('_', '-')}">${user.role?.replace('_', ' ')}</span>
+      </td>
+      <td class="py-4 px-6">
+        <span class="px-3 py-1 text-xs rounded-full font-medium ${user.is_active ? 'bg-success-100 text-success-700 dark:bg-success-900 dark:text-success-300' : 'bg-danger-100 text-danger-700 dark:bg-danger-900 dark:text-danger-300'}">
+          ${user.is_active ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+      <td class="py-4 px-6">
+        ${user.wallet ? `
+          <div class="text-sm">
+            <p class="font-medium">₹${parseFloat(user.wallet.balance || 0).toLocaleString()}</p>
+            <p class="text-xs text-neutral-500">Available: ₹${parseFloat(user.wallet.available_balance || 0).toLocaleString()}</p>
+          </div>
+        ` : '<span class="text-neutral-400">No wallet</span>'}
+      </td>
+      <td class="py-4 px-6">
+        <span class="px-2 py-1 text-xs rounded-full font-medium ${getKycStatusClass(user.kyc_status)}">
+          ${user.kyc_status?.replace('_', ' ') || 'Unknown'}
+        </span>
+      </td>
+      <td class="py-4 px-6 text-sm text-neutral-600 dark:text-neutral-400">
+        ${new Date(user.created_at).toLocaleDateString()}
+      </td>
+      <td class="py-4 px-6 text-right">
+        <div class="flex justify-end gap-2">
+          <button onclick="viewUser('${user.id}')" 
+                  class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+            View
+          </button>
+          <button onclick="editUser('${user.id}')" 
+                  class="text-warning-600 hover:text-warning-700 text-sm font-medium">
+            Edit
+          </button>
+          <button onclick="toggleUserStatus('${user.id}', ${user.is_active})" 
+                  class="text-${user.is_active ? 'danger' : 'success'}-600 hover:text-${user.is_active ? 'danger' : 'success'}-700 text-sm font-medium">
+            ${user.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      </td>
+    `;
+    
+    tbody.appendChild(row);
+  });
+}
+
+function getKycStatusClass(status) {
+  const classes = {
+    'NOT_SUBMITTED': 'bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300',
+    'PENDING': 'bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-300',
+    'APPROVED': 'bg-success-100 text-success-700 dark:bg-success-900 dark:text-success-300',
+    'REJECTED': 'bg-danger-100 text-danger-700 dark:bg-danger-900 dark:text-danger-300'
+  };
+  return classes[status] || classes['NOT_SUBMITTED'];
+}
+
+function displayPagination(pagination) {
+  totalPages = pagination.pages;
+  currentPage = pagination.page;
+  
+  // Update pagination info
+  const info = document.getElementById('paginationInfo');
+  const start = ((pagination.page - 1) * pagination.per_page) + 1;
+  const end = Math.min(pagination.page * pagination.per_page, pagination.total);
+  info.textContent = `Showing ${start}-${end} of ${pagination.total} users`;
+  
+  // Update pagination controls
+  const controls = document.getElementById('paginationControls');
+  controls.innerHTML = '';
+  
+  // Previous button
+  const prevBtn = document.createElement('button');
+  prevBtn.className = `btn ${pagination.has_prev ? 'bg-neutral-200 hover:bg-neutral-300 text-neutral-700' : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'} rounded-lg px-3 py-2 text-sm`;
+  prevBtn.innerHTML = '<iconify-icon icon="material-symbols:chevron-left"></iconify-icon>';
+  prevBtn.disabled = !pagination.has_prev;
+  prevBtn.onclick = () => pagination.has_prev && changePage(currentPage - 1);
+  controls.appendChild(prevBtn);
+  
+  // Page numbers
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, currentPage + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.className = `btn ${i === currentPage ? 'bg-primary-600 text-white' : 'bg-neutral-200 hover:bg-neutral-300 text-neutral-700'} rounded-lg px-3 py-2 text-sm`;
+    pageBtn.textContent = i;
+    pageBtn.onclick = () => changePage(i);
+    controls.appendChild(pageBtn);
+  }
+  
+  // Next button
+  const nextBtn = document.createElement('button');
+  nextBtn.className = `btn ${pagination.has_next ? 'bg-neutral-200 hover:bg-neutral-300 text-neutral-700' : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'} rounded-lg px-3 py-2 text-sm`;
+  nextBtn.innerHTML = '<iconify-icon icon="material-symbols:chevron-right"></iconify-icon>';
+  nextBtn.disabled = !pagination.has_next;
+  nextBtn.onclick = () => pagination.has_next && changePage(currentPage + 1);
+  controls.appendChild(nextBtn);
+}
+
+function changePage(page) {
+  currentPage = page;
+  loadUsers();
+}
+
+function updateSelection(userId, selected) {
+  if (selected) {
+    selectedUsers.add(userId);
+  } else {
+    selectedUsers.delete(userId);
+  }
+  updateBulkActions();
+}
+
+function updateBulkActions() {
+  const bulkActions = document.getElementById('bulkActions');
+  const selectedCount = document.getElementById('selectedCount');
+  
+  if (selectedUsers.size > 0) {
+    bulkActions.classList.remove('hidden');
+    selectedCount.textContent = `${selectedUsers.size} user${selectedUsers.size > 1 ? 's' : ''} selected`;
+  } else {
+    bulkActions.classList.add('hidden');
+  }
+}
+
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll').checked;
+  const checkboxes = document.querySelectorAll('.user-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll;
+    updateSelection(checkbox.dataset.userId, selectAll);
+  });
+}
+
+function clearSelection() {
+  selectedUsers.clear();
+  document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+  document.getElementById('selectAll').checked = false;
+  updateBulkActions();
+}
+
+function viewUser(userId) {
+  window.location.href = `/user-management/user/${userId}`;
+}
+
+function editUser(userId) {
+  // Implement edit user functionality
+  alert('Edit user functionality - implementation needed');
+}
+
+function toggleUserStatus(userId, currentStatus) {
+  const action = currentStatus ? 'deactivate' : 'activate';
+  const confirmMsg = `Are you sure you want to ${action} this user?`;
+  
+  if (confirm(confirmMsg)) {
+    fetch(`/user-management/api/users/${userId}/toggle-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        loadUsers(); // Reload users
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error updating user status');
+    });
+  }
+}
+
+function bulkAction(action) {
+  const userIds = Array.from(selectedUsers);
+  const confirmMsg = `Are you sure you want to ${action} ${userIds.length} user(s)?`;
+  
+  if (confirm(confirmMsg)) {
+    fetch('/user-management/api/users/bulk-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_ids: userIds,
+        action: action
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        alert(data.message);
+        clearSelection();
+        loadUsers();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error performing bulk action');
+    });
+  }
+}
+
+function exportUsers() {
+  // Implement export functionality
+  alert('Export functionality - implementation needed');
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+</script>
+{% endblock %}

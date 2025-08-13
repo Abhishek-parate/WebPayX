@@ -21,9 +21,9 @@ from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-# Import models and enums
+# Import models and enums - UPDATED: Use db instead of Base
 from models import (
-    Base, Tenant, User, UserRoleType, KYCStatus, Wallet,
+    db, Tenant, User, UserRoleType, KYCStatus, Wallet,
     OrganizationBankAccount, BankAccountType, AccountPurpose, BankAccountStatus,
     CommissionPlan, ServiceType, CommissionMode, NotificationTemplate,
     Permission, create_default_permissions, create_sample_tenant_data
@@ -39,13 +39,18 @@ class PostgreSQLDatabaseInitializer:
                 'host': 'localhost',
                 'port': 5432,
                 'username': 'postgres',
-                'password': 'admin',  # Change this to your PostgreSQL password
+                'password': '',  # This MUST be set correctly
                 'database': 'saas_platform'
             }
         
         self.config = config
         self.admin_url = f"postgresql://{config['username']}:{config['password']}@{config['host']}:{config['port']}/postgres"
         self.database_url = f"postgresql://{config['username']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}"
+        
+        print(f"🔧 Configuration:")
+        print(f"   Host: {config['host']}:{config['port']}")
+        print(f"   Username: {config['username']}")
+        print(f"   Database: {config['database']}")
         
         # Test connection first
         self.test_connection()
@@ -131,7 +136,8 @@ class PostgreSQLDatabaseInitializer:
         """Drop all existing tables"""
         try:
             print("🗑️  Dropping existing tables...")
-            Base.metadata.drop_all(self.engine)
+            # UPDATED: Use db.metadata instead of Base.metadata
+            db.metadata.drop_all(self.engine)
             print("✅ All tables dropped successfully")
         except Exception as e:
             print(f"⚠️  Warning during table drop: {e}")
@@ -140,7 +146,8 @@ class PostgreSQLDatabaseInitializer:
         """Create all tables from models"""
         try:
             print("🔧 Creating database tables...")
-            Base.metadata.create_all(self.engine)
+            # UPDATED: Use db.metadata instead of Base.metadata
+            db.metadata.create_all(self.engine)
             print("✅ All tables created successfully")
             
             # Verify critical tables were created
@@ -506,19 +513,21 @@ def main():
     
     # Get PostgreSQL configuration
     if args.auto:
+        # UPDATED: Set your actual PostgreSQL password here
         config = {
             'host': 'localhost',
             'port': 5432,
             'username': 'postgres',
-            'password': 'admin',  # Change this to your actual password
+            'password': '',  # ⚠️ SET YOUR ACTUAL POSTGRESQL PASSWORD HERE
             'database': 'saas_platform'
         }
-        print("🤖 Using automatic configuration (change password in script if needed)")
+        print("🤖 Using automatic configuration")
     else:
         config = get_postgresql_config()
     
     # Initialize database
     try:
+        print("🚀 Starting database initialization...")
         initializer = PostgreSQLDatabaseInitializer(config)
         success = initializer.run_full_initialization(force_recreate=args.force)
         
@@ -535,6 +544,7 @@ def main():
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Setup failed: {e}")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+<!-- resource\views\authentication\signin.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,17 +7,18 @@
 {% endblock %}
 
 <body class="dark:bg-neutral-800 bg-neutral-100 dark:text-white">
+
     <section class="bg-white dark:bg-dark-2 flex flex-wrap min-h-[100vh]">
         <div class="lg:w-1/2 lg:block hidden">
             <div class="flex items-center flex-col h-full justify-center">
-                <img src="{{ url_for('static', filename='assets/images/auth/auth-img.png') }}" alt="">
+                <img src="{{ url_for('static', filename='assets/images/auth/auth-img.png') }}" alt="Authentication Image">
             </div>
         </div>
         <div class="lg:w-1/2 py-8 px-6 flex flex-col justify-center">
             <div class="lg:max-w-[464px] mx-auto w-full">
                 <div>
-                    <a href="{{ url_for('dashboard') }}" class="mb-2.5 max-w-[290px]">
-                        <img src="{{ url_for('static', filename='assets/images/logo.png') }}" alt="">
+                    <a href="{{ url_for('dashboard.index') }}" class="mb-2.5 max-w-[290px]">
+                        <img src="{{ url_for('static', filename='assets/images/logo.png') }}" alt="Logo">
                     </a>
                     <h4 class="mb-3">Sign In to your Account</h4>
                     <p class="mb-8 text-secondary-light text-lg">Welcome back! please enter your detail</p>
@@ -26,78 +28,142 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-4 p-3 rounded-lg">
-                                {{ message }}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-4 p-4 rounded-xl border-l-4 
+                                        {% if category == 'error' %}bg-red-50 border-red-500 text-red-700{% elif category == 'success' %}bg-green-50 border-green-500 text-green-700{% else %}bg-blue-50 border-blue-500 text-blue-700{% endif %}">
+                                <div class="flex items-center">
+                                    <iconify-icon icon="{% if category == 'error' %}material-symbols:error{% elif category == 'success' %}material-symbols:check-circle{% else %}material-symbols:info{% endif %}" class="text-lg mr-2"></iconify-icon>
+                                    {{ message }}
+                                </div>
                             </div>
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
 
-                <!-- Updated Form with proper action and CSRF protection -->
-                <form id="signinForm" action="{{ url_for('authentication.signin_post') }}" method="POST">
-                    {{ csrf_token() }}
+                <!-- Updated Form with Flask Integration -->
+                <form method="POST" action="{{ url_for('authentication.login_page') }}" id="loginForm">
+                    {{ csrf_token() if csrf_token }}
                     
+                    <!-- Username/Email Field -->
                     <div class="icon-field mb-4 relative">
                         <span class="absolute start-4 top-1/2 -translate-y-1/2 pointer-events-none flex text-xl">
                             <iconify-icon icon="mage:email"></iconify-icon>
                         </span>
-                        <input type="text" name="username" id="username" 
+                        <input type="text" 
+                               name="username" 
+                               id="username"
                                class="form-control h-[56px] ps-11 border-neutral-300 bg-neutral-50 dark:bg-dark-2 rounded-xl" 
-                               placeholder="Username, Email or Phone" required>
+                               placeholder="Username or Email"
+                               required
+                               value="{{ request.form.username if request.form.username }}">
                     </div>
-                    
+
+                    <!-- Password Field -->
                     <div class="relative mb-5">
                         <div class="icon-field">
                             <span class="absolute start-4 top-1/2 -translate-y-1/2 pointer-events-none flex text-xl">
                                 <iconify-icon icon="solar:lock-password-outline"></iconify-icon>
                             </span>
-                            <input type="password" name="password" id="password" 
+                            <input type="password" 
+                                   name="password" 
+                                   id="your-password"
                                    class="form-control h-[56px] ps-11 border-neutral-300 bg-neutral-50 dark:bg-dark-2 rounded-xl" 
-                                   placeholder="Password" required>
+                                   placeholder="Password"
+                                   required>
                         </div>
-                        <span class="toggle-password ri-eye-line cursor-pointer absolute end-0 top-1/2 -translate-y-1/2 me-4 text-secondary-light" data-toggle="#password"></span>
+                        <span class="toggle-password ri-eye-line cursor-pointer absolute end-0 top-1/2 -translate-y-1/2 me-4 text-secondary-light" data-toggle="#your-password"></span>
                     </div>
 
-                    <!-- Hidden tenant field -->
-                    <input type="hidden" name="tenant_code" value="DEFAULT">
-                    
+                    <!-- Remember Me and Forgot Password -->
                     <div class="mt-7">
                         <div class="flex justify-between gap-2">
                             <div class="flex items-center">
-                                <input class="form-check-input border border-neutral-300" type="checkbox" value="1" name="remember" id="remember">
+                                <input class="form-check-input border border-neutral-300" 
+                                       type="checkbox" 
+                                       name="remember_me"
+                                       value="1" 
+                                       id="remember">
                                 <label class="ps-2" for="remember">Remember me</label>
                             </div>
-                            <a href="{{ url_for('authentication.forgot_password') }}" class="text-primary-600 font-medium hover:underline">Forgot Password?</a>
+                            <a href="#" class="text-primary-600 font-medium hover:underline" onclick="showForgotPassword()">Forgot Password?</a>
                         </div>
                     </div>
 
-                    <button type="submit" id="signinBtn" class="btn btn-primary justify-center text-sm btn-sm px-3 py-4 w-full rounded-xl mt-8">
-                        <span class="signin-text">Sign In</span>
-                        <span class="loading-text hidden">
-                            <iconify-icon icon="line-md:loading-twotone-loop" class="animate-spin"></iconify-icon>
-                            Signing in...
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            id="loginBtn"
+                            class="btn btn-primary justify-center text-sm btn-sm px-3 py-4 w-full rounded-xl mt-8 flex items-center">
+                        <span class="loading-spinner hidden mr-2">
+                            <iconify-icon icon="eos-icons:loading" class="animate-spin"></iconify-icon>
                         </span>
+                        <span class="btn-text">Sign In</span>
                     </button>
 
+                    <!-- Demo Credentials Section -->
+                    <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h6 class="text-sm font-semibold mb-1">Demo Credentials</h6>
+                                <p class="text-xs text-gray-600 dark:text-gray-300">
+                                    <strong>Username:</strong> superadmin<br>
+                                    <strong>Password:</strong> Admin@123
+                                </p>
+                            </div>
+                            <button type="button" 
+                                    class="btn btn-outline-primary btn-sm px-3 py-2 text-xs"
+                                    onclick="fillDemoCredentials()">
+                                <iconify-icon icon="material-symbols:auto-fix-high" class="mr-1"></iconify-icon>
+                                Use Demo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Social Login Divider -->
                     <div class="mt-8 center-border-horizontal text-center relative before:absolute before:w-full before:h-[1px] before:top-1/2 before:-translate-y-1/2 before:bg-neutral-300 before:start-0">
                         <span class="bg-white dark:bg-dark-2 z-[2] relative px-4">Or sign in with</span>
                     </div>
-                    
+
+                    <!-- Social Login Buttons -->
                     <div class="mt-8 flex items-center gap-3">
-                        <button type="button" class="font-semibold text-neutral-600 dark:text-neutral-200 py-4 px-6 w-1/2 border rounded-xl text-base flex items-center justify-center gap-3 line-height-1 hover:bg-primary-50">
+                        <button type="button" 
+                                class="font-semibold text-neutral-600 dark:text-neutral-200 py-4 px-6 w-1/2 border rounded-xl text-base flex items-center justify-center gap-3 line-height-1 hover:bg-primary-50"
+                                onclick="socialLogin('facebook')">
                             <iconify-icon icon="ic:baseline-facebook" class="text-primary-600 text-xl line-height-1"></iconify-icon>
                             Facebook
                         </button>
-                        <button type="button" class="font-semibold text-neutral-600 dark:text-neutral-200 py-4 px-6 w-1/2 border rounded-xl text-base flex items-center justify-center gap-3 line-height-1 hover:bg-primary-50">
+                        <button type="button" 
+                                class="font-semibold text-neutral-600 dark:text-neutral-200 py-4 px-6 w-1/2 border rounded-xl text-base flex items-center justify-center gap-3 line-height-1 hover:bg-primary-50"
+                                onclick="socialLogin('google')">
                             <iconify-icon icon="logos:google-icon" class="text-primary-600 text-xl line-height-1"></iconify-icon>
                             Google
                         </button>
                     </div>
-                    
-                    <div class="mt-8 text-center text-sm">
-                        <p class="mb-0">Don't have an account? <a href="{{ url_for('authentication.signup') }}" class="text-primary-600 font-semibold hover:underline">Sign Up</a></p>
-                    </div>
+
+                    <!-- Sign Up Link -->
+
                 </form>
+
+                <!-- Forgot Password Modal Placeholder -->
+                <div id="forgotPasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white dark:bg-dark-2 p-6 rounded-xl max-w-md w-full mx-4">
+                        <h5 class="text-lg font-semibold mb-4">Reset Password</h5>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                            Enter your email address and we'll send you a link to reset your password.
+                        </p>
+                        <form id="forgotPasswordForm">
+                            <input type="email" 
+                                   class="form-control w-full p-3 border rounded-lg mb-4" 
+                                   placeholder="Enter your email"
+                                   required>
+                            <div class="flex gap-3">
+                                <button type="button" 
+                                        class="btn btn-outline-secondary flex-1"
+                                        onclick="closeForgotPassword()">Cancel</button>
+                                <button type="submit" 
+                                        class="btn btn-primary flex-1">Send Reset Link</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -108,7 +174,7 @@
 
     {% block custom_script %}
     <script>
-        // Password Show Hide Functionality
+        // ================== Password Show Hide Js Start ==========
         function initializePasswordToggle(toggleSelector) {
             $(toggleSelector).on("click", function() {
                 $(this).toggleClass("ri-eye-off-line");
@@ -120,66 +186,151 @@
                 }
             });
         }
+        // Call the function
         initializePasswordToggle(".toggle-password");
+        // ========================= Password Show Hide Js End ===========================
 
-        // Enhanced Form Submission with AJAX
-        $(document).ready(function() {
-            $('#signinForm').on('submit', function(e) {
-                e.preventDefault();
-                
-                const form = $(this);
-                const btn = $('#signinBtn');
-                const formData = {
-                    username: $('#username').val(),
-                    password: $('#password').val(),
-                    tenant_code: $('input[name="tenant_code"]').val(),
-                    remember: $('#remember').is(':checked')
-                };
+        // ================== Demo Credentials Function ==========
+        function fillDemoCredentials() {
+            document.getElementById('username').value = 'superadmin';
+            document.getElementById('your-password').value = 'Admin@123';
+            
+            // Add visual feedback
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<iconify-icon icon="material-symbols:check" class="mr-1"></iconify-icon>Filled!';
+            btn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+            }, 2000);
+        }
 
-                // Show loading state
-                btn.prop('disabled', true);
-                $('.signin-text').addClass('hidden');
-                $('.loading-text').removeClass('hidden');
+        // ================== Form Submission Handling ==========
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const loginBtn = document.getElementById('loginBtn');
+            const spinner = loginBtn.querySelector('.loading-spinner');
+            const btnText = loginBtn.querySelector('.btn-text');
+            
+            // Show loading state
+            spinner.classList.remove('hidden');
+            btnText.textContent = 'Signing In...';
+            loginBtn.disabled = true;
+            
+            // Re-enable button after 10 seconds (in case of no response)
+            setTimeout(function() {
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Sign In';
+                loginBtn.disabled = false;
+            }, 10000);
+        });
 
-                // Clear previous alerts
-                $('.alert').remove();
+        // ================== Forgot Password Modal ==========
+        function showForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        }
 
-                $.ajax({
-                    url: '{{ url_for("auth.login") }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(formData),
-                    success: function(response) {
-                        if (response.message === 'Login successful') {
-                            // Store session token if needed
-                            if (response.session_token) {
-                                localStorage.setItem('session_token', response.session_token);
-                            }
-                            
-                            // Show success message
-                            form.before('<div class="alert alert-success mb-4 p-3 rounded-lg">Login successful! Redirecting...</div>');
-                            
-                            // Redirect to dashboard
-                            setTimeout(() => {
-                                window.location.href = '{{ url_for("dashboard") }}';
-                            }, 1500);
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = JSON.parse(xhr.responseText);
-                        const errorMessage = response.error || 'Login failed. Please try again.';
-                        
-                        // Show error message
-                        form.before('<div class="alert alert-danger mb-4 p-3 rounded-lg">' + errorMessage + '</div>');
-                    },
-                    complete: function() {
-                        // Reset button state
-                        btn.prop('disabled', false);
-                        $('.signin-text').removeClass('hidden');
-                        $('.loading-text').addClass('hidden');
-                    }
-                });
+        function closeForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+        }
+
+        // ================== Social Login Placeholder ==========
+        function socialLogin(provider) {
+            // Placeholder for social login implementation
+            alert(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login integration coming soon!`);
+        }
+
+        // ================== Auto-focus and Enter Key Handling ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus on username field
+            document.getElementById('username').focus();
+            
+            // Handle Enter key in password field
+            document.getElementById('your-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginForm').submit();
+                }
             });
+        });
+
+        // ================== Alert Auto-hide ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                if (alert.classList.contains('alert-success')) {
+                    setTimeout(function() {
+                        alert.style.transition = 'opacity 0.5s ease-in-out';
+                        alert.style.opacity = '0';
+                        setTimeout(function() {
+                            alert.remove();
+                        }, 500);
+                    }, 5000);
+                }
+            });
+        });
+
+        // ================== Form Validation ==========
+        function validateForm() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('your-password').value;
+            
+            if (!username || !password) {
+                showAlert('Please fill in all required fields', 'error');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters long', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // ================== Show Alert Function ==========
+        function showAlert(message, type = 'info') {
+            const alertHtml = `
+                <div class="alert alert-${type} mb-4 p-4 rounded-xl border-l-4 
+                            ${type === 'error' ? 'bg-red-50 border-red-500 text-red-700' : 
+                              type === 'success' ? 'bg-green-50 border-green-500 text-green-700' : 
+                              'bg-blue-50 border-blue-500 text-blue-700'}">
+                    <div class="flex items-center">
+                        <iconify-icon icon="${type === 'error' ? 'material-symbols:error' : 
+                                            type === 'success' ? 'material-symbols:check-circle' : 
+                                            'material-symbols:info'}" class="text-lg mr-2"></iconify-icon>
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            const form = document.getElementById('loginForm');
+            form.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                const alert = form.querySelector('.alert');
+                if (alert) {
+                    alert.style.transition = 'opacity 0.5s ease-in-out';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 5000);
+        }
+
+        // ================== Forgot Password Form Submission ==========
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            if (email) {
+                // Placeholder for actual forgot password implementation
+                showAlert('Password reset link sent to your email!', 'success');
+                closeForgotPassword();
+                this.reset();
+            } else {
+                showAlert('Please enter a valid email address', 'error');
+            }
         });
     </script>
     {% endblock %}

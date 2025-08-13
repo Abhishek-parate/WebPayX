@@ -1,0 +1,245 @@
+{% extends 'layout/layout.html' %}
+
+{% block content %}
+<style>
+  .stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .role-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .role-super-admin { background: #dc3545; color: white; }
+  .role-admin { background: #fd7e14; color: white; }
+  .role-white-label { background: #6f42c1; color: white; }
+  .role-master-distributor { background: #0d6efd; color: white; }
+  .role-distributor { background: #198754; color: white; }
+  .role-retailer { background: #6c757d; color: white; }
+</style>
+
+<!-- User Management Dashboard -->
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 dark:text-white">User Management</h1>
+      <p class="text-neutral-600 dark:text-neutral-300">Manage users and hierarchy</p>
+    </div>
+    <a href="{{ url_for('user_management.create_user_page') }}" 
+       class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 flex items-center gap-2">
+      <iconify-icon icon="material-symbols:person-add" class="text-lg"></iconify-icon>
+      Create User
+    </a>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="statsContainer">
+    <div class="stats-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Total Users</p>
+          <h3 class="text-2xl font-bold" id="totalUsers">0</h3>
+        </div>
+        <iconify-icon icon="material-symbols:group" class="text-3xl opacity-70"></iconify-icon>
+      </div>
+    </div>
+    
+    <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Active Users</p>
+          <h3 class="text-2xl font-bold" id="activeUsers">0</h3>
+        </div>
+        <iconify-icon icon="material-symbols:check-circle" class="text-3xl opacity-70"></iconify-icon>
+      </div>
+    </div>
+    
+    <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Pending KYC</p>
+          <h3 class="text-2xl font-bold" id="pendingKyc">0</h3>
+        </div>
+        <iconify-icon icon="material-symbols:pending-actions" class="text-3xl opacity-70"></iconify-icon>
+      </div>
+    </div>
+    
+    <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8 0%, #6610f2 100%);">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">This Month</p>
+          <h3 class="text-2xl font-bold" id="recentRegistrations">0</h3>
+        </div>
+        <iconify-icon icon="material-symbols:trending-up" class="text-3xl opacity-70"></iconify-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+          <iconify-icon icon="material-symbols:person-add" class="text-primary-600 text-xl"></iconify-icon>
+        </div>
+        <div>
+          <h6 class="font-semibold text-neutral-800 dark:text-white">Create User</h6>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">Add new user to hierarchy</p>
+        </div>
+      </div>
+      <a href="{{ url_for('user_management.create_user_page') }}" 
+         class="btn btn-outline-primary w-full rounded-lg py-2 text-sm">
+        Create New User
+      </a>
+    </div>
+
+    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 bg-success-100 dark:bg-success-900 rounded-lg flex items-center justify-center">
+          <iconify-icon icon="material-symbols:list" class="text-success-600 text-xl"></iconify-icon>
+        </div>
+        <div>
+          <h6 class="font-semibold text-neutral-800 dark:text-white">Manage Users</h6>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">View and edit user details</p>
+        </div>
+      </div>
+      <a href="{{ url_for('user_management.user_list_page') }}" 
+         class="btn btn-outline-success w-full rounded-lg py-2 text-sm">
+        View All Users
+      </a>
+    </div>
+
+    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center">
+          <iconify-icon icon="material-symbols:account-tree" class="text-warning-600 text-xl"></iconify-icon>
+        </div>
+        <div>
+          <h6 class="font-semibold text-neutral-800 dark:text-white">User Hierarchy</h6>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">View user tree structure</p>
+        </div>
+      </div>
+      <button onclick="viewHierarchy()" class="btn btn-outline-warning w-full rounded-lg py-2 text-sm">
+        View Hierarchy
+      </button>
+    </div>
+  </div>
+
+  <!-- Recent Users -->
+  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
+    <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
+      <div class="flex justify-between items-center">
+        <h6 class="card-title text-lg font-semibold">Recent Users</h6>
+        <a href="{{ url_for('user_management.user_list_page') }}" 
+           class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+          View All
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-6">
+      <div class="overflow-x-auto">
+        <table class="w-full" id="recentUsersTable">
+          <thead>
+            <tr class="border-b border-neutral-200 dark:border-neutral-600">
+              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">User</th>
+              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Role</th>
+              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Status</th>
+              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Created</th>
+              <th class="text-right py-3 text-sm font-semibold text-neutral-800 dark:text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recentUsersBody">
+            <!-- Users will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  loadDashboardStats();
+  loadRecentUsers();
+});
+
+function loadDashboardStats() {
+  fetch('/user-management/api/stats')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('totalUsers').textContent = data.total_users || 0;
+      document.getElementById('activeUsers').textContent = data.active_users || 0;
+      document.getElementById('pendingKyc').textContent = data.by_kyc_status?.PENDING || 0;
+      document.getElementById('recentRegistrations').textContent = data.recent_registrations || 0;
+    })
+    .catch(error => console.error('Error loading stats:', error));
+}
+
+function loadRecentUsers() {
+  fetch('/user-management/api/users?per_page=5')
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('recentUsersBody');
+      tbody.innerHTML = '';
+      
+      if (data.users && data.users.length > 0) {
+        data.users.forEach(user => {
+          const row = `
+            <tr class="border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+              <td class="py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <span class="text-xs font-medium text-primary-600">${user.full_name?.charAt(0) || 'U'}</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-neutral-800 dark:text-white">${user.full_name}</p>
+                    <p class="text-xs text-neutral-500">${user.user_code}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3">
+                <span class="role-badge role-${user.role?.toLowerCase().replace('_', '-')}">${user.role}</span>
+              </td>
+              <td class="py-3">
+                <span class="px-2 py-1 text-xs rounded-full ${user.is_active ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'}">
+                  ${user.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-400">
+                ${new Date(user.created_at).toLocaleDateString()}
+              </td>
+              <td class="py-3 text-right">
+                <a href="/user-management/user/${user.id}" class="text-primary-600 hover:text-primary-700 text-sm">
+                  View
+                </a>
+              </td>
+            </tr>
+          `;
+          tbody.innerHTML += row;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-neutral-500">No users found</td></tr>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading recent users:', error);
+      document.getElementById('recentUsersBody').innerHTML = 
+        '<tr><td colspan="5" class="text-center py-8 text-danger-500">Error loading users</td></tr>';
+    });
+}
+
+function viewHierarchy() {
+  // Implement hierarchy view
+  alert('User hierarchy view - implementation needed');
+}
+</script>
+{% endblock %}

@@ -5,9 +5,10 @@ SaaS Multi-Tenant Financial Services Platform - SQLAlchemy Models
 This module contains all SQLAlchemy models that correspond to the database schema.
 The models are designed to be compatible with both PostgreSQL (production) and SQLite (development).
 
-Author: Your Name
+Author: abhishek parate
 Created: 2025
 """
+# /models.py
 
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -16,16 +17,21 @@ import uuid
 import secrets
 from typing import Optional, Dict, Any
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import (
     Column, String, Integer, DateTime, Boolean, Text, DECIMAL, 
     ForeignKey, JSON, Enum, Date, BigInteger, Index, UniqueConstraint
 )
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.types import TypeDecorator, VARCHAR
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# =============================================================================
+# CRITICAL FIX: Create and export the db instance
+# =============================================================================
+db = SQLAlchemy()
 
 # PostgreSQL-specific imports with fallbacks
 try:
@@ -34,9 +40,6 @@ try:
 except ImportError:
     from sqlalchemy import String as UUID, String as ARRAY, String as INET
     HAS_POSTGRESQL = False
-
-# Base class for all models
-Base = declarative_base()
 
 # =============================================================================
 # CUSTOM TYPES FOR CROSS-DATABASE COMPATIBILITY
@@ -257,10 +260,10 @@ class BankAccountStatus(PyEnum):
     UNDER_VERIFICATION = "UNDER_VERIFICATION"
 
 # =============================================================================
-# BASE MODEL CLASS WITH COMMON FIELDS
+# BASE MODEL CLASS WITH COMMON FIELDS - UPDATED TO USE db.Model
 # =============================================================================
 
-class BaseModel(Base):
+class BaseModel(db.Model):
     """Base model class with common fields and methods"""
     __abstract__ = True
     
@@ -310,7 +313,7 @@ class Tenant(BaseModel):
     subscription_expires_at = Column(DateTime)
     api_settings = Column(JSONType, default={})
     rate_limits = Column(JSONType, default={})
-    created_by = Column(GUID(), ForeignKey('users.id'))
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
     meta_data = Column(JSONType, default={})
     
     def __repr__(self):
@@ -331,18 +334,18 @@ class User(BaseModel):
     """Hierarchical user management with role-based access"""
     __tablename__ = 'users'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    parent_id = Column(GUID(), ForeignKey('users.id'), index=True)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    parent_id = Column(GUID(), db.ForeignKey('users.id'), index=True)
     user_code = Column(String(50), unique=True, nullable=False, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, index=True)
     phone = Column(String(20), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(Enum(UserRoleType), nullable=False, index=True)
+    role = Column(db.Enum(UserRoleType), nullable=False, index=True)
     full_name = Column(String(255), nullable=False)
     business_name = Column(String(255))
     address = Column(JSONType, default={})
-    kyc_status = Column(Enum(KYCStatus), default=KYCStatus.NOT_SUBMITTED, index=True)
+    kyc_status = Column(db.Enum(KYCStatus), default=KYCStatus.NOT_SUBMITTED, index=True)
     kyc_data = Column(JSONType, default={})
     is_active = Column(Boolean, default=True, index=True)
     is_verified = Column(Boolean, default=False)
@@ -355,13 +358,11 @@ class User(BaseModel):
     two_factor_secret = Column(String(255))
     api_key = Column(String(255), unique=True, index=True)
     api_secret = Column(String(255))
-    tree_path = Column(String(500), index=True)  # Using string instead of LTREE for compatibility
+    tree_path = Column(String(500), index=True)
     level = Column(Integer, default=0)
     settings = Column(JSONType, default={})
     meta_data = Column(JSONType, default={})
-    created_by = Column(GUID(), ForeignKey('users.id'))
-    
-    # Relationships will be defined after all models are declared
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
     
     def __repr__(self):
         return f"<User(code='{self.user_code}', name='{self.full_name}', role='{self.role.value if self.role else None}')>"
@@ -388,7 +389,6 @@ class User(BaseModel):
         """Check if this user can access target user (hierarchy check)"""
         if self.id == target_user.id:
             return True
-        # Simple hierarchy check using tree_path string
         return target_user.tree_path and str(self.id) in target_user.tree_path
 
     # Flask-Login integration
@@ -405,7 +405,7 @@ class UserSession(BaseModel):
     """User session management"""
     __tablename__ = 'user_sessions'
     
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False, index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False, index=True)
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     refresh_token = Column(String(255), unique=True)
     ip_address = Column(IPAddressType)
@@ -428,7 +428,7 @@ class Wallet(BaseModel):
     """User wallet management"""
     __tablename__ = 'wallets'
     
-    user_id = Column(GUID(), ForeignKey('users.id'), unique=True, nullable=False)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), unique=True, nullable=False)
     balance = Column(DECIMAL(15, 4), default=0, nullable=False)
     hold_balance = Column(DECIMAL(15, 4), default=0, nullable=False)
     total_credited = Column(DECIMAL(15, 4), default=0)
@@ -463,8 +463,8 @@ class WalletTransaction(BaseModel):
     """Detailed wallet transaction ledger"""
     __tablename__ = 'wallet_transactions'
     
-    wallet_id = Column(GUID(), ForeignKey('wallets.id'), nullable=False, index=True)
-    transaction_type = Column(Enum(WalletTransactionType), nullable=False, index=True)
+    wallet_id = Column(GUID(), db.ForeignKey('wallets.id'), nullable=False, index=True)
+    transaction_type = Column(db.Enum(WalletTransactionType), nullable=False, index=True)
     amount = Column(DECIMAL(15, 4), nullable=False)
     balance_before = Column(DECIMAL(15, 4), nullable=False)
     balance_after = Column(DECIMAL(15, 4), nullable=False)
@@ -472,7 +472,7 @@ class WalletTransaction(BaseModel):
     reference_type = Column(String(50), index=True)
     description = Column(Text)
     meta_data = Column(JSONType, default={})
-    processed_by = Column(GUID(), ForeignKey('users.id'))
+    processed_by = Column(GUID(), db.ForeignKey('users.id'))
 
 # =============================================================================
 # PAYMENT GATEWAY MODELS
@@ -482,8 +482,8 @@ class PaymentGateway(BaseModel):
     """Payment gateway configurations"""
     __tablename__ = 'payment_gateways'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    gateway_type = Column(Enum(PaymentGatewayType), nullable=False)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    gateway_type = Column(db.Enum(PaymentGatewayType), nullable=False)
     gateway_name = Column(String(255), nullable=False)
     merchant_id = Column(String(255), nullable=False)
     api_key = Column(String(500), nullable=False)
@@ -504,7 +504,7 @@ class PaymentGateway(BaseModel):
     rate_limit_per_minute = Column(Integer, default=100)
     auto_settlement = Column(Boolean, default=True)
     is_default = Column(Boolean, default=False)
-    created_by = Column(GUID(), ForeignKey('users.id'))
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
 
 # =============================================================================
 # BANK ACCOUNT MANAGEMENT MODELS
@@ -514,8 +514,8 @@ class OrganizationBankAccount(BaseModel):
     """Organization bank accounts for multi-bank support"""
     __tablename__ = 'organization_bank_accounts'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'))
     account_code = Column(String(50), unique=True, nullable=False)
     account_name = Column(String(255), nullable=False)
     account_number = Column(String(50), nullable=False)
@@ -523,11 +523,11 @@ class OrganizationBankAccount(BaseModel):
     bank_name = Column(String(255), nullable=False)
     branch_name = Column(String(255))
     branch_address = Column(Text)
-    account_type = Column(Enum(BankAccountType), nullable=False, default=BankAccountType.CURRENT)
+    account_type = Column(db.Enum(BankAccountType), nullable=False, default=BankAccountType.CURRENT)
     account_holder_name = Column(String(255), nullable=False)
     pan_number = Column(String(10))
     gstin = Column(String(15))
-    status = Column(Enum(BankAccountStatus), default=BankAccountStatus.ACTIVE)
+    status = Column(db.Enum(BankAccountStatus), default=BankAccountStatus.ACTIVE)
     purpose = Column(ArrayType, default=[AccountPurpose.GENERAL.value])
     is_primary = Column(Boolean, default=False)
     is_default_topup = Column(Boolean, default=False)
@@ -557,15 +557,15 @@ class OrganizationBankAccount(BaseModel):
     is_visible_to_users = Column(Boolean, default=True)
     display_order = Column(Integer, default=1)
     additional_info = Column(JSONType, default={})
-    created_by = Column(GUID(), ForeignKey('users.id'))
-    last_updated_by = Column(GUID(), ForeignKey('users.id'))
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
+    last_updated_by = Column(GUID(), db.ForeignKey('users.id'))
 
 class UserBankPreference(BaseModel):
     """User-specific bank account preferences"""
     __tablename__ = 'user_bank_preferences'
     
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False)
-    bank_account_id = Column(GUID(), ForeignKey('organization_bank_accounts.id'), nullable=False)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False)
+    bank_account_id = Column(GUID(), db.ForeignKey('organization_bank_accounts.id'), nullable=False)
     is_favorite = Column(Boolean, default=False)
     usage_count = Column(Integer, default=0)
     last_used = Column(DateTime)
@@ -582,22 +582,22 @@ class WalletTopupRequest(BaseModel):
     __tablename__ = 'wallet_topup_requests'
     
     request_id = Column(String(100), unique=True, nullable=False, index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False, index=True)
-    requested_by = Column(GUID(), ForeignKey('users.id'), index=True)
-    approved_by = Column(GUID(), ForeignKey('users.id'))
-    payment_gateway_id = Column(GUID(), ForeignKey('payment_gateways.id'), index=True)
-    selected_bank_account_id = Column(GUID(), ForeignKey('organization_bank_accounts.id'))
-    topup_method = Column(Enum(TopupMethod), nullable=False, default=TopupMethod.MANUAL_REQUEST)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False, index=True)
+    requested_by = Column(GUID(), db.ForeignKey('users.id'), index=True)
+    approved_by = Column(GUID(), db.ForeignKey('users.id'))
+    payment_gateway_id = Column(GUID(), db.ForeignKey('payment_gateways.id'), index=True)
+    selected_bank_account_id = Column(GUID(), db.ForeignKey('organization_bank_accounts.id'))
+    topup_method = Column(db.Enum(TopupMethod), nullable=False, default=TopupMethod.MANUAL_REQUEST)
     amount = Column(DECIMAL(15, 4), nullable=False)
     processing_fee = Column(DECIMAL(10, 4), default=0)
     net_amount = Column(DECIMAL(15, 4), nullable=False)
-    transaction_mode = Column(Enum(TransactionMode))
+    transaction_mode = Column(db.Enum(TransactionMode))
     external_transaction_id = Column(String(255), index=True)
     bank_reference = Column(String(255))
     upi_ref = Column(String(255))
     utr_number = Column(String(100))
     order_id = Column(String(255), index=True)
-    status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING, index=True)
+    status = Column(db.Enum(TransactionStatus), default=TransactionStatus.PENDING, index=True)
     gateway_status = Column(String(100))
     gateway_response = Column(JSONType, default={})
     payment_method = Column(String(100))
@@ -638,15 +638,15 @@ class Transaction(BaseModel):
     """Core transaction processing"""
     __tablename__ = 'transactions'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False, index=True)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False, index=True)
     transaction_id = Column(String(100), unique=True, nullable=False, index=True)
-    service_type = Column(Enum(ServiceType), nullable=False, index=True)
+    service_type = Column(db.Enum(ServiceType), nullable=False, index=True)
     amount = Column(DECIMAL(15, 4), nullable=False)
     commission = Column(DECIMAL(10, 4), default=0)
     platform_charges = Column(DECIMAL(10, 4), default=0)
     net_amount = Column(DECIMAL(15, 4), nullable=False)
-    status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING, index=True)
+    status = Column(db.Enum(TransactionStatus), default=TransactionStatus.PENDING, index=True)
     provider = Column(String(100), index=True)
     provider_response = Column(JSONType, default={})
     customer_details = Column(JSONType, nullable=False)
@@ -668,8 +668,8 @@ class CommissionDistribution(BaseModel):
     """Commission distribution across user hierarchy"""
     __tablename__ = 'commission_distributions'
     
-    transaction_id = Column(GUID(), ForeignKey('transactions.id'), nullable=False, index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False, index=True)
+    transaction_id = Column(GUID(), db.ForeignKey('transactions.id'), nullable=False, index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False, index=True)
     user_level = Column(Integer, nullable=False)
     commission_rate = Column(DECIMAL(10, 4), nullable=False)
     commission_amount = Column(DECIMAL(10, 4), nullable=False)
@@ -686,7 +686,7 @@ class RechargeTransaction(BaseModel):
     """Mobile/DTH recharge specific details"""
     __tablename__ = 'recharge_transactions'
     
-    transaction_id = Column(GUID(), ForeignKey('transactions.id'), nullable=False)
+    transaction_id = Column(GUID(), db.ForeignKey('transactions.id'), nullable=False)
     operator_name = Column(String(100), nullable=False, index=True)
     circle = Column(String(100))
     mobile_number = Column(String(15), nullable=False, index=True)
@@ -700,7 +700,7 @@ class BillPaymentTransaction(BaseModel):
     """Bill payment specific details"""
     __tablename__ = 'bill_payment_transactions'
     
-    transaction_id = Column(GUID(), ForeignKey('transactions.id'), nullable=False)
+    transaction_id = Column(GUID(), db.ForeignKey('transactions.id'), nullable=False)
     category = Column(String(100), nullable=False)
     biller_name = Column(String(255), nullable=False)
     biller_id = Column(String(100), nullable=False, index=True)
@@ -715,7 +715,7 @@ class MoneyTransferTransaction(BaseModel):
     """Money transfer specific details"""
     __tablename__ = 'money_transfer_transactions'
     
-    transaction_id = Column(GUID(), ForeignKey('transactions.id'), nullable=False)
+    transaction_id = Column(GUID(), db.ForeignKey('transactions.id'), nullable=False)
     sender_name = Column(String(255), nullable=False)
     sender_mobile = Column(String(15), nullable=False, index=True)
     beneficiary_name = Column(String(255), nullable=False)
@@ -723,7 +723,7 @@ class MoneyTransferTransaction(BaseModel):
     bank_name = Column(String(255), nullable=False)
     account_number = Column(String(50), nullable=False, index=True)
     ifsc_code = Column(String(11), nullable=False)
-    transfer_mode = Column(Enum(TransactionMode), nullable=False)
+    transfer_mode = Column(db.Enum(TransactionMode), nullable=False)
     utr_number = Column(String(100), index=True)
     reference_number = Column(String(100))
 
@@ -735,30 +735,30 @@ class CommissionPlan(BaseModel):
     """Commission plans for different services"""
     __tablename__ = 'commission_plans'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
     plan_name = Column(String(255), nullable=False)
-    service_type = Column(Enum(ServiceType), nullable=False)
-    commission_mode = Column(Enum(CommissionMode), nullable=False)
+    service_type = Column(db.Enum(ServiceType), nullable=False)
+    commission_mode = Column(db.Enum(CommissionMode), nullable=False)
     base_rate = Column(DECIMAL(10, 4), default=0)
     min_commission = Column(DECIMAL(10, 2), default=0)
     max_commission = Column(DECIMAL(10, 2))
-    slabs = Column(JSONType, default=[])  # For slab-based commission
+    slabs = Column(JSONType, default=[])
     conditions = Column(JSONType, default={})
     is_active = Column(Boolean, default=True, index=True)
     valid_from = Column(DateTime, default=datetime.utcnow)
     valid_until = Column(DateTime)
-    created_by = Column(GUID(), ForeignKey('users.id'))
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
 
 class UserCommission(BaseModel):
     """User commission assignments"""
     __tablename__ = 'user_commissions'
     
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False)
-    commission_plan_id = Column(GUID(), ForeignKey('commission_plans.id'))
-    custom_rate = Column(DECIMAL(10, 4))  # Override plan rate
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False)
+    commission_plan_id = Column(GUID(), db.ForeignKey('commission_plans.id'))
+    custom_rate = Column(DECIMAL(10, 4))
     is_active = Column(Boolean, default=True)
     assigned_at = Column(DateTime, default=datetime.utcnow)
-    assigned_by = Column(GUID(), ForeignKey('users.id'))
+    assigned_by = Column(GUID(), db.ForeignKey('users.id'))
     
     __table_args__ = (UniqueConstraint('user_id', 'commission_plan_id'),)
 
@@ -766,8 +766,8 @@ class ServicePricing(BaseModel):
     """Service pricing configurations"""
     __tablename__ = 'service_pricing'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    service_type = Column(Enum(ServiceType), nullable=False)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    service_type = Column(db.Enum(ServiceType), nullable=False)
     provider = Column(String(100))
     base_cost = Column(DECIMAL(10, 4), nullable=False)
     markup = Column(DECIMAL(10, 4), default=0)
@@ -793,9 +793,9 @@ class RolePermission(BaseModel):
     """Role-based permissions"""
     __tablename__ = 'role_permissions'
     
-    role = Column(Enum(UserRoleType), nullable=False)
-    permission_id = Column(GUID(), ForeignKey('permissions.id'))
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'))
+    role = Column(db.Enum(UserRoleType), nullable=False)
+    permission_id = Column(GUID(), db.ForeignKey('permissions.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'))
     is_granted = Column(Boolean, default=True)
     conditions = Column(JSONType, default={})
     
@@ -805,10 +805,10 @@ class UserPermission(BaseModel):
     """User-specific permission overrides"""
     __tablename__ = 'user_permissions'
     
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False)
-    permission_id = Column(GUID(), ForeignKey('permissions.id'))
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False)
+    permission_id = Column(GUID(), db.ForeignKey('permissions.id'))
     is_granted = Column(Boolean, default=True)
-    granted_by = Column(GUID(), ForeignKey('users.id'))
+    granted_by = Column(GUID(), db.ForeignKey('users.id'))
     expires_at = Column(DateTime)
     
     __table_args__ = (UniqueConstraint('user_id', 'permission_id'),)
@@ -821,10 +821,10 @@ class NotificationTemplate(BaseModel):
     """Notification templates"""
     __tablename__ = 'notification_templates'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'))
     template_code = Column(String(100), nullable=False)
     template_name = Column(String(255), nullable=False)
-    template_type = Column(String(50), nullable=False)  # EMAIL, SMS, PUSH
+    template_type = Column(String(50), nullable=False)
     subject = Column(String(500))
     body = Column(Text, nullable=False)
     variables = Column(JSONType, default=[])
@@ -836,9 +836,9 @@ class NotificationQueue(BaseModel):
     """Notification queue for processing"""
     __tablename__ = 'notification_queue'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'))
-    user_id = Column(GUID(), ForeignKey('users.id'))
-    template_id = Column(GUID(), ForeignKey('notification_templates.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'))
+    user_id = Column(GUID(), db.ForeignKey('users.id'))
+    template_id = Column(GUID(), db.ForeignKey('notification_templates.id'))
     notification_type = Column(String(50), nullable=False)
     recipient = Column(String(255), nullable=False)
     subject = Column(String(500))
@@ -859,8 +859,8 @@ class APIConfiguration(BaseModel):
     """API configurations for external services"""
     __tablename__ = 'api_configurations'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    service_type = Column(Enum(ServiceType), nullable=False)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    service_type = Column(db.Enum(ServiceType), nullable=False)
     provider = Column(String(100), nullable=False)
     api_url = Column(Text, nullable=False)
     api_key = Column(String(255))
@@ -878,9 +878,9 @@ class APIRequestLog(BaseModel):
     """API request logs for debugging"""
     __tablename__ = 'api_request_logs'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'))
-    transaction_id = Column(GUID(), ForeignKey('transactions.id'))
-    api_config_id = Column(GUID(), ForeignKey('api_configurations.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'))
+    transaction_id = Column(GUID(), db.ForeignKey('transactions.id'))
+    api_config_id = Column(GUID(), db.ForeignKey('api_configurations.id'))
     request_url = Column(Text, nullable=False)
     request_method = Column(String(10), default='POST')
     request_headers = Column(JSONType, default={})
@@ -899,8 +899,8 @@ class AuditLog(BaseModel):
     """System audit logs"""
     __tablename__ = 'audit_logs'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'), index=True)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), index=True)
     action = Column(String(100), nullable=False, index=True)
     resource_type = Column(String(100), index=True)
     resource_id = Column(GUID(), index=True)
@@ -917,8 +917,8 @@ class ErrorLog(BaseModel):
     """System error logs"""
     __tablename__ = 'error_logs'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'))
-    user_id = Column(GUID(), ForeignKey('users.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'))
+    user_id = Column(GUID(), db.ForeignKey('users.id'))
     error_code = Column(String(50))
     error_message = Column(Text, nullable=False)
     stack_trace = Column(Text)
@@ -926,7 +926,7 @@ class ErrorLog(BaseModel):
     response_data = Column(JSONType, default={})
     severity = Column(String(20), default='ERROR')
     resolved = Column(Boolean, default=False)
-    resolved_by = Column(GUID(), ForeignKey('users.id'))
+    resolved_by = Column(GUID(), db.ForeignKey('users.id'))
     resolved_at = Column(DateTime)
 
 # =============================================================================
@@ -937,10 +937,10 @@ class DailySummary(BaseModel):
     """Pre-computed daily summaries"""
     __tablename__ = 'daily_summaries'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False, index=True)
-    user_id = Column(GUID(), ForeignKey('users.id'), nullable=False, index=True)
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False, index=True)
+    user_id = Column(GUID(), db.ForeignKey('users.id'), nullable=False, index=True)
     summary_date = Column(Date, nullable=False, index=True)
-    service_type = Column(Enum(ServiceType))
+    service_type = Column(db.Enum(ServiceType))
     total_transactions = Column(Integer, default=0)
     success_transactions = Column(Integer, default=0)
     failed_transactions = Column(Integer, default=0)
@@ -958,8 +958,8 @@ class PaymentWebhook(BaseModel):
     __tablename__ = 'payment_webhooks'
     
     webhook_id = Column(String(255), unique=True, nullable=False)
-    payment_gateway_id = Column(GUID(), ForeignKey('payment_gateways.id'))
-    topup_request_id = Column(GUID(), ForeignKey('wallet_topup_requests.id'))
+    payment_gateway_id = Column(GUID(), db.ForeignKey('payment_gateways.id'))
+    topup_request_id = Column(GUID(), db.ForeignKey('wallet_topup_requests.id'))
     event_type = Column(String(100), nullable=False)
     order_id = Column(String(255), index=True)
     payment_id = Column(String(255), index=True)
@@ -978,9 +978,9 @@ class PaymentGatewayLog(BaseModel):
     """Payment gateway API interaction logs"""
     __tablename__ = 'payment_gateway_logs'
     
-    topup_request_id = Column(GUID(), ForeignKey('wallet_topup_requests.id'))
-    payment_gateway_id = Column(GUID(), ForeignKey('payment_gateways.id'))
-    log_type = Column(String(50), nullable=False)  # REQUEST, RESPONSE, CALLBACK, WEBHOOK
+    topup_request_id = Column(GUID(), db.ForeignKey('wallet_topup_requests.id'))
+    payment_gateway_id = Column(GUID(), db.ForeignKey('payment_gateways.id'))
+    log_type = Column(String(50), nullable=False)
     endpoint = Column(String(255))
     request_method = Column(String(10))
     request_headers = Column(JSONType, default={})
@@ -1002,15 +1002,15 @@ class TopupRefund(BaseModel):
     __tablename__ = 'topup_refunds'
     
     refund_id = Column(String(255), unique=True, nullable=False)
-    topup_request_id = Column(GUID(), ForeignKey('wallet_topup_requests.id'), nullable=False)
+    topup_request_id = Column(GUID(), db.ForeignKey('wallet_topup_requests.id'), nullable=False)
     original_amount = Column(DECIMAL(15, 4), nullable=False)
     refund_amount = Column(DECIMAL(15, 4), nullable=False)
     refund_reason = Column(Text, nullable=False)
-    refund_type = Column(String(50), default='FULL')  # FULL, PARTIAL
+    refund_type = Column(String(50), default='FULL')
     gateway_refund_id = Column(String(255))
     gateway_response = Column(JSONType, default={})
-    status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING)
-    processed_by = Column(GUID(), ForeignKey('users.id'))
+    status = Column(db.Enum(TransactionStatus), default=TransactionStatus.PENDING)
+    processed_by = Column(GUID(), db.ForeignKey('users.id'))
     processed_at = Column(DateTime)
 
 # =============================================================================
@@ -1021,9 +1021,9 @@ class BankAccountTransaction(BaseModel):
     """Bank account transaction log"""
     __tablename__ = 'bank_account_transactions'
     
-    bank_account_id = Column(GUID(), ForeignKey('organization_bank_accounts.id'), nullable=False)
-    topup_request_id = Column(GUID(), ForeignKey('wallet_topup_requests.id'))
-    transaction_type = Column(String(50), nullable=False)  # CREDIT, DEBIT, HOLD, RELEASE
+    bank_account_id = Column(GUID(), db.ForeignKey('organization_bank_accounts.id'), nullable=False)
+    topup_request_id = Column(GUID(), db.ForeignKey('wallet_topup_requests.id'))
+    transaction_type = Column(String(50), nullable=False)
     amount = Column(DECIMAL(15, 4), nullable=False)
     balance_before = Column(DECIMAL(15, 4))
     balance_after = Column(DECIMAL(15, 4))
@@ -1032,7 +1032,7 @@ class BankAccountTransaction(BaseModel):
     transaction_date = Column(DateTime, default=datetime.utcnow)
     value_date = Column(Date)
     description = Column(Text)
-    category = Column(String(100))  # TOPUP, SETTLEMENT, REFUND, etc.
+    category = Column(String(100))
     counterparty_name = Column(String(255))
     counterparty_account = Column(String(50))
     counterparty_ifsc = Column(String(11))
@@ -1044,17 +1044,17 @@ class BankAccountTransaction(BaseModel):
     statement_reference = Column(String(255))
     reconciled = Column(Boolean, default=False)
     reconciled_at = Column(DateTime)
-    reconciled_by = Column(GUID(), ForeignKey('users.id'))
+    reconciled_by = Column(GUID(), db.ForeignKey('users.id'))
     meta_data = Column(JSONType, default={})
 
 class BankStatementImport(BaseModel):
     """Bank statement import tracking"""
     __tablename__ = 'bank_statement_imports'
     
-    bank_account_id = Column(GUID(), ForeignKey('organization_bank_accounts.id'), nullable=False)
+    bank_account_id = Column(GUID(), db.ForeignKey('organization_bank_accounts.id'), nullable=False)
     import_batch_id = Column(String(100), unique=True, nullable=False)
     file_name = Column(String(255))
-    file_type = Column(String(50))  # CSV, XLSX, PDF, API
+    file_type = Column(String(50))
     statement_period_from = Column(Date, nullable=False)
     statement_period_to = Column(Date, nullable=False)
     total_records = Column(Integer, default=0)
@@ -1067,9 +1067,9 @@ class BankStatementImport(BaseModel):
     closing_balance = Column(DECIMAL(15, 4))
     total_credits = Column(DECIMAL(15, 4), default=0)
     total_debits = Column(DECIMAL(15, 4), default=0)
-    import_status = Column(String(50), default='PROCESSING')  # PROCESSING, COMPLETED, FAILED
+    import_status = Column(String(50), default='PROCESSING')
     error_details = Column(JSONType, default={})
-    processed_by = Column(GUID(), ForeignKey('users.id'))
+    processed_by = Column(GUID(), db.ForeignKey('users.id'))
     processing_started_at = Column(DateTime, default=datetime.utcnow)
     processing_completed_at = Column(DateTime)
     auto_reconcile = Column(Boolean, default=True)
@@ -1083,9 +1083,9 @@ class RoleBankPermission(BaseModel):
     """Role-based bank access control"""
     __tablename__ = 'role_bank_permissions'
     
-    tenant_id = Column(GUID(), ForeignKey('tenants.id'), nullable=False)
-    role = Column(Enum(UserRoleType), nullable=False)
-    bank_account_id = Column(GUID(), ForeignKey('organization_bank_accounts.id'))
+    tenant_id = Column(GUID(), db.ForeignKey('tenants.id'), nullable=False)
+    role = Column(db.Enum(UserRoleType), nullable=False)
+    bank_account_id = Column(GUID(), db.ForeignKey('organization_bank_accounts.id'))
     can_view = Column(Boolean, default=True)
     can_select_for_topup = Column(Boolean, default=True)
     can_modify = Column(Boolean, default=False)
@@ -1093,15 +1093,13 @@ class RoleBankPermission(BaseModel):
     can_reconcile = Column(Boolean, default=False)
     purpose_allowed = Column(ArrayType, default=[AccountPurpose.WALLET_TOPUP.value])
     amount_limit = Column(DECIMAL(15, 4))
-    created_by = Column(GUID(), ForeignKey('users.id'))
+    created_by = Column(GUID(), db.ForeignKey('users.id'))
     
     __table_args__ = (UniqueConstraint('tenant_id', 'role', 'bank_account_id'),)
 
 # =============================================================================
 # RELATIONSHIP DEFINITIONS
 # =============================================================================
-
-# Add relationships after all models are defined to avoid circular imports
 
 # Tenant relationships
 Tenant.users = relationship("User", back_populates="tenant", foreign_keys="User.tenant_id")
@@ -1158,25 +1156,25 @@ CommissionDistribution.transaction = relationship("Transaction", back_populates=
 
 def create_tables(engine):
     """Create all database tables"""
-    Base.metadata.create_all(engine)
+    db.metadata.create_all(engine)
 
 def drop_tables(engine):
     """Drop all database tables (use with caution!)"""
-    Base.metadata.drop_all(engine)
+    db.metadata.drop_all(engine)
 
 def get_model_by_name(name: str):
     """Get model class by name"""
-    for cls in Base.registry._class_registry.values():
-        if hasattr(cls, '__name__') and cls.__name__ == name:
-            return cls
+    for model in db.Model.registry._class_registry.values():
+        if hasattr(model, '__name__') and model.__name__ == name:
+            return model
     return None
 
 def get_all_models():
     """Get all model classes"""
     models = []
-    for cls in Base.registry._class_registry.values():
-        if hasattr(cls, '__tablename__'):
-            models.append(cls)
+    for model in db.Model.registry._class_registry.values():
+        if hasattr(model, '__tablename__'):
+            models.append(model)
     return models
 
 # =============================================================================
@@ -1186,16 +1184,14 @@ def get_all_models():
 def validate_model_relationships():
     """Validate that all model relationships are properly defined"""
     try:
-        # This will check for relationship issues without creating tables
         from sqlalchemy import MetaData
         metadata = MetaData()
-        Base.metadata.bind = None
+        db.metadata.bind = None
         
-        # Check for circular dependencies and relationship issues
-        for table in Base.metadata.sorted_tables:
+        for table in db.metadata.sorted_tables:
             for fk in table.foreign_keys:
                 target_table = fk.column.table
-                if target_table not in Base.metadata.tables.values():
+                if target_table not in db.metadata.tables.values():
                     raise ValueError(f"Foreign key references unknown table: {target_table.name}")
         
         return True
@@ -1332,13 +1328,10 @@ if __name__ == "__main__":
     """
     Example usage of the models
     """
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    
     print("=" * 60)
     print("🚀 SaaS Platform Models Loaded Successfully!")
     print("=" * 60)
-    print(f"📊 Total Models: {len([cls for cls in Base.registry._class_registry.values() if hasattr(cls, '__tablename__')])}")
+    print(f"📊 Total Models: {len([cls for cls in db.Model.registry._class_registry.values() if hasattr(cls, '__tablename__')])}")
     print(f"🔧 PostgreSQL Support: {'Yes' if HAS_POSTGRESQL else 'No (using fallbacks)'}")
     print("\n📋 Available Models:")
     
@@ -1370,12 +1363,12 @@ if __name__ == "__main__":
     print("  • All models inherit from BaseModel with common fields")
 
 # =============================================================================
-# EXPORT ALL MODELS AND UTILITIES
+# EXPORT ALL MODELS AND UTILITIES - INCLUDE db
 # =============================================================================
 
 __all__ = [
-    # Base
-    'Base', 'BaseModel',
+    # CRITICAL: Export db instance
+    'db',
     
     # Custom Types
     'GUID', 'JSONType', 'ArrayType', 'IPAddressType',
