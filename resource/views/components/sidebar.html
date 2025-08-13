@@ -1,0 +1,393 @@
+<aside class="sidebar">
+    <button type="button" class="sidebar-close-btn !mt-4">
+        <iconify-icon icon="radix-icons:cross-2"></iconify-icon>
+    </button>
+    <div>
+        <a href="{{ url_for('dashboard.index') }}" class="sidebar-logo">
+            <img src="{{ url_for('static', filename='assets/images/icons/logo.png') }}" alt="site logo" class="light-logo">
+            <img src="{{ url_for('static', filename='assets/images/icons/logo.png') }}" alt="site logo"
+                class="dark-logo">
+            <img src="{{ url_for('static', filename='assets/images/icons/logo.png') }}" alt="site logo"
+                class="logo-icon">
+        </a>
+    </div>
+    <div class="sidebar-menu-area">
+        <ul class="sidebar-menu" id="sidebar-menu">
+            <li>
+                <a href="{{ url_for('email') }}">
+                    <iconify-icon icon="mage:email" class="menu-icon"></iconify-icon>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:document-text-outline" class="menu-icon"></iconify-icon>
+                    <span>Self Services</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('selfservice.paymentgateway') }}"><i
+                                class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Payment Gateway
+                            Services</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selfservice.ccbillpaymentservice') }}"><i
+                                class="ri-circle-fill circle-icon text-success-600 w-auto"></i> CC Bill Payment
+                            Service</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selfservice.moneytransferservice') }}"><i
+                                class="ri-circle-fill circle-icon text-purple-600  dark:text-purple-400 w-auto"></i>
+                            Money Transfer Service</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selfservice.mobilerecharge') }}"><i
+                                class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Mobile Recharge</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selfservice.dthrecharge') }}"><i
+                                class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> DTH Recharge</a>
+                    </li>
+                    <!-- <li>
+                        <a href="{{ url_for('componentspage.carousel') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Carousel</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.avatar') }}"><i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Avatars</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.progress') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Progress bar</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.tabs') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Tab & Accordion</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.pagination') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Pagination</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.badges') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Badges</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.tooltip') }}"><i class="ri-circle-fill circle-icon dark:text-purple-400 w-auto"></i> Tooltip & Popover</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.videos') }}"><i class="ri-circle-fill circle-icon text-cyan-600 w-auto"></i> Videos</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.starRating') }}"><i class="ri-circle-fill circle-icon text-[#7f27ff] w-auto"></i> Star Ratings</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.tags') }}"><i class="ri-circle-fill circle-icon text-[#8252e9] w-auto"></i> Tags</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.lists') }}"><i class="ri-circle-fill circle-icon text-[#e30a0a] w-auto"></i> List</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.calendar') }}"><i class="ri-circle-fill circle-icon text-yellow-400 w-auto"></i> Calendar</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.radio') }}"><i class="ri-circle-fill circle-icon text-orange-500 w-auto"></i> Radio</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.switch') }}"><i class="ri-circle-fill circle-icon text-pink-600 w-auto"></i> Switch</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('componentspage.imageUpload') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Upload</a>
+                    </li> -->
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="hugeicons:invoice-03" class="menu-icon"></iconify-icon>
+                    <span>Self Transaction Report</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.paymentgatewayreport') }}"><i
+                                class="ri-circle-fill circle-icon text-primary-600 w-auto"></i>Payment Gateway
+                            Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.billpaymentreport') }}"><i
+                                class="ri-circle-fill circle-icon text-warning-600 w-auto"></i>Bill Payment Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.moneytransferreport') }}"><i
+                                class="ri-circle-fill circle-icon text-info-600 w-auto"></i>Money Transfer Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.mobilerechargereport') }}"><i
+                                class="ri-circle-fill circle-icon text-danger-600 w-auto"></i>Mobile Recharge Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.dthrechargereport') }}"><i
+                                class="ri-circle-fill circle-icon text-purple-600 w-auto"></i>DTH Recharge Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('selftransactionreport.commissionreport') }}"><i
+                                class="ri-circle-fill circle-icon text-info-600 w-auto"></i>Commission Reports</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="hugeicons:bitcoin-circle" class="menu-icon"></iconify-icon>
+                    <span>Member Manager</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('membermanager.retailer') }}"><i
+                                class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Retailer</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('membermanager.distributor') }}"><i
+                                class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Distributor</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('membermanager.wallettopuprequest') }}"><i
+                                class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Wallet Top-up Request</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="hugeicons:ai-brain-03" class="menu-icon"></iconify-icon>
+                    <span>Member Report</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('memberreport.paymentgatewayreport') }}"><i
+                                class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Payment Gateway
+                            Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('memberreport.billpaymentreport') }}"><i
+                                class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Bill Payment Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('memberreport.moneytransferreport') }}"><i
+                                class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Money Transfer Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('memberreport.mobilerechargereport') }}"><i
+                                class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Mobile Recharge
+                            Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('memberreport.dthrechargereport') }}"><i
+                                class="ri-circle-fill circle-icon text-success-600 w-auto"></i>DTH Recharge Report</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('memberreport.wallettopuprecharge') }}"><i
+                                class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Wallet Top-up Report</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{{ url_for('wallettopup.index') }}">
+                    <iconify-icon icon="bi:chat-dots" class="menu-icon"></iconify-icon>
+                    <span>Wallet Top-up</span>
+                </a>
+            </li>
+            
+<li>
+                <a href="{{ url_for('profilesetting.index') }}">
+                    <iconify-icon icon="ic:baseline-group" class="menu-icon"></iconify-icon>
+                    <span>Profile Setting</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('complaint.index') }}">
+                    <iconify-icon icon="material-symbols:map-outline" class="menu-icon"></iconify-icon>
+                    <span>Complaint</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('privacypolicy.index') }}">
+                    <iconify-icon icon="solar:gallery-wide-linear" class="menu-icon"></iconify-icon>
+                    <span>Privacy Policy</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('terms_condition.index') }}">
+                    <iconify-icon icon="hugeicons:money-send-square" class="menu-icon"></iconify-icon>
+                    <span>Terms & Condition</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('logout.index') }}">
+                    <iconify-icon icon="mage:message-question-mark-round" class="menu-icon"></iconify-icon>
+                    <span>Logout</span>
+                </a>
+            </li>
+
+            <!-- 
+                        <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
+                    <span>Self Services</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('dashboard.index') }}"><i
+                                class="ri-circle-fill circle-icon text-primary-600 w-auto"></i>Payment Gateway
+                            Services</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard.index2') }}"><i
+                                class="ri-circle-fill circle-icon text-warning-600 w-auto"></i>CC Bill Payment
+                            Service</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard.index3') }}"><i
+                                class="ri-circle-fill circle-icon text-info-600 w-auto"></i>Money Transfer Service</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard.index4') }}"><i
+                                class="ri-circle-fill circle-icon text-danger-600 w-auto"></i>Mobile Recharge</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard.index5') }}"><i
+                                class="ri-circle-fill circle-icon text-success-600 w-auto"></i>DTH Recharge</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="heroicons:document" class="menu-icon"></iconify-icon>
+                    <span>Forms</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('forms.form') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Input Forms</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('forms.formLayout') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Input Layout</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('forms.formValidation') }}"><i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Form Validation</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('forms.wizard') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Form Wizard</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="mingcute:storage-line" class="menu-icon"></iconify-icon>
+                    <span>Table</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('table.tableBasic') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Basic Table</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('table.tableData') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Data Table</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:pie-chart-outline" class="menu-icon"></iconify-icon>
+                    <span>Chart</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('chart.lineChart') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Line Chart</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('chart.columnChart') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Column Chart</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('chart.pieChart') }}"><i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Pie Chart</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{{ url_for('widgets') }}">
+                    <iconify-icon icon="fe:vector" class="menu-icon"></iconify-icon>
+                    <span>Widgets</span>
+                </a>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
+                    <span>Users</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('user.usersList') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Users List</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user.usersGrid') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Users Grid</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user.addUser') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Add User</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user.viewProfile') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> View Profile</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="simple-line-icons:vector" class="menu-icon"></iconify-icon>
+                    <span>Authentication</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('authentication.signin') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Sign In</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('authentication.signup') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Sign Up</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('authentication.forgotPassword') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Forgot Password</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{{ url_for('pageError') }}">
+                    <iconify-icon icon="streamline:straight-face" class="menu-icon"></iconify-icon>
+                    <span>404</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('termsCondition') }}">
+                    <iconify-icon icon="octicon:info-24" class="menu-icon"></iconify-icon>
+                    <span>Terms & Conditions</span>
+                </a>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="icon-park-outline:setting-two" class="menu-icon"></iconify-icon>
+                    <span>Settings</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('settings.company') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Company</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.notification') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Notification</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.notificationAlert') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Notification Alert</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.theme') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Theme</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.currencies') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Currencies</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.language') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Languages</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.paymentGateway') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Payment Gateway</a>
+                    </li>
+                </ul>
+            </li> -->
+        </ul>
+    </div>
+</aside>

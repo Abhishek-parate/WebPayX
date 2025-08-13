@@ -1,0 +1,597 @@
+{% extends 'layout/layout.html' %} {% block content %}
+
+<style>
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+<script src="https://kit.fontawesome.com/77aa2e75d8.js"></script>
+
+<!--PDF Name : WebpayX Distributor Dashboard-->
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-4 gap-6">
+    <div
+        class="card shadow-2xl border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+             <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Today’s Business</p>
+
+                </div>
+               <div class="w-[50px] h-[50px]  flex justify-center items-center">
+                        <img src="static\assets\images\icons\sim1.jpg" alt="Bill Payment" class=" rounded-xl mb-2" />
+                    </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="font-semibold text-2xl text-neutral-600 dark:text-white mt-3 mb-0 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 text-neutral-800 dark:text-success-400"> ₹
+                        3,00,759</span>
+                </p>
+                <div class="w-[50px] h-[50px] flex justify-end items-end">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- card end -->
+    <div
+        class="card shadow-2xl border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Yesterday’s Buz.</p>
+
+                </div>
+             
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
+                <p class="font-semibold text-2xl text-neutral-600 dark:text-white mt-3 mb-0 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 text-neutral-800 dark:text-success-400"> ₹
+                        1,10,759 /-</span>
+                </p>
+                
+            </div>
+        </div>
+    </div>
+    <!-- card end -->
+    <div
+        class="card shadow-2xl border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Total Earning</p>
+
+                </div>
+             <div class="w-[50px] h-[50px]  flex justify-center items-center">
+                        <img src="static\assets\images\icons\sim2.jpg" alt="Bill Payment" class=" rounded-xl mb-2" />
+                    </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="font-semibold text-2xl text-neutral-600 dark:text-white mt-3 mb-0 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 text-neutral-800 dark:text-success-400"> ₹
+                        10,759 /-</span>
+                </p>
+                <div class="w-[50px] h-[50px] flex justify-end items-end">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+            </div>
+        </div>
+    </div><!-- card end -->
+    <div
+        class="card shadow-2xl border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+      
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Today’s Business</p>
+
+                </div>
+             
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
+                <p class="font-semibold text-2xl text-neutral-600 dark:text-white mt-3 mb-0 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 text-neutral-800 dark:text-success-400"> ₹ 13,00,759</span>
+                </p>
+                
+            </div>
+        </div>
+    </div>
+    </div><!-- card end -->
+    
+</div>
+
+<!-- Services -->
+
+<div class="card-body p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 3xl:grid-cols-4 gap-6">
+
+        <!-- Cards -->
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-xl p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\1.jpg" alt="Bill Payment"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">Bill Payment</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\2.jpg" alt="Mobile Recharge"
+                class="h-12  border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">Mobile Recharge</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\5.jpg" alt="CC Payment"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">CC Payment</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\3.jpg" alt="Collection Service"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">Collection Service</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\6.jpg" alt="AEPS"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1  mb-2" />
+            <p class="text-center text-sm font-medium">AEPS</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\9.jpg" alt="DTH Recharge"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">DTH Recharge</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\8.jpg" alt="Travel Booking"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">Travel Booking</p>
+        </div>
+
+        <div
+            class="flex flex-col items-center justify-center bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+            <img src="static\assets\images\icons\4.jpg" alt="DMT"
+                class="h-12 border border-neutral-300 rounded-xl px-2 py-1 mb-2" />
+            <p class="text-center text-sm font-medium">DMT</p>
+        </div>
+    </div>
+    <!--Member Summary-->
+
+ <div class="  grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-6 mt-10 mb-6">
+    <div
+        class="card border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white ">
+        <div class="card-body p-5 ">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl flex justify-between">Total Retailer</p>
+
+                </div>
+              
+            </div>
+            <div class="card border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 bg-white flex justify-center items-center h-32 mt-2">
+  <span class="text-2xl font-semibold text-neutral-700 dark:text-success-400">
+    45
+  </span>
+</div>
+
+        </div>
+    </div>
+    <!-- card end -->
+    <div
+        class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Total Distributor</p>
+
+                </div>
+              
+            </div>
+            <div class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 bg-white flex justify-center items-center h-32 mt-2">
+  <span class="text-2xl font-semibold text-neutral-700 dark:text-success-400">
+    05
+  </span>
+</div>
+
+        </div>
+    </div>
+    <!-- card end -->
+   <div
+        class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">Retailer Wallet</p>
+
+                </div>
+              
+            </div>
+            <div class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 bg-white flex justify-center items-center h-32 mt-2">
+  <span class="text-2xl font-semibold text-neutral-700 dark:text-success-400">
+   ₹ 300,000
+  </span>
+</div>
+
+        </div>
+    </div>
+    
+    <!-- card end -->
+    <div
+        class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 rounded-lg h-full bg-white">
+        <div class="card-body p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-neutral-900 dark:text-white mb-1 text-xl">DS Wallet</p>
+
+                </div>
+              
+            </div>
+            <div class="card  border border-neutral-400 dark:border-neutral-600 dark:bg-neutral-700 bg-white flex justify-center items-center h-32 mt-2">
+  <span class="text-2xl font-semibold text-neutral-700 dark:text-success-400">
+   ₹ 300,000
+  </span>
+</div>
+
+        </div>
+    </div>
+    </div><!-- card end -->
+    
+<!-- Transaction Summary -->
+
+<div class="grid grid-cols-12">
+    <div class="col-span-12">
+
+        <div class="border border-gray-300 rounded">
+            <div class="card-body border border-gray-300 rounded bg-white">
+                <div class="table-responsive scroll-sm overflow-x-auto hide-scrollbar">
+                    <table class="table mb-0 bg-white">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Sr. No.
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Date
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Service Name
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Amount
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Ref. No
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Status
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Opening Bal
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Earning Amt.
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Closing Bal
+                                        </label>
+                                    </div>
+                                </th>
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Sr. No </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-05-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Money Transfer Service </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 7500 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 863574563456 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Pending </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+
+
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Sr. No </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-05-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Mobile Recharge </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 750 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 6453456354635 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Success </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+
+
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Sr. No </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-05-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1">Bill Payment Services </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs.500 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 3563463463465 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Failed </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+
+
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Sr. No </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-05-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> DTH Recharge Services </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs.500 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 545636436664 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Refunded </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 75,000 </label>
+                                    </div>
+                                </td>
+
+
+
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+    {% endblock %}

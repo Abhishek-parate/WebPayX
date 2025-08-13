@@ -1,0 +1,57 @@
+<div class="navbar-header border-b border-neutral-200 dark:border-neutral-600">     
+    <div class="flex items-center justify-between">         
+        <div class="col-auto">             
+            <div class="flex flex-wrap items-center gap-[16px]">                 
+                <button type="button" class="sidebar-toggle">                     
+                    <iconify-icon icon="heroicons:bars-3-solid" class="icon non-active"></iconify-icon>                     
+                    <iconify-icon icon="iconoir:arrow-right" class="icon active"></iconify-icon>                 
+                </button>                 
+                <button type="button" class="sidebar-mobile-toggle d-flex !leading-[0]">                     
+                    <iconify-icon icon="heroicons:bars-3-solid" class="icon !text-[30px]"></iconify-icon>                 
+                </button>                 
+                <form class="navbar-search">                     
+                    <input type="text" name="search" placeholder="Search something......">                     
+                    <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>                 
+                </form>              
+            </div>         
+        </div>        
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <iconify-icon icon="mdi:wallet" class="text-lg"></iconify-icon>         
+                Wallet : 20000        
+            </div>       
+            <div class="flex-shrink-0">                     
+                <div>                 
+                    <button data-dropdown-toggle="distributorDropdown" data-dropdown-placement="bottom"                     
+                        class="text-black-600 focus:bg-black-600 hover:bg-black-700 border border-black-600 hover:text-black focus:text-black  focus:outline-none focus:ring-black-300 font-medium rounded-lg text-base px-5 py-1.5 text-center inline-flex items-center "                     
+                        type="button">                     
+                        Select                     
+                        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"                         
+                            viewBox="0 0 10 6">                         
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"                             
+                                d="m1 1 4 4 4-4" />                     
+                        </svg>                 
+                    </button>                 
+                    <div id="distributorDropdown"                     
+                        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">                     
+                        <ul class="py-2 text-base text-gray-700 dark:text-gray-200">                         
+                            <li>                             
+                                <a href="#"                                 
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Name - ID</a>                         
+                            </li>                         
+                            <li>                             
+                                <a href="#"                                 
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Helpdesk</a>                         
+                            </li>                     
+                            <li>                             
+                                <a href="#"                                 
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Logout</a>                         
+                            </li>                     
+                        </ul>                 
+                    </div>             
+                </div>         
+            </div>
+        </div>     
+    </div> 
+</div>

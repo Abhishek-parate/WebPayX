@@ -1,0 +1,396 @@
+{% extends 'layout/layout.html' %}
+
+    {% block custom_script %}
+            <script>
+                // =============================== Wizard Step Js Start ================================
+                $(document).ready(function() {
+                    // click on next button
+                    $(".form-wizard-next-btn").on("click", function() {
+                        var parentFieldset = $(this).parents(".wizard-fieldset");
+                        var currentActiveStep = $(this).parents(".form-wizard").find(".form-wizard-list .active");
+                        var next = $(this);
+                        var nextWizardStep = true;
+                        parentFieldset.find(".wizard-required").each(function(){
+                            var thisValue = $(this).val();
+                        
+                            if( thisValue == "") {
+                                $(this).siblings(".wizard-form-error").show();
+                                nextWizardStep = false;
+                            }
+                            else {
+                                $(this).siblings(".wizard-form-error").hide();
+                            }
+                        });
+                        if( nextWizardStep) {
+                            next.parents(".wizard-fieldset").removeClass("show","400");
+                            currentActiveStep.removeClass("active").addClass("activated").next().addClass("active","400");
+                            next.parents(".wizard-fieldset").next(".wizard-fieldset").addClass("show","400");
+                            $(document).find(".wizard-fieldset").each(function(){
+                                if($(this).hasClass("show")){
+                                    var formAtrr = $(this).attr("data-tab-content");
+                                    $(document).find(".form-wizard-list .form-wizard-step-item").each(function(){
+                                        if($(this).attr("data-attr") == formAtrr){
+                                            $(this).addClass("active");
+                                            var innerWidth = $(this).innerWidth();
+                                            var position = $(this).position();
+                                            $(document).find(".form-wizard-step-move").css({"left": position.left, "width": innerWidth});
+                                        }else{
+                                            $(this).removeClass("active");
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    //click on previous button
+                    $(".form-wizard-previous-btn").on("click",function() {
+                        var counter = parseInt($(".wizard-counter").text());;
+                        var prev =$(this);
+                        var currentActiveStep = $(this).parents(".form-wizard").find(".form-wizard-list .active");
+                        prev.parents(".wizard-fieldset").removeClass("show","400");
+                        prev.parents(".wizard-fieldset").prev(".wizard-fieldset").addClass("show","400");
+                        currentActiveStep.removeClass("active").prev().removeClass("activated").addClass("active","400");
+                        $(document).find(".wizard-fieldset").each(function(){
+                            if($(this).hasClass("show")){
+                                var formAtrr = $(this).attr("data-tab-content");
+                                $(document).find(".form-wizard-list .form-wizard-step-item").each(function(){
+                                    if($(this).attr("data-attr") == formAtrr){
+                                        $(this).addClass("active");
+                                        var innerWidth = $(this).innerWidth();
+                                        var position = $(this).position();
+                                        $(document).find(".form-wizard-step-move").css({"left": position.left, "width": innerWidth});
+                                    }else{
+                                        $(this).removeClass("active");
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    //click on form submit button
+                    $(document).on("click",".form-wizard .form-wizard-submit" , function(){
+                        var parentFieldset = $(this).parents(".wizard-fieldset");
+                        var currentActiveStep = $(this).parents(".form-wizard").find(".form-wizard-list .active");
+                        parentFieldset.find(".wizard-required").each(function() {
+                            var thisValue = $(this).val();
+                            if( thisValue == "" ) {
+                                $(this).siblings(".wizard-form-error").show();
+                            }
+                            else {
+                                $(this).siblings(".wizard-form-error").hide();
+                            }
+                        });
+                    });
+                    // focus on input field check empty or not
+                    $(".form-control").on("focus", function(){
+                        var tmpThis = $(this).val();
+                        if(tmpThis == "" ) {
+                            $(this).parent().addClass("focus-input");
+                        }
+                        else if(tmpThis !="" ){
+                            $(this).parent().addClass("focus-input");
+                        }
+                    }).on("blur", function(){
+                        var tmpThis = $(this).val();
+                        if(tmpThis == "" ) {
+                            $(this).parent().removeClass("focus-input");
+                            $(this).siblings(".wizard-form-error").show();
+                        }
+                        else if(tmpThis !="" ){
+                            $(this).parent().addClass("focus-input");
+                            $(this).siblings(".wizard-form-error").hide();
+                        }
+                    });
+                });
+                // =============================== Wizard Step Js End ================================
+            </script>
+        {% endblock %}
+
+{% block content %}
+    <style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<div class="card border-0 over mb-2">
+  <div class="card-header flex items-end gap-4 p-4 overflow-x-auto hide-scrollbar overflow-hidden">
+    <div class="flex-shrink-0">
+      <label for="fromDate" class="form-label">From Date</label>
+      <input type="date" id="fromDate" name="fromDate" class="form-control" />
+    </div>
+
+    <div class="flex-shrink-0">
+      <label for="toDate" class="form-label">To Date</label>
+      <input type="date" id="toDate" name="toDate" class="form-control" />
+    </div>
+
+    <div class="flex-shrink-0">
+      <label class="form-label">User Type</label>
+      <div>
+        <button data-dropdown-toggle="distributorDropdown" data-dropdown-placement="bottom"
+          class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-base px-5 py-1.5 text-center inline-flex items-center dark:text-primary-400 dark:hover:text-white dark:focus:text-white dark:focus:ring-primary-800"
+          type="button">
+          Select
+          <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="m1 1 4 4 4-4" />
+          </svg>
+        </button>
+        <div id="distributorDropdown"
+          class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+          <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+            <li>
+              <a href="#"
+                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Retailer</a>
+            </li>
+            <li>
+              <a href="#"
+                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Distributor</a>
+            </li>
+            <li>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Master
+                Distributor</a>
+            </li>
+            <li>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">White
+                Label Partner</a>
+            </li>
+             <li>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">All Member</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="flex-shrink-0">
+      <label class="form-label">Amount Holder</label>
+      <div>
+        <button data-dropdown-toggle="kycDropdown" data-dropdown-placement="bottom"
+          class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-base px-2 py-1.5 text-center inline-flex items-center dark:text-primary-400 dark:hover:text-white dark:focus:text-white dark:focus:ring-primary-800"
+          type="button">
+          Select Holder Type
+          <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="m1 1 4 4 4-4" />
+          </svg>
+        </button>
+        <div id="kycDropdown"
+          class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+          <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+            <li>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Admin</a>
+            </li>
+            <li>
+              <a href="#"
+                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">White Label Partner</a>
+            </li>
+            <li>
+              <a href="#"
+                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Employees</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-shrink-0 gap-2">
+      <button type="button" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+        Search
+      </button>
+    </div>
+
+    <div class="md:col-span-6 col-span-12 flex justify-end items-end">
+      <button type="button" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-5 py-[11px] mt-4 items-end">
+        Export-Excel
+      </button>
+    </div>
+    <div class="md:col-span-6 col-span-12 flex justify-end items-end">
+      <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-5 py-[11px] mt-4 items-end">
+        Export-PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-12">
+  <div class="col-span-12">
+    <div class="card-header flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <h6>Create Retailer</h6>
+        </div>
+      </div>
+    </div>
+    <div class="border border-gray-300 rounded">
+      <div class="card-body border border-gray-300 rounded bg-white">
+        <div class="table-responsive scroll-sm overflow-x-auto hide-scrollbar">
+          <table class="table mb-0 bg-white">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                      Sr. No
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                      Hold Date
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                      Amount Holder
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                     User Type
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                     Member ID
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                  Member Name
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                   Wallet Balance
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                     Hold Amount 
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                      Closing Bal
+                    </label>
+                  </div>
+                </th>
+                <th scope="col">
+                  <div
+                    class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                    <label class="form-check-label" for="checkAll">
+                   Holder Remark
+                    </label>
+                  </div>
+                </th>
+               
+                </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                <td>
+                  <div
+                    class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                    <label class="form-check-label" for="check1"> 0123 </label>
+                  </div>
+                </td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+

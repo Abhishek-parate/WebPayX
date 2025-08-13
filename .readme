@@ -1,0 +1,65 @@
+PS F:\webpayx\WebPayX> py .\fix_and_setup.py
+🔧 PostgreSQL Configuration
+==============================
+Host [localhost]: 
+Port [5432]: 
+Username [postgres]: 
+Password: 
+Database name [saas_platform]: 
+🔌 Testing PostgreSQL connection...
+✅ PostgreSQL connection successful
+🗄️  Checking if database 'saas_platform' exists...
+📊 Creating database 'saas_platform'...
+✅ Database created successfully
+🔧 Initializing SaaS Platform Database (PostgreSQL)...
+=======================================================
+🔧 Creating database tables...
+✅ All tables created successfully
+  ✓ tenants: 16 columns
+  ✓ users: 32 columns
+  ✓ wallets: 15 columns
+  ✓ organization_bank_accounts: 48 columns
+🏢 Creating default tenant...
+✅ Default tenant created with ID: ef03242b-123a-406a-8205-1fa8d11877f7
+👤 Creating super admin user...
+✅ Super admin created:
+   Username: superadmin
+   Password: Admin@123
+   API Key: nv8ZbYfWV_zkKTJT1-5zUtEYtg4ZHxCI2CfBir4H6eA
+💰 Creating admin wallet...
+✅ Admin wallet created with balance: ₹100000.0000
+🏦 Creating default bank account...
+✅ Default bank account created: Primary Collection Account
+🔐 Creating default permissions...
+✅ Created 18 default permissions
+📊 Creating sample data...
+✅ Sample data created successfully
+
+=======================================================
+🎉 PostgreSQL Database initialization completed successfully!
+
+📊 Database Details:
+   🗄️  Host: localhost:5432
+   📂 Database: saas_platform
+   👤 User: postgres
+
+📋 Application Summary:
+   🏢 Tenant: Default SaaS Tenant (DEFAULT)
+   👤 Admin: superadmin
+   💰 Wallet Balance: ₹100000.0000
+   🏦 Bank Account: Primary Collection Account
+
+🔑 Login Details:
+   Username: superadmin
+   Password: Admin@123
+   API Key: nv8ZbYfWV_zkKTJT1-5zUtEYtg4ZHxCI2CfBir4H6eA
+
+⚠️  Please change the default password after first login!
+
+🚀 You can now start your application!
+💡 Don't forget to update your app's database URL to use PostgreSQL
+
+
+
+
+ py .\fix_and_setup.py

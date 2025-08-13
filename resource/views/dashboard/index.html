@@ -1,0 +1,1156 @@
+{% extends 'layout/layout.html' %} {% block content %}
+<!-- Header -->
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+  <!-- Earning Static start -->
+  <div class="lg:col-span-12 2xl:col-span-6">
+    <div class="card rounded-lg border-0">
+      <div class="card-body p-6">
+        <div class="flex items-center flex-wrap gap-2 justify-between">
+          <div class="flex-1 text-center mt-4 py-2">
+            <h6 class="mb-4 font-bold text-lg">
+              Last 15 days Vise Business Statistics
+            </h6>
+          </div>
+        </div>
+
+        <div
+          class="mt-5 gap-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
+        >
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">Payment Gate. Business</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">E-commerce Business</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">Online Banking</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">Investment Portal</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">Mobile Payments</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card px-4 py-2 shadow-2 rounded-lg border-gray-200 dark:border-neutral-600 h-full bg-gradient-to-l from-primary-600/10 to-bg-white"
+          >
+            <div class="card-body p-0">
+              <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center">
+                  <p class="font-semibold">Crypto Exchange</p>
+                  <span
+                    class="w-[28px] h-[28px] shrink-0 text-black flex justify-center items-center rounded-full px-2"
+                  >
+                    <iconify-icon
+                      icon="garden:chevron-double-right-fill-12"
+                      class="icon"
+                    ></iconify-icon>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-end mt-6">
+          <select
+            class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light"
+          >
+            <option>Yearly</option>
+            <option>Monthly</option>
+            <option>Weekly</option>
+            <option>Today</option>
+          </select>
+        </div>
+        <div id="barChart" class="mt-16"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Earning Static End -->
+
+  <!-- Campaign Static start -->
+  <div class="lg:col-span-12 2xl:col-span-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-6 2xl:col-span-12 col-xxl-12 col-sm-6">
+        <div class="card h-full rounded-lg border-0">
+          <div class="card-body p-4">
+            <div class="flex gap-6">
+              <!-- Left Side - Menu Items -->
+              <div class="w-1/2">
+                <h6 class="mb-2 font-bold text-lg text-gray-800">
+                  API Card Balance
+                </h6>
+                <div>
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >Credit Card Bill Payment</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >Money Transfer Services</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >Prepaid Bill Payment</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >Mobile Recharge Services</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >Payment Card Services</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-2 mb-1 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
+                  >
+                    <span class="text-gray-700 font-medium"
+                      >PayOut Business</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- Right Side - Card Section -->
+              <div class="w-1/2">
+                <!-- AUTO TRANSITION CARD SLIDER -->
+                <div class="relative h-[250px] mt-10">
+                  <!-- Cards Container - No arrows needed -->
+                  <div class="h-full overflow-hidden rounded-2xl">
+                    <div
+                      id="cardSliderTrack"
+                      class="flex h-full transition-transform duration-500 ease-in-out"
+                    >
+                      <!-- Card 1 - Blue Visa -->
+                      <div class="w-full flex-shrink-0">
+                        <div
+                          class="h-full rounded-2xl p-4 text-white shadow-xl"
+                          style="
+                            background: linear-gradient(
+                              135deg,
+                              #667eea 0%,
+                              #764ba2 100%
+                            );
+                          "
+                        >
+                          <div class="flex flex-col justify-between h-full">
+                            <!-- Top -->
+                            <div class="flex justify-between items-start">
+                              <h3 class="text-lg font-bold">Visa Card</h3>
+                              <div
+                                class="bg-white/20 px-2 py-1 rounded text-xs font-bold"
+                              >
+                                VISA
+                              </div>
+                            </div>
+
+                            <!-- Middle -->
+                            <div class="my-3">
+                              <p class="text-xs opacity-75 mb-2">
+                                Credit Card Number
+                              </p>
+                              <h2
+                                class="text-lg font-mono font-bold tracking-wider"
+                              >
+                                2356 9854 3652 5612
+                              </h2>
+                            </div>
+
+                            <!-- Bottom -->
+                            <div class="flex justify-between">
+                              <div>
+                                <p class="text-xs opacity-75">Name</p>
+                                <p class="font-semibold text-sm">
+                                  Arlene McCoy
+                                </p>
+                              </div>
+                              <div>
+                                <p class="text-xs opacity-75">Expires</p>
+                                <p class="font-semibold text-sm">05/26</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Card 2 - Dark MasterCard -->
+                      <div class="w-full flex-shrink-0">
+                        <div
+                          class="h-full rounded-2xl p-4 text-white shadow-xl"
+                          style="
+                            background: linear-gradient(
+                              135deg,
+                              #2c3e50 0%,
+                              #34495e 100%
+                            );
+                          "
+                        >
+                          <div class="flex flex-col justify-between h-full">
+                            <!-- Top -->
+                            <div class="flex justify-between items-start">
+                              <h3 class="text-lg font-bold">Master Card</h3>
+                              <div class="flex space-x-1">
+                                <div
+                                  class="w-5 h-5 bg-red-500 rounded-full"
+                                ></div>
+                                <div
+                                  class="w-5 h-5 bg-yellow-400 rounded-full -ml-2"
+                                ></div>
+                              </div>
+                            </div>
+
+                            <!-- Middle -->
+                            <div class="my-3">
+                              <p class="text-xs opacity-75 mb-2">
+                                Credit Card Number
+                              </p>
+                              <h2
+                                class="text-lg font-mono font-bold tracking-wider"
+                              >
+                                1234 5678 9012 3456
+                              </h2>
+                            </div>
+
+                            <!-- Bottom -->
+                            <div class="flex justify-between">
+                              <div>
+                                <p class="text-xs opacity-75">Name</p>
+                                <p class="font-semibold text-sm">John Doe</p>
+                              </div>
+                              <div>
+                                <p class="text-xs opacity-75">Expires</p>
+                                <p class="font-semibold text-sm">12/27</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Card 3 - Green Amex -->
+                      <div class="w-full flex-shrink-0">
+                        <div
+                          class="h-full rounded-2xl p-4 text-white shadow-xl"
+                          style="
+                            background: linear-gradient(
+                              135deg,
+                              #11998e 0%,
+                              #38ef7d 100%
+                            );
+                          "
+                        >
+                          <div class="flex flex-col justify-between h-full">
+                            <!-- Top -->
+                            <div class="flex justify-between items-start">
+                              <h3 class="text-lg font-bold">
+                                American Express
+                              </h3>
+                              <div
+                                class="bg-white/20 px-2 py-1 rounded text-xs font-bold"
+                              >
+                                AMEX
+                              </div>
+                            </div>
+
+                            <!-- Middle -->
+                            <div class="my-3">
+                              <p class="text-xs opacity-75 mb-2">
+                                Credit Card Number
+                              </p>
+                              <h2
+                                class="text-lg font-mono font-bold tracking-wider"
+                              >
+                                9876 5432 1098 7654
+                              </h2>
+                            </div>
+
+                            <!-- Bottom -->
+                            <div class="flex justify-between">
+                              <div>
+                                <p class="text-xs opacity-75">Name</p>
+                                <p class="font-semibold text-sm">Jane Smith</p>
+                              </div>
+                              <div>
+                                <p class="text-xs opacity-75">Expires</p>
+                                <p class="font-semibold text-sm">08/25</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dots -->
+                <div class="flex justify-center mt-4 space-x-2">
+                  <button
+                    class="card-dot w-3 h-3 rounded-full bg-blue-500"
+                    data-slide="0"
+                  ></button>
+                  <button
+                    class="card-dot w-3 h-3 rounded-full bg-gray-300"
+                    data-slide="1"
+                  ></button>
+                  <button
+                    class="card-dot w-3 h-3 rounded-full bg-gray-300"
+                    data-slide="2"
+                  ></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Overview Section -->
+      <div class="lg:col-span-6 2xl:col-span-12 col-xxl-12 col-sm-6">
+        <div class="card h-full rounded-lg border-0 overflow-hidden">
+          <div class="card-body p-4">
+            <div class="flex items-center flex-wrap gap-2 justify-between">
+              <h6 class="mb-2 font-bold text-lg">Customer Overview</h6>
+            </div>
+
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-3 gap-6"
+            >
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-2">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-4">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-4">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-4">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-4">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+              <div
+                class="w-52 bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <!-- Top Section -->
+                <div
+                  class="p-4 text-center border-b border-dashed border-gray-200"
+                >
+                  <p class="text-gray-500 text-sm font-medium">Retailer</p>
+                  <h2 class="text-3xl font-bold text-gray-800">100</h2>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="pb-4">
+                  <div
+                    class="flex items-center justify-between cursor-pointer hover:bg-blue-50 rounded-lg px-3 transition-colors duration-200 group"
+                  >
+                    <span
+                      class="text-blue-600 text-sm font-medium group-hover:text-blue-700"
+                      >Click to View the List</span
+                    >
+                    <div
+                      class="flex items-center justify-center w-6 h-6 bg-blue-600 rounded-full group-hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- card end -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mb-10 py-6">
+  <div class="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-3 gap-6">
+    <div class="w-full mx-auto bg-white rounded-lg shadow-lg p-6">
+      <!-- Header with three dots menu -->
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-semibold text-gray-800">
+          Profit and Loss Reports
+        </h2>
+        <button class="p-2 hover:bg-gray-100 rounded">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Chart Area -->
+      <div class="mb-8">
+        <!-- Chart Container with Grid -->
+        <div class="relative">
+          <!-- Grid lines -->
+          <div class="absolute inset-0 flex" style="margin-left: 100px">
+            <div class="flex-1 border-l border-gray-200"></div>
+            <div class="flex-1 border-l border-gray-200"></div>
+            <div class="flex-1 border-l border-gray-200"></div>
+            <div class="flex-1 border-l border-gray-200"></div>
+            <div class="flex-1"></div>
+          </div>
+
+          <!-- Chart Rows -->
+          <div class="space-y-4 py-2">
+            <!-- Earnings -->
+            <div class="flex items-center">
+              <div class="w-24 text-sm text-gray-600 px-4 text-right">
+                Earning
+              </div>
+              <div class="flex-1 h-8 px-7">
+                <div
+                  class="h-full rounded flex items-center px-3 text-white text-sm font-medium"
+                  style="
+                    width: 65%;
+                    background-color: #00bcd4;
+                    display: inline-flex;
+                  "
+                >
+                  145000
+                </div>
+              </div>
+            </div>
+
+            <!-- Expenses -->
+            <div class="flex items-center">
+              <div class="w-24 text-sm text-gray-600 px-4 text-right">
+                Expenses
+              </div>
+              <div class="flex-1 h-8 px-4">
+                <div
+                  class="h-full rounded flex items-center justify-center text-white text-sm font-medium"
+                  style="
+                    width: 38%;
+                    background-color: #38bdf8;
+                    display: inline-flex;
+                  "
+                >
+                  310000
+                </div>
+              </div>
+            </div>
+
+            <!-- GST Amt. -->
+            <div class="flex items-center">
+              <div class="w-24 text-sm text-gray-600 px-4 text-right">
+                GST Amt.
+              </div>
+              <div class="flex-1 h-8 px-4">
+                <div
+                  class="h-full rounded flex items-center justify-center text-white text-sm font-medium"
+                  style="
+                    width: 26%;
+                    background-color: #3b82f6;
+                    display: inline-flex;
+                  "
+                >
+                  200000
+                </div>
+              </div>
+            </div>
+
+            <!-- TDS Amt. -->
+            <div class="flex items-center">
+              <div class="w-24 text-sm text-gray-600 px-4 text-right">
+                TDS Amt.
+              </div>
+              <div class="flex-1 h-8 px-4">
+                <div
+                  class="h-full rounded flex items-center justify-center text-white text-sm font-medium"
+                  style="
+                    width: 78%;
+                    background-color: #a78bfa;
+                    display: inline-flex;
+                  "
+                >
+                  600000
+                </div>
+              </div>
+            </div>
+
+            <!-- Balance Left -->
+            <div class="flex items-center">
+              <div class="w-24 text-sm text-gray-600 px-4 text-right">
+                Balance Left
+              </div>
+              <div class="flex-1 h-8">
+                <div
+                  class="h-full rounded flex items-center justify-center text-white text-sm font-medium"
+                  style="
+                    width: 24%;
+                    background-color: #a78bfa;
+                    display: inline-flex;
+                  "
+                >
+                  600000
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Month selector -->
+      <div class="flex justify-center gap-2">
+        <button
+          class="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+        >
+          April
+        </button>
+        <button
+          class="px-4 py-1.5 text-sm text-white rounded"
+          style="background-color: #00bcd4"
+        >
+          May
+        </button>
+        <button
+          class="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+        >
+          June
+        </button>
+      </div>
+    </div>
+    <div class="card rounded-xl h-full border-0 overflow-hidden">
+       <div>
+        <!-- Main Wallet Fund -->
+        <div class="card p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            Main Wallet Fund
+          </h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">Retailer</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">Distributor</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">MDS</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">White Label</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card rounded-xl h-full border-0 overflow-hidden">
+      <div>
+        <!-- Main Wallet Fund -->
+        <div class="card p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            Main Wallet Fund
+          </h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">Retailer</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">Distributor</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">MDS</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm font-medium text-gray-700">White Label</p>
+              <p class="text-xl font-bold text-gray-800">Rs. 50,00,000</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-red-500">Agent Count: 20</span>
+                <button class="text-red-500">
+                  <iconify-icon
+                    icon="mdi:refresh"
+                    class="text-lg"
+                  ></iconify-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Last 10 Transactions -->
+<div class="card p-6 lg:col-span-2">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-semibold text-gray-800">Last 10 Transactions >></h2>
+    <button class="text-gray-500 hover:text-gray-700">
+      <iconify-icon icon="mdi:dots-vertical" class="text-xl"></iconify-icon>
+    </button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm text-left text-gray-500">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3">Sr. No.</th>
+          <th scope="col" class="px-6 py-3">Date</th>
+          <th scope="col" class="px-6 py-3">Member ID</th>
+          <th scope="col" class="px-6 py-3">Member Name</th>
+          <th scope="col" class="px-6 py-3">Transaction Type</th>
+          <th scope="col" class="px-6 py-3">Trx. Amount</th>
+          <th scope="col" class="px-6 py-3">Ref. No</th>
+          <th scope="col" class="px-6 py-3">Status</th>
+          <th scope="col" class="px-6 py-3">Wallet Balance</th>
+          <th scope="col" class="px-6 py-3">Commission Amt.</th>
+          <th scope="col" class="px-6 py-3">Closing Bal.</th>
+          <th scope="col" class="px-6 py-3">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Add table rows here -->
+        <tr class="bg-white border-b">
+          <td class="px-6 py-4">1</td>
+          <td class="px-6 py-4">03-07-2025</td>
+          <td class="px-6 py-4">USR123</td>
+          <td class="px-6 py-4">John Doe</td>
+          <td class="px-6 py-4">Credit</td>
+          <td class="px-6 py-4">5,000</td>
+          <td class="px-6 py-4">REF987</td>
+          <td class="px-6 py-4">
+            <span
+              class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full"
+              >Success</span
+            >
+          </td>
+          <td class="px-6 py-4">50,000</td>
+          <td class="px-6 py-4">50</td>
+          <td class="px-6 py-4">55,050</td>
+          <td class="px-6 py-4">
+            <button class="font-medium text-blue-600 hover:underline">
+              View Report
+            </button>
+          </td>
+        </tr>
+        <!-- Repeat for other rows -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- AUTO TRANSITION SLIDER JAVASCRIPT -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Starting Auto Card Slider...");
+
+    // Get elements
+    const track = document.getElementById("cardSliderTrack");
+    const dots = document.querySelectorAll(".card-dot");
+
+    // Check if elements exist
+    if (!track || !dots.length) {
+      console.error("Slider elements not found!");
+      return;
+    }
+
+    console.log("All elements found, initializing auto slider...");
+
+    // Slider state
+    let currentSlide = 0;
+    const totalSlides = 3;
+    let autoSlideInterval;
+    let isAnimating = false;
+
+    // Update slider position
+    function updateSlider() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const translateX = -(currentSlide * 100);
+      track.style.transform = `translateX(${translateX}%)`;
+      console.log(
+        `Auto moving to slide ${currentSlide}, translateX: ${translateX}%`
+      );
+
+      // Update dots
+      dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+          dot.classList.remove("bg-gray-300");
+          dot.classList.add("bg-blue-500");
+        } else {
+          dot.classList.remove("bg-blue-500");
+          dot.classList.add("bg-gray-300");
+        }
+      });
+
+      setTimeout(() => {
+        isAnimating = false;
+      }, 500);
+    }
+
+    // Next slide (auto)
+    function nextSlide() {
+      if (isAnimating) return;
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateSlider();
+      console.log("Auto transition to slide:", currentSlide);
+    }
+
+    // Start auto slide
+    function startAutoSlide() {
+      autoSlideInterval = setInterval(() => {
+        nextSlide();
+      }, 3000); // Auto transition every 3 seconds
+      console.log("Auto slide started - transitions every 3 seconds");
+    }
+
+    // Stop auto slide
+    function stopAutoSlide() {
+      if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = null;
+        console.log("Auto slide stopped");
+      }
+    }
+
+    // Restart auto slide
+    function restartAutoSlide() {
+      stopAutoSlide();
+      setTimeout(() => {
+        startAutoSlide();
+      }, 5000); // Resume after 5 seconds
+    }
+
+    // Dot clicks (optional manual control)
+    dots.forEach((dot, index) => {
+      dot.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (isAnimating) return;
+
+        currentSlide = index;
+        updateSlider();
+        console.log("Manual dot clicked, slide:", currentSlide);
+
+        // Temporarily stop auto slide, then restart
+        restartAutoSlide();
+      });
+    });
+
+    // Touch support (optional manual control)
+    let startX = 0;
+    track.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      stopAutoSlide(); // Stop auto slide on touch
+    });
+
+    track.addEventListener("touchend", (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          // Swipe left - next slide
+          currentSlide = (currentSlide + 1) % totalSlides;
+        } else {
+          // Swipe right - previous slide
+          currentSlide =
+            currentSlide === 0 ? totalSlides - 1 : currentSlide - 1;
+        }
+        updateSlider();
+        console.log("Touch swipe to slide:", currentSlide);
+      }
+
+      // Restart auto slide after touch
+      restartAutoSlide();
+    });
+
+    // Pause auto slide on hover
+    track.addEventListener("mouseenter", () => {
+      stopAutoSlide();
+      console.log("Auto slide paused on hover");
+    });
+
+    // Resume auto slide when mouse leaves
+    track.addEventListener("mouseleave", () => {
+      startAutoSlide();
+      console.log("Auto slide resumed");
+    });
+
+    // Initialize
+    updateSlider();
+    startAutoSlide();
+
+    console.log("Auto Card Slider initialized successfully!");
+    console.log(
+      "Features: Auto transition (3s), Pause on hover, Touch control, Dot control"
+    );
+  });
+</script>
+
+{% endblock %}

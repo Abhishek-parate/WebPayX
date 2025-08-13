@@ -1,0 +1,770 @@
+{% extends 'layout/layout.html' %} {% block content %}
+
+<style>
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+<!--Distributor-->
+<div class="card border-0 over mb-2">
+    <div class="card-header flex items-end gap-4 p-4 overflow-x-auto hide-scrollbar overflow-hidden">
+        <div class="flex-shrink-0">
+            <label for="fromDate" class="form-label">From Date</label>
+            <input type="date" id="fromDate" name="fromDate" class="form-control" />
+        </div>
+
+        <div class="flex-shrink-0">
+            <label for="toDate" class="form-label">To Date</label>
+            <input type="date" id="toDate" name="toDate" class="form-control" />
+        </div>
+
+
+
+        <div class="flex-shrink-0">
+            <label class="form-label"> KYC Status</label>
+            <div>
+                <button data-dropdown-toggle="statusDropdown" data-dropdown-placement="bottom"
+                    class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-base px-2 py-1.5 text-center inline-flex items-center dark:text-primary-400 dark:hover:text-white dark:focus:text-white dark:focus:ring-primary-800"
+                    type="button">
+                    KYC Status
+                    <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 4 4 4-4" />
+                    </svg>
+                </button>
+                <div id="statusDropdown"
+                    class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+                    <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+                        <li>
+                            <a href="#"
+                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Approved</a>
+                        </li>
+                        <li>
+                            <a href="#"
+                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Pending</a>
+                        </li>
+
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="flex flex-shrink-0 gap-2">
+            <button type="button" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                Search
+            </button>
+            <button type="button" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                Create DS
+            </button>
+
+            <button type="button" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-5 py-[11px]">
+                Export-Excel
+            </button>
+            <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-5 py-[11px]">
+                Export-PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-12">
+    <div class="col-span-12">
+        <div class="card-header flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <h6>Create Retailer</h6>
+                </div>
+            </div>
+        </div>
+        <div class="border border-gray-300 rounded">
+            <div class="card-body border border-gray-300 rounded bg-white">
+                <div class="table-responsive scroll-sm overflow-x-auto hide-scrollbar">
+                    <table class="table mb-0 bg-white">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Sr. No
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Created Date
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Distributor ID
+                                        </label>
+                                    </div>
+                                </th>
+
+
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Distributor Name
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Contact No.
+                                        </label>
+                                    </div>
+                                </th>
+
+                                 <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Retailer Count
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Wallet Balance
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Earning
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            State Name
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            KYC Status
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Comission Plan
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            Action
+                                        </label>
+                                    </div>
+                                </th>
+
+                                <th scope="col">
+                                    <div
+                                        class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label" for="checkAll">
+                                            View Profile
+                                        </label>
+                                    </div>
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 01 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-05-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> D829233 </label>
+                                    </div>
+                                </td>
+
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Anshu Kumar </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 1234567890 </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31  </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 50,000 </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> ₹ 3000.00</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Maharashtra </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Pending </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Retailer Plan </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Active </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <button type="button"
+                                            class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                                            View Now
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                          <tr>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 02 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 31-06-2025 </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> DS829266 </label>
+                                    </div>
+                                </td>
+
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Kondiba Patil </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 1234567890 </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> 10  </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Rs. 50,000 </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> ₹ 3000.00</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Maharashtra </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Active </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> Retailer Plan </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div
+                                        class="form-check style-check flex items-center gap-2 border border-gray-300 rounded form-check style-check py-2 px-4">
+                                        <label class="form-check-label" for="check1"> De-active </label>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <button type="button"
+                                            class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                                            View Now
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--View Profile-->
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+    <div class="grid grid-cols-6">
+        <div class="col-span-6">
+            <div class="grid grid-cols-12 gap-5">
+                <div class="col-span-12">
+                    <div class="card border-0">
+                        <div class="card-header">
+                            <h5 class="text-lg font-semibold mb-0">User Profile Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <form class="grid grid-cols-12 gap-4">
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Contact Number</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="text" name="#0" class="form-control" " required>
+                </div>
+                <div class=" md:col-span-6 col-span-12">
+                                    <label class="form-label">D.O.B</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">State Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">District Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">City Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Village Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Pin Code</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Business Name</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                                <div class="md:col-span-6 col-span-12">
+                                    <label class="form-label">Business Address</label>
+                                    <input type="text" name="#0" class="form-control" required />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-6">
+        <div class="flex flex-col gap-6">
+            <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
+                <div class="card-header p-4">
+                    <h4 class="card-title mb-0 text-base font-semibold">
+                        Commission Plan
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div>
+                        <div class="flex-shrink-0">
+                            <label class="form-label"> Select Plan</label>
+                            <div>
+                                <button data-dropdown-toggle="statusDropdown1" data-dropdown-placement="bottom"
+                                    class=" w-full text-neutral-600 bg-neutral-300 hover:bg-gray-700 font-medium rounded-lg text-base px-2 py-1.5 text-center inline-flex items-center dark:text-primary-400 dark:hover:text-white dark:focus:text-white dark:focus:ring-primary-800"
+                                    type="button">
+                                    01:- Default Plan
+                                    <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 10 6">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="m1 1 4 4 4-4" />
+                                    </svg>
+                                </button>
+                                <div id="statusDropdown1"
+                                    class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+                                    <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+                                        <li>
+                                            <a href="#"
+                                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#"
+                                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                            </a>
+                                        </li>
+
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg mt-2">
+                <div class="card-header border-b border-neutral-200 dark:border-neutral-600 p-4">
+                    <h6 class="card-title mb-0 text-base font-semibold">
+                        User Platform Accessibilities
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <form action="#">
+                        <div class="flex flex-col">
+                            <div>
+                                <label for="agentType"
+                                    class="text-sm font-medium text-neutral-600 dark:text-neutral-300 block">Select the
+                                    User Platform
+                                </label>
+                                <div class="card-body px-4">
+                                    <div class="grid grid-cols-2 gap-8">
+                                        <!-- Left Column -->
+                                        <div class="flex flex-col gap-5">
+                                            <div class="flex items-center gap-3">
+                                                <label for="raise-request"
+                                                    class="bg-neutral-100 dark:bg-neutral-700 px-6 py-2 rounded-xl font-medium text-lg text-neutral-600 dark:text-neutral-200 flex-1 text-left">
+                                                    Mobile Application
+                                                </label>
+                                                <div class="form-check style-check flex items-center">
+                                                    <input
+                                                        class="form-check-input rounded border border-neutral-400 dark:border-neutral-500"
+                                                        type="checkbox" name="checkbox" id="raise-request" checked />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Right Column -->
+                                        <div class="flex flex-col gap-5">
+                                            <div class="flex items-center gap-3">
+                                                <label for="request-report"
+                                                    class="bg-neutral-100 dark:bg-neutral-700 px-6 py-2 rounded-xl font-medium text-lg text-neutral-600 dark:text-neutral-200 flex-1 text-left">
+                                                    Web Portal Access
+                                                </label>
+                                                <div class="form-check style-check flex items-center">
+                                                    <input
+                                                        class="form-check-input rounded border border-neutral-400 dark:border-neutral-500"
+                                                        type="checkbox" name="checkbox" id="request-report" checked />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
+                <div class="card-header p-4">
+                    <h6 class="card-title mb-0 text-base font-semibold">
+                        Manager
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <form action="#" class="space-y-4">
+                        <div class="flex items-end gap-4">
+                            <div class="flex-1">
+
+                                <select id="commissionPlan"
+                                    class="form-select w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-800">
+                                    <option>DS000001 : - Raghuwanshi Kumbhar</option>
+
+                                </select>
+                            </div>
+
+                        </div>
+                    </form>
+                    <p class="mt-3">Note:- Currently this agent is mapped under Distributor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+    <div class="grid grid-cols-6">
+        <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
+            <div class="card-header p-4">
+                <h6 class="card-title mb-0 text-base font-semibold">
+                    Bank Account Updates
+                </h6>
+            </div>
+
+            <div class="grid grid-cols-2 xl:grid-cols-2 mt-6 p-4">
+
+                <div>
+                    <button data-dropdown-toggle="distributorDropdown1" data-dropdown-placement="bottom"
+                        class="text-neutral-700 bg-neutral-200 border border-neutral-600 font-semibold rounded-lg px-5 py-1.5 text-center inline-flex items-center text-neutral-300"
+                        type="button">
+                        Self Bank Top-up
+                        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m1 1 4 4 4-4" />
+                        </svg>
+                    </button>
+                    <div id="distributorDropdown1"
+                        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+                        <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    ---- </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <button data-dropdown-toggle="distributorDropdown2" data-dropdown-placement="bottom"
+                        class="text-neutral-700 bg-neutral-200 border border-neutral-600 font-semibold rounded-lg px-5 py-1.5 text-center inline-flex items-center text-neutral-300"
+                        type="button">
+                        Settlement Bank A/c
+                        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m1 1 4 4 4-4" />
+                        </svg>
+                    </button>
+                    <div id="distributorDropdown2"
+                        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">
+                        <ul class="py-2 text-base text-gray-700 dark:text-gray-200">
+                            <li>
+                                <a href="#"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    ---- </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+            <div class="card-body p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden">
+
+                        <div class="p-4">
+                            <form action="#" class="space-y-5">
+                                <div class="font-medium text-center">
+                                    <label class="text-md">01:</label>
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Name:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Number:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">Bank IFSC:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Type:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <p class="text-sm text-primary-600 dark:text-primary-500 text-center pt-2">
+                                    Current Status :-<span class="font-semibold">Active</span>
+                                </p>
+
+                            </form>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <div class="border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden">
+
+                        <div class="p-4">
+                            <form action="#" class="space-y-5">
+                                <div class="font-medium text-center">
+                                    <label class="text-md">02:</label>
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Name:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Number:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">Bank IFSC:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Type:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <p class="text-sm text-danger-600 dark:text-danger-500 text-center pt-2">
+                                    Current Status:- <span class="font-semibold">Deactive</span>
+                                </p>
+
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden">
+
+                        <div class="p-4">
+                            <form action="#" class="space-y-5">
+                                <div class="font-medium text-center">
+                                    <label class="text-md">03:</label>
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Name:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Number:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">Bank IFSC:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <div>
+                                    <label class="text-xs">A/c Type:</label>
+                                    <input type="text"
+                                        class="form-input w-full rounded-md text-sm border-neutral-300 dark:border-neutral-600 dark:bg-neutral-900 py-1.5 px-3" />
+                                </div>
+                                <p class="text-sm text-neutral-800 dark:text-neutral-500 text-center pt-2">
+                                    Current Status :-<span class="font-semibold">Active</span>
+                                </p>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
