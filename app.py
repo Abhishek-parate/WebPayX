@@ -634,7 +634,7 @@ if __name__ == '__main__':
     print()
     print("🔗 Access URLs:")
     print("   • Main App: http://localhost:5000")
-    print("   • Login: http://localhost:5000/auth/login")
+    print("   • Login: http://localhost:5000/login")
     print("   • User Management: http://localhost:5000/user-management")
     print("   • Wallet Top-up: http://localhost:5000/topup")
     print("   • Bank Management: http://localhost:5000/bank-management")
