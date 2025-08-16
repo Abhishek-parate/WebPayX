@@ -115,6 +115,8 @@ def create_app(config_name='development'):
     # =============================================================================
     
     @app.route('/')
+    @login_required
+
     def index():
         """Homepage - redirect to login or dashboard"""
         if current_user.is_authenticated:
@@ -128,7 +130,7 @@ def create_app(config_name='development'):
         # Get user statistics
         user_stats = get_user_dashboard_stats()
         
-        return render_template('dashboard/main.html',
+        return render_template('dashboard/index.html',
             title='Dashboard',
             subtitle=f'Welcome, {current_user.full_name}',
             user_stats=user_stats
