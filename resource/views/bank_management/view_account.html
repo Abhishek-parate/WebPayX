@@ -1,0 +1,807 @@
+{% extends 'layout/layout.html' %} {% block content %}
+
+<!-- Breadcrumb -->
+<div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+    <a href="{{ url_for('bank_management.index') }}" class="hover:text-primary-600 dark:hover:text-primary-400">Bank Management</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <span>Account Details</span>
+</div>
+
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white" id="pageTitle">Account Details</h1>
+        <p class="mt-1 text-gray-600 dark:text-gray-400">View complete bank account information and transaction history</p>
+    </div>
+    <div class="flex gap-3">
+        <a href="{{ url_for('bank_management.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-b rounded-lg px-6 py-2 inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Accounts
+        </a>
+        <button onclick="editAccount()" class="btn bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg px-6 py-2 inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit Account
+        </button>
+        <button onclick="printAccountDetails()" class="btn bg-blue-500 hover:bg-blue-600 text-black rounded-lg px-6 py-2 inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Print Details
+        </button>
+    </div>
+</div>
+
+<!-- Alert Container -->
+<div id="alertContainer" class="mb-6"></div>
+
+<!-- Account Overview Card -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="accountNameDisplay">Loading...</h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-400" id="accountCodeDisplay">Account Code: Loading...</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500" id="accountCreatedDate">Created: Loading...</p>
+                </div>
+            </div>
+            <div class="flex flex-col items-end space-y-2">
+                <span id="accountStatusBadge" class="bg-gray-100 text-gray-800 text-lg font-medium px-4 py-2 rounded-full">Loading...</span>
+                <div id="accountFlags" class="flex flex-wrap gap-2">
+                    <!-- Account flags will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="flex flex-wrap items-center justify-between mb-6">
+            <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-green-700 dark:text-green-300">Current Balance</p>
+                        <p class="text-2xl font-bold text-green-800 dark:text-green-200" id="currentBalanceDisplay">₹0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-blue-700 dark:text-blue-300">Total Transactions</p>
+                        <p class="text-2xl font-bold text-blue-800 dark:text-blue-200" id="totalTransactionsDisplay">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-purple-700 dark:text-purple-300">Total Credits</p>
+                        <p class="text-2xl font-bold text-purple-800 dark:text-purple-200" id="totalCreditsDisplay">₹0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-red-50 dark:bg-red-900 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-red-600 dark:text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-red-700 dark:text-red-300">Total Debits</p>
+                        <p class="text-2xl font-bold text-red-800 dark:text-red-200" id="totalDebitsDisplay">₹0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Details Tabs -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200 dark:border-gray-700">
+        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+            <button onclick="showTab('basic-info')" id="tab-basic-info" class="tab-button active border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600">
+                Basic Information
+            </button>
+            <button onclick="showTab('financial-info')" id="tab-financial-info" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Financial Details
+            </button>
+            <button onclick="showTab('settings')" id="tab-settings" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Account Settings
+            </button>
+            <button onclick="showTab('transactions')" id="tab-transactions" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Recent Transactions
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="p-6">
+        <!-- Basic Information Tab -->
+        <div id="content-basic-info" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="info-item">
+                    <label class="info-label">Account Name</label>
+                    <p class="info-value" id="basicAccountName">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Account Number</label>
+                    <p class="info-value font-mono" id="basicAccountNumber">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Account Holder Name</label>
+                    <p class="info-value" id="basicAccountHolderName">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Bank Name</label>
+                    <p class="info-value" id="basicBankName">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">IFSC Code</label>
+                    <p class="info-value font-mono" id="basicIfscCode">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Account Type</label>
+                    <p class="info-value" id="basicAccountType">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Branch Name</label>
+                    <p class="info-value" id="basicBranchName">N/A</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">PAN Number</label>
+                    <p class="info-value font-mono" id="basicPanNumber">N/A</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">UPI ID</label>
+                    <p class="info-value" id="basicUpiId">N/A</p>
+                </div>
+                <div class="info-item md:col-span-2">
+                    <label class="info-label">Branch Address</label>
+                    <p class="info-value" id="basicBranchAddress">N/A</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">GSTIN</label>
+                    <p class="info-value font-mono" id="basicGstin">N/A</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Details Tab -->
+        <div id="content-financial-info" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="info-item">
+                    <label class="info-label">Current Balance</label>
+                    <p class="info-value text-green-600 font-bold" id="financialCurrentBalance">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Minimum Balance</label>
+                    <p class="info-value" id="financialMinimumBalance">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Daily Transaction Limit</label>
+                    <p class="info-value" id="financialDailyLimit">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Monthly Transaction Limit</label>
+                    <p class="info-value" id="financialMonthlyLimit">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Daily Limit Used</label>
+                    <p class="info-value" id="financialDailyUsed">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Monthly Limit Used</label>
+                    <p class="info-value" id="financialMonthlyUsed">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Available Daily Limit</label>
+                    <p class="info-value text-blue-600 font-semibold" id="financialAvailableDaily">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Available Monthly Limit</label>
+                    <p class="info-value text-blue-600 font-semibold" id="financialAvailableMonthly">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Priority Level</label>
+                    <p class="info-value" id="financialPriority">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Settings Tab -->
+        <div id="content-settings" class="tab-content hidden">
+            <div class="space-y-6">
+                <!-- Purpose Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Purpose</h3>
+                    <div id="accountPurposeList" class="flex flex-wrap gap-2">
+                        <!-- Purpose badges will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Account Flags Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Configuration</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Primary Account</span>
+                            <span id="settingsPrimary" class="status-badge">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Default for Topup</span>
+                            <span id="settingsDefaultTopup" class="status-badge">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Default for Settlement</span>
+                            <span id="settingsDefaultSettlement" class="status-badge">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Visible to Users</span>
+                            <span id="settingsVisibleToUsers" class="status-badge">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Auto Settlement</span>
+                            <span id="settingsAutoSettlement" class="status-badge">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Display Order</span>
+                            <span id="settingsDisplayOrder" class="text-sm font-medium text-gray-900 dark:text-gray-100">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions Tab -->
+        <div id="content-transactions" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
+                <div class="flex gap-2">
+                    <button onclick="openAddTransactionModal()" class="btn bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm">
+                        Add Transaction
+                    </button>
+                    <button onclick="exportTransactions()" class="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm">
+                        Export All
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reference</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Balance After</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Transactions will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noTransactions" class="text-center py-8 hidden">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400 text-lg">No transactions found</p>
+                <p class="text-gray-400 dark:text-gray-500 text-sm">Transactions will appear here once they are recorded</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div id="addTransactionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Manual Transaction</h3>
+                <button onclick="closeAddTransactionModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="addTransactionForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Transaction Type <span class="text-red-500">*</span></label>
+                        <select id="transactionType" name="transaction_type" class="form-control" required>
+                            <option value="">Select Type</option>
+                            <option value="CREDIT">Credit (+)</option>
+                            <option value="DEBIT">Debit (-)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Amount <span class="text-red-500">*</span></label>
+                        <input type="number" id="transactionAmount" name="amount" class="form-control" step="0.01" required />
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Reference Number</label>
+                        <input type="text" id="referenceNumber" name="reference_number" class="form-control" />
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">UTR Number</label>
+                        <input type="text" id="utrNumber" name="utr_number" class="form-control" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Description <span class="text-red-500">*</span></label>
+                    <textarea id="transactionDescription" name="description" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddTransactionModal()" class="btn bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-6 py-2">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-6 py-2">
+                        Add Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-item {
+    @apply bg-gray-50 dark:bg-gray-700 p-4 rounded-lg;
+}
+
+.info-label {
+    @apply block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1;
+}
+
+.info-value {
+    @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.tab-button.active {
+    @apply text-blue-600 border-blue-500;
+}
+
+.tab-button:not(.active) {
+    @apply text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300;
+}
+
+.status-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.status-badge.enabled {
+    @apply bg-green-100 text-green-800;
+}
+
+.status-badge.disabled {
+    @apply bg-red-100 text-red-800;
+}
+</style>
+
+<script>
+// Global variables
+let accountId = null;
+let accountData = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Get account ID from URL
+    const pathParts = window.location.pathname.split('/');
+    accountId = pathParts[pathParts.length - 1];
+    
+    if (accountId) {
+        loadAccountDetails(accountId);
+    }
+    
+    // Form submission handler
+    document.getElementById('addTransactionForm').addEventListener('submit', handleTransactionSubmit);
+});
+
+// Load account details
+async function loadAccountDetails(accountId) {
+    try {
+        showLoading('Loading account details...');
+        
+        const response = await fetch(`/bank-management/api/accounts/${accountId}`);
+        const data = await response.json();
+        
+        hideLoading();
+        
+        if (response.ok) {
+            accountData = data.account;
+            populateAccountDetails(accountData);
+        } else {
+            showAlert('Error loading account details: ' + data.error, 'error');
+            // Redirect to index if account not found
+            setTimeout(() => {
+                window.location.href = '{{ url_for("bank_management.index") }}';
+            }, 3000);
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Error loading account details:', error);
+        showAlert('Error loading account details', 'error');
+    }
+}
+
+// Populate account details
+function populateAccountDetails(account) {
+    // Header information
+    document.getElementById('pageTitle').textContent = `${account.account_name} - Details`;
+    document.getElementById('accountNameDisplay').textContent = account.account_name;
+    document.getElementById('accountCodeDisplay').textContent = `Account Code: ${account.account_code}`;
+    document.getElementById('accountCreatedDate').textContent = `Created: ${formatDate(account.created_at)}`;
+    
+    // Status badge
+    updateStatusBadge(account.status);
+    
+    // Account flags
+    updateAccountFlags(account);
+    
+    // Key metrics
+    document.getElementById('currentBalanceDisplay').textContent = `₹${formatCurrency(account.current_balance)}`;
+    
+    const stats = account.statistics || {};
+    document.getElementById('totalTransactionsDisplay').textContent = stats.total_transactions || 0;
+    document.getElementById('totalCreditsDisplay').textContent = `₹${formatCurrency(stats.total_credits || 0)}`;
+    document.getElementById('totalDebitsDisplay').textContent = `₹${formatCurrency(stats.total_debits || 0)}`;
+    
+    // Basic Information Tab
+    populateBasicInfo(account);
+    
+    // Financial Details Tab
+    populateFinancialInfo(account, stats);
+    
+    // Settings Tab
+    populateSettingsInfo(account);
+    
+    // Transactions Tab
+    populateTransactions(account.recent_transactions || []);
+}
+
+// Update status badge
+function updateStatusBadge(status) {
+    const badge = document.getElementById('accountStatusBadge');
+    badge.className = 'text-lg font-medium px-4 py-2 rounded-full';
+    
+    switch(status) {
+        case 'ACTIVE':
+            badge.classList.add('bg-green-100', 'text-green-800');
+            badge.textContent = 'Active';
+            break;
+        case 'INACTIVE':
+            badge.classList.add('bg-red-100', 'text-red-800');
+            badge.textContent = 'Inactive';
+            break;
+        case 'SUSPENDED':
+            badge.classList.add('bg-yellow-100', 'text-yellow-800');
+            badge.textContent = 'Suspended';
+            break;
+        default:
+            badge.classList.add('bg-gray-100', 'text-gray-800');
+            badge.textContent = status;
+    }
+}
+
+// Update account flags
+function updateAccountFlags(account) {
+    const flagsContainer = document.getElementById('accountFlags');
+    flagsContainer.innerHTML = '';
+    
+    if (account.is_primary) {
+        flagsContainer.innerHTML += '<span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">Primary Account</span>';
+    }
+    
+    if (account.is_default_topup) {
+        flagsContainer.innerHTML += '<span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">Default Topup</span>';
+    }
+    
+    if (account.is_default_settlement) {
+        flagsContainer.innerHTML += '<span class="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full">Default Settlement</span>';
+    }
+}
+
+// Populate basic information
+function populateBasicInfo(account) {
+    document.getElementById('basicAccountName').textContent = account.account_name;
+    document.getElementById('basicAccountNumber').textContent = account.account_number;
+    document.getElementById('basicAccountHolderName').textContent = account.account_holder_name;
+    document.getElementById('basicBankName').textContent = account.bank_name;
+    document.getElementById('basicIfscCode').textContent = account.ifsc_code;
+    document.getElementById('basicAccountType').textContent = account.account_type;
+    document.getElementById('basicBranchName').textContent = account.branch_name || 'N/A';
+    document.getElementById('basicPanNumber').textContent = account.pan_number || 'N/A';
+    document.getElementById('basicUpiId').textContent = account.upi_id || 'N/A';
+    document.getElementById('basicBranchAddress').textContent = account.branch_address || 'N/A';
+    document.getElementById('basicGstin').textContent = account.gstin || 'N/A';
+}
+
+// Populate financial information
+function populateFinancialInfo(account, stats) {
+    document.getElementById('financialCurrentBalance').textContent = `₹${formatCurrency(account.current_balance)}`;
+    document.getElementById('financialMinimumBalance').textContent = `₹${formatCurrency(account.minimum_balance || 0)}`;
+    document.getElementById('financialDailyLimit').textContent = `₹${formatCurrency(account.daily_limit)}`;
+    document.getElementById('financialMonthlyLimit').textContent = `₹${formatCurrency(account.monthly_limit)}`;
+    document.getElementById('financialDailyUsed').textContent = `₹${formatCurrency(account.daily_used || 0)}`;
+    document.getElementById('financialMonthlyUsed').textContent = `₹${formatCurrency(account.monthly_used || 0)}`;
+    document.getElementById('financialAvailableDaily').textContent = `₹${formatCurrency(stats.available_daily_limit || 0)}`;
+    document.getElementById('financialAvailableMonthly').textContent = `₹${formatCurrency(stats.available_monthly_limit || 0)}`;
+    document.getElementById('financialPriority').textContent = getPriorityText(account.priority || 1);
+}
+
+// Populate settings information
+function populateSettingsInfo(account) {
+    // Account purpose
+    const purposeContainer = document.getElementById('accountPurposeList');
+    purposeContainer.innerHTML = '';
+    
+    if (account.purpose && account.purpose.length > 0) {
+        account.purpose.forEach(purpose => {
+            const badge = document.createElement('span');
+            badge.className = 'bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full';
+            badge.textContent = formatPurpose(purpose);
+            purposeContainer.appendChild(badge);
+        });
+    } else {
+        purposeContainer.innerHTML = '<span class="text-gray-500">No purpose specified</span>';
+    }
+    
+    // Account configuration
+    document.getElementById('settingsPrimary').innerHTML = getBooleanBadge(account.is_primary);
+    document.getElementById('settingsDefaultTopup').innerHTML = getBooleanBadge(account.is_default_topup);
+    document.getElementById('settingsDefaultSettlement').innerHTML = getBooleanBadge(account.is_default_settlement);
+    document.getElementById('settingsVisibleToUsers').innerHTML = getBooleanBadge(account.is_visible_to_users);
+    document.getElementById('settingsAutoSettlement').innerHTML = getBooleanBadge(account.auto_settlement);
+    document.getElementById('settingsDisplayOrder').textContent = account.display_order || 1;
+}
+
+// Populate transactions
+function populateTransactions(transactions) {
+    const tbody = document.getElementById('transactionsTableBody');
+    const noTransactions = document.getElementById('noTransactions');
+    
+    tbody.innerHTML = '';
+    
+    if (transactions.length === 0) {
+        noTransactions.classList.remove('hidden');
+        return;
+    }
+    
+    noTransactions.classList.add('hidden');
+    
+    transactions.forEach(transaction => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+        
+        const typeClass = transaction.transaction_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
+        const amountSign = transaction.transaction_type === 'CREDIT' ? '+' : '-';
+        
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                ${formatDate(transaction.created_at)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${transaction.transaction_type === 'CREDIT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${transaction.transaction_type}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${typeClass} text-right">
+                ${amountSign}₹${formatCurrency(transaction.amount)}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                ${transaction.description}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-mono">
+                ${transaction.reference_number || 'N/A'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                ₹${formatCurrency(transaction.balance_after)}
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Tab management
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-500', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab content
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    
+    // Add active class to selected tab button
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    activeTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+}
+
+// Modal functions
+function openAddTransactionModal() {
+    document.getElementById('addTransactionModal').classList.remove('hidden');
+}
+
+function closeAddTransactionModal() {
+    document.getElementById('addTransactionModal').classList.add('hidden');
+    document.getElementById('addTransactionForm').reset();
+}
+
+// Transaction form submission
+async function handleTransactionSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const transactionData = Object.fromEntries(formData.entries());
+    
+    try {
+        showLoading('Adding transaction...');
+        
+        const response = await fetch(`/bank-management/api/accounts/${accountId}/transactions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData)
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (response.ok) {
+            showAlert(data.message, 'success');
+            closeAddTransactionModal();
+            // Reload account details to get updated balance and transactions
+            loadAccountDetails(accountId);
+        } else {
+            showAlert('Error: ' + data.error, 'error');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Error adding transaction:', error);
+        showAlert('Error adding transaction', 'error');
+    }
+}
+
+// Action functions
+function editAccount() {
+    window.location.href = `/bank-management/update-account/${accountId}`;
+}
+
+function printAccountDetails() {
+    window.print();
+}
+
+function exportTransactions() {
+    window.open(`/bank-management/api/accounts/${accountId}/transactions/export`);
+}
+
+// Utility functions
+function formatCurrency(amount) {
+    return parseFloat(amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatPurpose(purpose) {
+    return purpose.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function getPriorityText(priority) {
+    const priorities = {
+        1: 'High Priority (1)',
+        2: 'Medium Priority (2)',
+        3: 'Low Priority (3)'
+    };
+    return priorities[priority] || `Priority ${priority}`;
+}
+
+function getBooleanBadge(value) {
+    if (value) {
+        return '<span class="status-badge enabled">Enabled</span>';
+    } else {
+        return '<span class="status-badge disabled">Disabled</span>';
+    }
+}
+
+function showLoading(message) {
+    const alertContainer = document.getElementById('alertContainer');
+    alertContainer.innerHTML = `
+        <div class="bg-blue-100 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            ${message}
+        </div>
+    `;
+}
+
+function hideLoading() {
+    document.getElementById('alertContainer').innerHTML = '';
+}
+
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alertContainer');
+    
+    const alertColors = {
+        'success': 'bg-green-100 border-green-200 text-green-800',
+        'error': 'bg-red-100 border-red-200 text-red-800',
+        'warning': 'bg-yellow-100 border-yellow-200 text-yellow-800',
+        'info': 'bg-blue-100 border-blue-200 text-blue-800'
+    };
+    
+    const alert = document.createElement('div');
+    alert.className = `${alertColors[type]} border px-4 py-3 rounded-lg flex items-center justify-between`;
+    alert.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    
+    // Auto remove success messages after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            if (alert.parentElement) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+}
+</script>
+
+{% endblock %}

@@ -53,6 +53,30 @@ def add_account_page():
         title='Add Bank Account',
         subtitle='Add New Organization Bank Account'
     )
+    
+@bank_management_bp.route('/update-account/<account_id>')
+@login_required
+def update_account_page(account_id):
+    """Update existing bank account page"""
+    if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN']:
+        flash('Access denied', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    # Verify account exists and belongs to current tenant
+    account = OrganizationBankAccount.query.filter(
+        OrganizationBankAccount.id == account_id,
+        OrganizationBankAccount.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not account:
+        flash('Bank account not found', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    return render_template('bank_management/update_account.html',
+        title=f'Update Bank Account - {account.account_name}',
+        subtitle='Update Bank Account Information'
+    )
+
 
 @bank_management_bp.route('/account/<account_id>')
 @login_required
@@ -65,13 +89,16 @@ def account_details_page(account_id):
     
     if not account:
         flash('Bank account not found', 'error')
-        return redirect(url_for('bank_management.bank_accounts_page'))
+        return redirect(url_for('bank_management.index'))
     
-    return render_template('bank_management/account_details.html',
+    # Change this line - use view_account.html instead of account_details.html
+    return render_template('bank_management/view_account.html',
         title=f'Bank Account - {account.account_name}',
-        subtitle='Account Details & Transactions',
-        account=account
+        subtitle='Account Details & Transactions'
     )
+
+
+
 
 # =============================================================================
 # BANK ACCOUNT CRUD API

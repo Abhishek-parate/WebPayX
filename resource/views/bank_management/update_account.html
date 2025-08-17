@@ -1,0 +1,703 @@
+{% extends 'layout/layout.html' %} {% block content %}
+
+<!-- Breadcrumb -->
+<div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+    <a href="{{ url_for('bank_management.index') }}" class="hover:text-primary-600 dark:hover:text-primary-400">Bank Management</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <span>Update Bank Account</span>
+</div>
+
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Update Bank Account</h1>
+        <p class="mt-1 text-gray-600 dark:text-gray-400">Update bank account information and settings</p>
+    </div>
+    <div class="flex gap-3">
+        <a href="{{ url_for('bank_management.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-6 py-2 inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Accounts
+        </a>
+        <a href="#" onclick="viewAccountDetails()" class="btn bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-2 inline-flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            View Details
+        </a>
+    </div>
+</div>
+
+<!-- Alert Container -->
+<div id="alertContainer" class="mb-6"></div>
+
+<!-- Account Status Banner -->
+<div class="mb-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="bannerAccountName">Loading...</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" id="bannerAccountInfo">Loading account information...</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="bannerStatus" class="bg-gray-100 text-gray-800 text-sm font-medium px-3 py-1 rounded-full">Loading...</span>
+                <span id="bannerPrimary" class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hidden">Primary Account</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Form -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <div class="p-6">
+        <form id="updateAccountForm" class="space-y-6">
+            <!-- Hidden field to store account ID from URL -->
+            <input type="hidden" id="accountId" value="">
+            
+            <!-- Basic Account Information -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Basic Account Information
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label class="form-label">Account Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="accountName" name="account_name" class="form-control" required 
+                               placeholder="Enter account display name" />
+                        <p class="text-xs text-gray-500 mt-1">This name will be displayed to users</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Account Number</label>
+                        <input type="text" id="accountNumber" name="account_number" class="form-control bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                               readonly />
+                        <p class="text-xs text-gray-500 mt-1">Account number cannot be changed</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Account Holder Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="accountHolderName" name="account_holder_name" class="form-control" required 
+                               placeholder="Name as per bank records" />
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">IFSC Code</label>
+                        <input type="text" id="ifscCode" name="ifsc_code" class="form-control bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                               readonly />
+                        <p class="text-xs text-gray-500 mt-1">IFSC code cannot be changed</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Bank Name</label>
+                        <input type="text" id="bankName" name="bank_name" class="form-control bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                               readonly />
+                        <p class="text-xs text-gray-500 mt-1">Bank name cannot be changed</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Account Type</label>
+                        <select id="accountType" name="account_type" class="form-control bg-gray-100 dark:bg-gray-700 cursor-not-allowed" disabled>
+                            <option value="SAVINGS">Savings Account</option>
+                            <option value="CURRENT">Current Account</option>
+                            <option value="OVERDRAFT">Overdraft Account</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Account type cannot be changed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch Information -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Branch Information
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="form-label">Branch Name</label>
+                        <input type="text" id="branchName" name="branch_name" class="form-control" 
+                               placeholder="Enter branch name" />
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Branch Address</label>
+                        <textarea id="branchAddress" name="branch_address" class="form-control" rows="3"
+                                  placeholder="Enter complete branch address"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Settings -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Financial Settings
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label class="form-label">Daily Transaction Limit</label>
+                        <input type="number" id="dailyLimit" name="daily_limit" class="form-control" 
+                               step="1000" min="0" />
+                        <p class="text-xs text-gray-500 mt-1">Maximum daily transaction amount</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Monthly Transaction Limit</label>
+                        <input type="number" id="monthlyLimit" name="monthly_limit" class="form-control" 
+                               step="10000" min="0" />
+                        <p class="text-xs text-gray-500 mt-1">Maximum monthly transaction amount</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Minimum Balance</label>
+                        <input type="number" id="minimumBalance" name="minimum_balance" class="form-control" 
+                               step="1000" min="0" />
+                        <p class="text-xs text-gray-500 mt-1">Minimum balance to maintain</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Current Balance</label>
+                        <input type="number" id="currentBalance" name="current_balance" class="form-control" 
+                               step="0.01" min="0" />
+                        <p class="text-xs text-gray-500 mt-1">Current account balance</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Additional Information
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label class="form-label">PAN Number</label>
+                        <input type="text" id="panNumber" name="pan_number" class="form-control" 
+                               placeholder="Enter PAN number" style="text-transform: uppercase;" 
+                               pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10" />
+                        <p class="text-xs text-gray-500 mt-1">10-character PAN number</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">GSTIN</label>
+                        <input type="text" id="gstin" name="gstin" class="form-control" 
+                               placeholder="Enter GSTIN" style="text-transform: uppercase;" maxlength="15" />
+                        <p class="text-xs text-gray-500 mt-1">15-character GSTIN number</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">UPI ID</label>
+                        <input type="text" id="upiId" name="upi_id" class="form-control" 
+                               placeholder="username@bankname" />
+                        <p class="text-xs text-gray-500 mt-1">UPI ID for quick payments</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Purpose & Settings -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Purpose Configuration -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                        Account Purpose
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Select what this account will be used for:</p>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="purpose" value="WALLET_TOPUP" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Wallet Topup</div>
+                                    <div class="text-sm text-gray-500">Accept payments for wallet topup</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="purpose" value="SETTLEMENT" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Settlement</div>
+                                    <div class="text-sm text-gray-500">Receive settlement payments</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" name="purpose" value="REFUND" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Refund</div>
+                                    <div class="text-sm text-gray-500">Process refund payments</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Account Flags -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                        Account Settings
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Configure account behavior:</p>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" id="isPrimary" name="is_primary" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Primary Account</div>
+                                    <div class="text-sm text-gray-500">Mark as the primary organization account</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" id="isDefaultTopup" name="is_default_topup" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Default for Topup</div>
+                                    <div class="text-sm text-gray-500">Use as default account for wallet topup</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" id="isDefaultSettlement" name="is_default_settlement" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Default for Settlement</div>
+                                    <div class="text-sm text-gray-500">Use as default account for settlements</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" id="isVisibleToUsers" name="is_visible_to_users" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Visible to Users</div>
+                                    <div class="text-sm text-gray-500">Show this account to users for selection</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" id="autoSettlement" name="auto_settlement" class="mt-1 form-check-input">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Auto Settlement</div>
+                                    <div class="text-sm text-gray-500">Enable automatic settlement processing</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Settings -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Display Settings
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="form-label">Priority Level</label>
+                        <select id="priority" name="priority" class="form-control">
+                            <option value="1">High Priority (1)</option>
+                            <option value="2">Medium Priority (2)</option>
+                            <option value="3">Low Priority (3)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Higher priority accounts appear first</p>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Display Order</label>
+                        <input type="number" id="displayOrder" name="display_order" class="form-control" 
+                               min="1" max="100" />
+                        <p class="text-xs text-gray-500 mt-1">Order in which account appears (1 = first)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Status Control -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Account Status
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="form-label">Account Status</label>
+                        <select id="accountStatus" name="status" class="form-control">
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="SUSPENDED">Suspended</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Change account operational status</p>
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <div class="w-full p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.084 14.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                                <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                                    <strong>Important:</strong> Changing status to Inactive will prevent all transactions on this account.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <a href="{{ url_for('bank_management.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-8 py-3">
+                    Cancel
+                </a>
+                <button type="button" onclick="resetForm()" class="btn bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg px-8 py-3">
+                    Reset Changes
+                </button>
+                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-8 py-3">
+                    <span id="submitButtonText">Update Account</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Global variables
+let originalFormData = {};
+let accountId = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Get account ID from URL
+    const pathParts = window.location.pathname.split('/');
+    accountId = pathParts[pathParts.length - 1];
+    
+    if (accountId) {
+        document.getElementById('accountId').value = accountId;
+        loadAccountData(accountId);
+    }
+    
+    // Form submission handler
+    document.getElementById('updateAccountForm').addEventListener('submit', handleFormSubmit);
+    
+    // Input formatting
+    document.getElementById('panNumber').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+    
+    document.getElementById('gstin').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+});
+
+// Load account data
+async function loadAccountData(accountId) {
+    try {
+        showLoading('Loading account details...');
+        
+        const response = await fetch(`/bank-management/api/accounts/${accountId}`);
+        const data = await response.json();
+        
+        hideLoading();
+        
+        if (response.ok) {
+            const account = data.account;
+            populateForm(account);
+            updateBanner(account);
+            storeOriginalFormData();
+        } else {
+            showAlert('Error loading account: ' + data.error, 'error');
+            // Redirect to index if account not found
+            setTimeout(() => {
+                window.location.href = '{{ url_for("bank_management.index") }}';
+            }, 3000);
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Error loading account:', error);
+        showAlert('Error loading account details', 'error');
+    }
+}
+
+// Populate form with account data
+function populateForm(account) {
+    document.getElementById('accountName').value = account.account_name || '';
+    document.getElementById('accountNumber').value = account.account_number || '';
+    document.getElementById('accountHolderName').value = account.account_holder_name || '';
+    document.getElementById('ifscCode').value = account.ifsc_code || '';
+    document.getElementById('bankName').value = account.bank_name || '';
+    document.getElementById('accountType').value = account.account_type || '';
+    document.getElementById('branchName').value = account.branch_name || '';
+    document.getElementById('branchAddress').value = account.branch_address || '';
+    document.getElementById('dailyLimit').value = account.daily_limit || 0;
+    document.getElementById('monthlyLimit').value = account.monthly_limit || 0;
+    document.getElementById('minimumBalance').value = account.minimum_balance || 0;
+    document.getElementById('currentBalance').value = account.current_balance || 0;
+    document.getElementById('panNumber').value = account.pan_number || '';
+    document.getElementById('gstin').value = account.gstin || '';
+    document.getElementById('upiId').value = account.upi_id || '';
+    document.getElementById('priority').value = account.priority || 1;
+    document.getElementById('displayOrder').value = account.display_order || 1;
+    document.getElementById('accountStatus').value = account.status || 'ACTIVE';
+    
+    // Handle purpose checkboxes
+    document.querySelectorAll('input[name="purpose"]').forEach(cb => {
+        cb.checked = account.purpose && account.purpose.includes(cb.value);
+    });
+    
+    // Handle boolean checkboxes
+    document.getElementById('isPrimary').checked = account.is_primary || false;
+    document.getElementById('isDefaultTopup').checked = account.is_default_topup || false;
+    document.getElementById('isDefaultSettlement').checked = account.is_default_settlement || false;
+    document.getElementById('isVisibleToUsers').checked = account.is_visible_to_users !== false;
+    document.getElementById('autoSettlement').checked = account.auto_settlement || false;
+}
+
+// Update banner with account info
+function updateBanner(account) {
+    document.getElementById('bannerAccountName').textContent = account.account_name || 'Unknown Account';
+    document.getElementById('bannerAccountInfo').textContent = `Account Code: ${account.account_code || 'N/A'} | ${account.account_number || 'N/A'}`;
+    
+    // Update status badge
+    const statusElement = document.getElementById('bannerStatus');
+    const status = account.status || 'UNKNOWN';
+    
+    statusElement.className = 'text-sm font-medium px-3 py-1 rounded-full';
+    
+    switch(status) {
+        case 'ACTIVE':
+            statusElement.classList.add('bg-green-100', 'text-green-800');
+            statusElement.textContent = 'Active';
+            break;
+        case 'INACTIVE':
+            statusElement.classList.add('bg-red-100', 'text-red-800');
+            statusElement.textContent = 'Inactive';
+            break;
+        case 'SUSPENDED':
+            statusElement.classList.add('bg-yellow-100', 'text-yellow-800');
+            statusElement.textContent = 'Suspended';
+            break;
+        default:
+            statusElement.classList.add('bg-gray-100', 'text-gray-800');
+            statusElement.textContent = status;
+    }
+    
+    // Show/hide primary badge
+    const primaryElement = document.getElementById('bannerPrimary');
+    if (account.is_primary) {
+        primaryElement.classList.remove('hidden');
+    } else {
+        primaryElement.classList.add('hidden');
+    }
+}
+
+// Store original form data for reset functionality
+function storeOriginalFormData() {
+    const form = document.getElementById('updateAccountForm');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    originalFormData = {};
+    
+    inputs.forEach(input => {
+        if (input.type === 'checkbox') {
+            originalFormData[input.name || input.id] = input.checked;
+        } else {
+            originalFormData[input.name || input.id] = input.value;
+        }
+    });
+}
+
+// Handle form submission
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+        return;
+    }
+    
+    const formData = new FormData(e.target);
+    const accountData = Object.fromEntries(formData.entries());
+    
+    // Handle checkboxes for purpose
+    const purposeCheckboxes = document.querySelectorAll('input[name="purpose"]:checked');
+    accountData.purpose = Array.from(purposeCheckboxes).map(cb => cb.value);
+    
+    if (accountData.purpose.length === 0) {
+        showAlert('Please select at least one purpose for this account', 'error');
+        return;
+    }
+    
+    // Handle boolean checkboxes
+    accountData.is_primary = document.getElementById('isPrimary').checked;
+    accountData.is_default_topup = document.getElementById('isDefaultTopup').checked;
+    accountData.is_default_settlement = document.getElementById('isDefaultSettlement').checked;
+    accountData.is_visible_to_users = document.getElementById('isVisibleToUsers').checked;
+    accountData.auto_settlement = document.getElementById('autoSettlement').checked;
+    
+    // Convert numeric fields
+    accountData.daily_limit = parseFloat(accountData.daily_limit) || 0;
+    accountData.monthly_limit = parseFloat(accountData.monthly_limit) || 0;
+    accountData.minimum_balance = parseFloat(accountData.minimum_balance) || 0;
+    accountData.current_balance = parseFloat(accountData.current_balance) || 0;
+    accountData.priority = parseInt(accountData.priority) || 1;
+    accountData.display_order = parseInt(accountData.display_order) || 1;
+    
+    try {
+        showLoading('Updating account...');
+        
+        const response = await fetch(`/bank-management/api/accounts/${accountId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(accountData)
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (response.ok) {
+            showAlert(data.message, 'success');
+            // Reload account data to update the banner and form
+            loadAccountData(accountId);
+            // Redirect to accounts list after successful update
+            setTimeout(() => {
+                window.location.href = '{{ url_for("bank_management.index") }}';
+            }, 2000);
+        } else {
+            showAlert('Error: ' + data.error, 'error');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Error updating account:', error);
+        showAlert('Error updating account', 'error');
+    }
+}
+
+// Validate form
+function validateForm() {
+    const requiredFields = ['accountName', 'accountHolderName'];
+    
+    for (const fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (!field.value.trim()) {
+            field.focus();
+            showAlert(`Please fill in the ${field.previousElementSibling.textContent.replace(' *', '')}`, 'error');
+            return false;
+        }
+    }
+    
+    // Validate PAN number format if provided
+    const panNumber = document.getElementById('panNumber').value.trim();
+    if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber)) {
+        document.getElementById('panNumber').focus();
+        showAlert('Please enter a valid PAN number (10 characters)', 'error');
+        return false;
+    }
+    
+    // Validate GSTIN format if provided
+    const gstin = document.getElementById('gstin').value.trim();
+    if (gstin && gstin.length !== 15) {
+        document.getElementById('gstin').focus();
+        showAlert('GSTIN should be exactly 15 characters', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// Reset form to original values
+function resetForm() {
+    if (confirm('Are you sure you want to reset all changes? This will restore the original values.')) {
+        // Reset all form fields
+        Object.keys(originalFormData).forEach(key => {
+            const element = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = originalFormData[key];
+                } else {
+                    element.value = originalFormData[key];
+                }
+            }
+        });
+        
+        showAlert('Form has been reset to original values', 'info');
+    }
+}
+
+// View account details
+function viewAccountDetails() {
+    window.location.href = `/bank-management/account/${accountId}`;
+}
+
+// Show loading spinner
+function showLoading(message) {
+    const alertContainer = document.getElementById('alertContainer');
+    alertContainer.innerHTML = `
+        <div class="bg-blue-100 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            ${message}
+        </div>
+    `;
+}
+
+// Hide loading spinner
+function hideLoading() {
+    document.getElementById('alertContainer').innerHTML = '';
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alertContainer');
+    
+    const alertColors = {
+        'success': 'bg-green-100 border-green-200 text-green-800',
+        'error': 'bg-red-100 border-red-200 text-red-800',
+        'warning': 'bg-yellow-100 border-yellow-200 text-yellow-800',
+        'info': 'bg-blue-100 border-blue-200 text-blue-800'
+    };
+    
+    const alert = document.createElement('div');
+    alert.className = `${alertColors[type]} border px-4 py-3 rounded-lg flex items-center justify-between`;
+    alert.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    
+    // Auto remove success messages after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            if (alert.parentElement) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+}
+</script>
+
+{% endblock %}
