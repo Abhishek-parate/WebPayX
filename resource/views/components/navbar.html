@@ -17,41 +17,183 @@
         </div>        
         
         <div class="flex items-center gap-4">
+            <!-- Wallet Balance Display -->
             <div class="flex items-center gap-2">
                 <iconify-icon icon="mdi:wallet" class="text-lg"></iconify-icon>         
-                Wallet : 20000        
-            </div>       
+                <span>Wallet: ₹{{ current_user.wallet.available_balance if current_user.wallet else '0' }}</span>      
+            </div>
+            
+            <!-- User Profile Dropdown -->       
             <div class="flex-shrink-0">                     
-                <div>                 
-                    <button data-dropdown-toggle="distributorDropdown" data-dropdown-placement="bottom"                     
-                        class="text-black-600 focus:bg-black-600 hover:bg-black-700 border border-black-600 hover:text-black focus:text-black  focus:outline-none focus:ring-black-300 font-medium rounded-lg text-base px-5 py-1.5 text-center inline-flex items-center "                     
-                        type="button">                     
-                        Select                     
-                        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"                         
-                            viewBox="0 0 10 6">                         
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"                             
-                                d="m1 1 4 4 4-4" />                     
+                <div class="relative">                 
+                    <button data-dropdown-toggle="userDropdown" data-dropdown-placement="bottom"                     
+                        class="text-black-600 focus:bg-gray-100 hover:bg-gray-100 border border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center gap-2"                     
+                        type="button">
+                        <!-- User Avatar or Icon -->
+                        <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                            {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
+                        </div>
+                        <!-- User Info -->
+                        <div class="flex flex-col text-left">
+                            <span class="text-sm font-medium text-gray-900">{{ current_user.full_name or current_user.username }}</span>
+                            <span class="text-xs text-gray-500">{{ current_user.user_code }}</span>
+                        </div>                    
+                        <svg class="w-2.5 h-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">                         
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />                     
                         </svg>                 
                     </button>                 
-                    <div id="distributorDropdown"                     
-                        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44 dark:bg-gray-700">                     
-                        <ul class="py-2 text-base text-gray-700 dark:text-gray-200">                         
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-56 dark:bg-gray-700 border border-gray-200">                     
+                        <!-- User Info Section -->
+                        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-600">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                    {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ current_user.full_name or current_user.username }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-300">{{ current_user.email }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-300">Role: {{ current_user.role.value.replace('_', ' ').title() }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-300">ID: {{ current_user.user_code }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Menu Items -->
+                        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">                         
                             <li>                             
-                                <a href="#"                                 
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Name - ID</a>                         
+                                <a href="{{ url_for('dashboard.index') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    <iconify-icon icon="mdi:dashboard" class="text-base"></iconify-icon>
+                                    Dashboard
+                                </a>                         
                             </li>                         
                             <li>                             
-                                <a href="#"                                 
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Helpdesk</a>                         
-                            </li>                     
+                                <a href="{{ url_for('profilesetting.index') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    <iconify-icon icon="mdi:account-settings" class="text-base"></iconify-icon>
+                                    Profile Settings
+                                </a>                         
+                            </li>
                             <li>                             
-                                <a href="#"                                 
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Logout</a>                         
-                            </li>                     
-                        </ul>                 
+                                <a href="{{ url_for('enhanced_topup.topup_request_page') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    <iconify-icon icon="mdi:wallet-plus" class="text-base"></iconify-icon>
+                                    Wallet Top-up
+                                </a>                         
+                            </li>
+                            {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+                            <li>                             
+                                <a href="{{ url_for('user_management.index') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    <iconify-icon icon="mdi:account-group" class="text-base"></iconify-icon>
+                                    User Management
+                                </a>                         
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <!-- Logout Section -->
+                        <div class="py-2 border-t border-gray-100 dark:border-gray-600">
+                            <a href="{{ url_for('logout.logout_user') }}" 
+                               class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                               onclick="return confirm('Are you sure you want to logout?')">
+                                <iconify-icon icon="mdi:logout" class="text-base"></iconify-icon>
+                                Logout
+                            </a>
+                        </div>                
                     </div>             
                 </div>         
             </div>
         </div>     
     </div> 
 </div>
+<script>
+    // Navbar functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dropdown functionality
+    initializeDropdowns();
+    
+    // Auto-refresh wallet balance every 30 seconds
+    refreshWalletBalance();
+    setInterval(refreshWalletBalance, 30000);
+    
+    // Handle logout confirmation
+    const logoutLinks = document.querySelectorAll('a[href*="logout"]');
+    logoutLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to logout?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+});
+
+function initializeDropdowns() {
+    // Simple dropdown toggle functionality
+    const dropdownButtons = document.querySelectorAll('[data-dropdown-toggle]');
+    
+    dropdownButtons.forEach(button => {
+        const dropdownId = button.getAttribute('data-dropdown-toggle');
+        const dropdown = document.getElementById(dropdownId);
+        
+        if (dropdown) {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Close other dropdowns
+                document.querySelectorAll('[id$="Dropdown"]').forEach(otherDropdown => {
+                    if (otherDropdown !== dropdown) {
+                        otherDropdown.classList.add('hidden');
+                    }
+                });
+                
+                // Toggle current dropdown
+                dropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!button.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        }
+    });
+}
+
+function refreshWalletBalance() {
+    // Fetch updated wallet balance
+    fetch('/api/user/profile')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user && data.user.wallet) {
+                // Update wallet balance display
+                const walletElements = document.querySelectorAll('[data-wallet-balance]');
+                walletElements.forEach(element => {
+                    element.textContent = `Wallet: ₹${data.user.wallet.available_balance}`;
+                });
+            }
+        })
+        .catch(error => {
+            console.log('Could not refresh wallet balance:', error);
+        });
+}
+
+// Utility function to show notifications
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>

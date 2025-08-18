@@ -1,0 +1,324 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<!-- Transaction Reports -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Transaction Reports</h1>
+    <p class="text-gray-600">Generate comprehensive transaction reports and analytics</p>
+</div>
+
+<!-- Report Filters -->
+<div class="card border-0 over mb-6">
+    <div class="card-header flex items-end gap-4 p-4 overflow-x-auto hide-scrollbar overflow-hidden">
+        <form method="GET" action="{{ url_for('transaction_management.reports_page') }}" class="flex items-end gap-4 overflow-x-auto hide-scrollbar">
+            <div class="flex-shrink-0">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from or '' }}" class="form-control" />
+            </div>
+
+            <div class="flex-shrink-0">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to or '' }}" class="form-control" />
+            </div>
+
+            <div class="flex flex-shrink-0 gap-2">
+                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                    Generate Report
+                </button>
+                <a href="{{ url_for('transaction_management.reports_page') }}" 
+                   class="btn bg-gray-600 hover:bg-gray-700 text-white rounded-lg px-5 py-[11px]">
+                    Clear
+                </a>
+                <button type="button" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-5 py-[11px]">
+                    Export-Excel
+                </button>
+                <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-5 py-[11px]">
+                    Export-PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Report Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-6 border">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Transactions</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ summary.total_transactions }}</p>
+                {% if date_from or date_to %}
+                <p class="text-xs text-gray-500">
+                    {% if date_from and date_to %}
+                        {{ date_from }} to {{ date_to }}
+                    {% elif date_from %}
+                        From {{ date_from }}
+                    {% elif date_to %}
+                        Until {{ date_to }}
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Volume</p>
+                <p class="text-2xl font-semibold text-gray-900">Rs. {{ "{:,.2f}".format(summary.total_volume) }}</p>
+                <p class="text-xs text-gray-500">Completed transactions only</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Success Rate</p>
+                <p class="text-2xl font-semibold text-gray-900">
+                    {% if summary.total_transactions > 0 %}
+                        {{ "%.1f"|format((summary.by_status.get('COMPLETED', {}).get('count', 0) / summary.total_transactions * 100)) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </p>
+                <p class="text-xs text-gray-500">Completed / Total</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Average Amount</p>
+                <p class="text-2xl font-semibold text-gray-900">
+                    Rs. {{ "{:,.2f}".format(summary.total_volume / summary.total_transactions if summary.total_transactions > 0 else 0) }}
+                </p>
+                <p class="text-xs text-gray-500">Per transaction</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Transaction Status Breakdown -->
+    <div class="bg-white rounded-lg shadow border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Transaction Status Breakdown</h3>
+        </div>
+        <div class="p-6">
+            {% if summary.by_status %}
+            <div class="space-y-4">
+                {% for status, data in summary.by_status.items() %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if status == 'COMPLETED' %}bg-green-100 text-green-800
+                            {% elif status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                            {% elif status == 'PROCESSING' %}bg-blue-100 text-blue-800
+                            {% elif status == 'FAILED' %}bg-red-100 text-red-800
+                            {% elif status == 'CANCELLED' %}bg-gray-100 text-gray-800
+                            {% else %}bg-purple-100 text-purple-800{% endif %}">
+                            {{ status.title() }}
+                        </span>
+                        <span class="ml-3 text-sm text-gray-600">{{ data.count }} transactions</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900">Rs. {{ "{:,.2f}".format(data.volume) }}</div>
+                        <div class="text-xs text-gray-500">
+                            {{ "%.1f"|format((data.count / summary.total_transactions * 100) if summary.total_transactions > 0 else 0) }}%
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No transaction data available</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Transaction Type Breakdown -->
+    <div class="bg-white rounded-lg shadow border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Transaction Type Breakdown</h3>
+        </div>
+        <div class="p-6">
+            {% if summary.by_type %}
+            <div class="space-y-4">
+                {% for type, data in summary.by_type.items() %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if type == 'DEPOSIT' %}bg-green-100 text-green-800
+                            {% elif type == 'WITHDRAWAL' %}bg-red-100 text-red-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ type.title() }}
+                        </span>
+                        <span class="ml-3 text-sm text-gray-600">{{ data.count }} transactions</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900">Rs. {{ "{:,.2f}".format(data.volume) }}</div>
+                        <div class="text-xs text-gray-500">
+                            {{ "%.1f"|format((data.count / summary.total_transactions * 100) if summary.total_transactions > 0 else 0) }}%
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No transaction data available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="bg-white rounded-lg shadow border">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800">Detailed Statistics</h3>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Deposits -->
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">
+                    {{ summary.by_type.get('DEPOSIT', {}).get('count', 0) }}
+                </div>
+                <div class="text-sm text-gray-600">Total Deposits</div>
+                <div class="text-lg font-semibold text-gray-900 mt-1">
+                    Rs. {{ "{:,.2f}".format(summary.by_type.get('DEPOSIT', {}).get('volume', 0)) }}
+                </div>
+            </div>
+
+            <!-- Withdrawals -->
+            <div class="text-center">
+                <div class="text-2xl font-bold text-red-600">
+                    {{ summary.by_type.get('WITHDRAWAL', {}).get('count', 0) }}
+                </div>
+                <div class="text-sm text-gray-600">Total Withdrawals</div>
+                <div class="text-lg font-semibold text-gray-900 mt-1">
+                    Rs. {{ "{:,.2f}".format(summary.by_type.get('WITHDRAWAL', {}).get('volume', 0)) }}
+                </div>
+            </div>
+
+            <!-- Transfers -->
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">
+                    {{ summary.by_type.get('TRANSFER', {}).get('count', 0) }}
+                </div>
+                <div class="text-sm text-gray-600">Total Transfers</div>
+                <div class="text-lg font-semibold text-gray-900 mt-1">
+                    Rs. {{ "{:,.2f}".format(summary.by_type.get('TRANSFER', {}).get('volume', 0)) }}
+                </div>
+            </div>
+
+            <!-- Net Flow -->
+            <div class="text-center">
+                {% set net_flow = summary.by_type.get('DEPOSIT', {}).get('volume', 0) - summary.by_type.get('WITHDRAWAL', {}).get('volume', 0) %}
+                <div class="text-2xl font-bold {% if net_flow >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if net_flow >= 0 %}+{% endif %}{{ "{:,.2f}".format(net_flow) }}
+                </div>
+                <div class="text-sm text-gray-600">Net Flow</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    (Deposits - Withdrawals)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="mt-6 bg-gray-50 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Export Options</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button type="button" class="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export to Excel
+        </button>
+        
+        <button type="button" class="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export to PDF
+        </button>
+        
+        <button type="button" class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export to CSV
+        </button>
+        
+        <button type="button" onclick="window.print()" class="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Print Report
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates if not provided
+    const dateFromInput = document.getElementById('date_from');
+    const dateToInput = document.getElementById('date_to');
+    
+    if (!dateFromInput.value && !dateToInput.value) {
+        // Set default to last 30 days
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        dateFromInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        dateToInput.value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+
+{% endblock %}

@@ -8,76 +8,128 @@
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.15);
+    min-width: 220px;
+    flex: 1 1 0;
+    margin-right: 20px;
   }
-  
+  .stats-card:last-child { margin-right: 0; }
   .role-badge {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
+    display: inline-block;
+    min-width: 90px;
+    text-align: center;
   }
-  
   .role-super-admin { background: #dc3545; color: white; }
   .role-admin { background: #fd7e14; color: white; }
   .role-white-label { background: #6f42c1; color: white; }
   .role-master-distributor { background: #0d6efd; color: white; }
   .role-distributor { background: #198754; color: white; }
   .role-retailer { background: #6c757d; color: white; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .card-header {
+    background: #f8f9fa;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  .btn {
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .btn-outline-primary {
+    border: 1px solid #667eea;
+    color: #667eea;
+    background: transparent;
+  }
+  .btn-outline-primary:hover {
+    background: #667eea;
+    color: #fff;
+  }
+  .btn-outline-success {
+    border: 1px solid #28a745;
+    color: #28a745;
+    background: transparent;
+  }
+  .btn-outline-success:hover {
+    background: #28a745;
+    color: #fff;
+  }
+  .btn-outline-warning {
+    border: 1px solid #ffc107;
+    color: #ffc107;
+    background: transparent;
+  }
+  .btn-outline-warning:hover {
+    background: #ffc107;
+    color: #fff;
+  }
+  @media (max-width: 900px) {
+    .flex#statsContainer { flex-direction: column; }
+    .stats-card { margin-right: 0; margin-bottom: 16px; }
+  }
 </style>
 
-<!-- User Management Dashboard -->
 <div class="container mx-auto px-4 py-6">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex justify-between items-center mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-800 dark:text-white">User Management</h1>
+      <h1 class="text-3xl font-bold text-neutral-800 dark:text-white mb-1">User Management</h1>
       <p class="text-neutral-600 dark:text-neutral-300">Manage users and hierarchy</p>
     </div>
     <a href="{{ url_for('user_management.create_user_page') }}" 
-       class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 flex items-center gap-2">
+       class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-2 flex items-center gap-2 shadow">
       <iconify-icon icon="material-symbols:person-add" class="text-lg"></iconify-icon>
       Create User
     </a>
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="statsContainer">
+  <div class="flex mb-8" id="statsContainer">
     <div class="stats-card">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm opacity-90">Total Users</p>
-          <h3 class="text-2xl font-bold" id="totalUsers">0</h3>
+          <h3 class="text-2xl font-bold mt-1" id="totalUsers">0</h3>
         </div>
         <iconify-icon icon="material-symbols:group" class="text-3xl opacity-70"></iconify-icon>
       </div>
     </div>
-    
     <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm opacity-90">Active Users</p>
-          <h3 class="text-2xl font-bold" id="activeUsers">0</h3>
+          <h3 class="text-2xl font-bold mt-1" id="activeUsers">0</h3>
         </div>
         <iconify-icon icon="material-symbols:check-circle" class="text-3xl opacity-70"></iconify-icon>
       </div>
     </div>
-    
     <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm opacity-90">Pending KYC</p>
-          <h3 class="text-2xl font-bold" id="pendingKyc">0</h3>
+          <h3 class="text-2xl font-bold mt-1" id="pendingKyc">0</h3>
         </div>
         <iconify-icon icon="material-symbols:pending-actions" class="text-3xl opacity-70"></iconify-icon>
       </div>
     </div>
-    
     <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8 0%, #6610f2 100%);">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm opacity-90">This Month</p>
-          <h3 class="text-2xl font-bold" id="recentRegistrations">0</h3>
+          <h3 class="text-2xl font-bold mt-1" id="recentRegistrations">0</h3>
         </div>
         <iconify-icon icon="material-symbols:trending-up" class="text-3xl opacity-70"></iconify-icon>
       </div>
@@ -101,7 +153,6 @@
         Create New User
       </a>
     </div>
-
     <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
       <div class="flex items-center gap-4 mb-4">
         <div class="w-12 h-12 bg-success-100 dark:bg-success-900 rounded-lg flex items-center justify-center">
@@ -117,7 +168,6 @@
         View All Users
       </a>
     </div>
-
     <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
       <div class="flex items-center gap-4 mb-4">
         <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center">
@@ -135,26 +185,24 @@
   </div>
 
   <!-- Recent Users -->
-  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-    <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-      <div class="flex justify-between items-center">
-        <h6 class="card-title text-lg font-semibold">Recent Users</h6>
-        <a href="{{ url_for('user_management.user_list_page') }}" 
-           class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-          View All
-        </a>
-      </div>
+  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg overflow-hidden">
+    <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
+      <h6 class="card-title text-lg font-semibold">Recent Users</h6>
+      <a href="{{ url_for('user_management.user_list_page') }}" 
+         class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+        View All
+      </a>
     </div>
-    <div class="card-body p-6">
+    <div class="card-body p-0">
       <div class="overflow-x-auto">
         <table class="w-full" id="recentUsersTable">
           <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-600">
-              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">User</th>
-              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Role</th>
-              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Status</th>
-              <th class="text-left py-3 text-sm font-semibold text-neutral-800 dark:text-white">Created</th>
-              <th class="text-right py-3 text-sm font-semibold text-neutral-800 dark:text-white">Actions</th>
+            <tr class="border-b border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900">
+              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">User</th>
+              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Role</th>
+              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Status</th>
+              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Created</th>
+              <th class="text-right py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Actions</th>
             </tr>
           </thead>
           <tbody id="recentUsersBody">
@@ -190,12 +238,11 @@ function loadRecentUsers() {
     .then(data => {
       const tbody = document.getElementById('recentUsersBody');
       tbody.innerHTML = '';
-      
       if (data.users && data.users.length > 0) {
         data.users.forEach(user => {
           const row = `
-            <tr class="border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800">
-              <td class="py-3">
+            <tr class="border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition">
+              <td class="py-4 px-6">
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
                     <span class="text-xs font-medium text-primary-600">${user.full_name?.charAt(0) || 'U'}</span>
@@ -206,19 +253,19 @@ function loadRecentUsers() {
                   </div>
                 </div>
               </td>
-              <td class="py-3">
+              <td class="py-4 px-6">
                 <span class="role-badge role-${user.role?.toLowerCase().replace('_', '-')}">${user.role}</span>
               </td>
-              <td class="py-3">
+              <td class="py-4 px-6">
                 <span class="px-2 py-1 text-xs rounded-full ${user.is_active ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'}">
                   ${user.is_active ? 'Active' : 'Inactive'}
                 </span>
               </td>
-              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-400">
+              <td class="py-4 px-6 text-sm text-neutral-600 dark:text-neutral-400">
                 ${new Date(user.created_at).toLocaleDateString()}
               </td>
-              <td class="py-3 text-right">
-                <a href="/user-management/user/${user.id}" class="text-primary-600 hover:text-primary-700 text-sm">
+              <td class="py-4 px-6 text-right">
+                <a href="/user-management/user/${user.id}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
                   View
                 </a>
               </td>
@@ -238,8 +285,9 @@ function loadRecentUsers() {
 }
 
 function viewHierarchy() {
-  // Implement hierarchy view
   alert('User hierarchy view - implementation needed');
 }
 </script>
+
+
 {% endblock %}

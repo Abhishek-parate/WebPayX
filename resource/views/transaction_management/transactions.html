@@ -1,0 +1,345 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<!-- Transaction List -->
+<div class="card border-0 over mb-2">
+    <div class="card-header flex items-end gap-4 p-4 overflow-x-auto hide-scrollbar overflow-hidden">
+        <form method="GET" action="{{ url_for('transaction_management.transactions_page') }}" class="flex items-end gap-4 overflow-x-auto hide-scrollbar">
+            <div class="flex-shrink-0">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" id="date_from" name="date_from" value="{{ current_filters.date_from or '' }}" class="form-control" />
+            </div>
+
+            <div class="flex-shrink-0">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" id="date_to" name="date_to" value="{{ current_filters.date_to or '' }}" class="form-control" />
+            </div>
+
+            <div class="flex-shrink-0">
+                <label class="form-label">Transaction Type</label>
+                <div>
+                    <select name="type" class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-base px-5 py-1.5">
+                        <option value="">Select Type</option>
+                        {% for transaction_type in transaction_types %}
+                        <option value="{{ transaction_type.value }}" 
+                            {% if current_filters.type == transaction_type.value %}selected{% endif %}>
+                            {{ transaction_type.value.title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0">
+                <label class="form-label">Status</label>
+                <div>
+                    <select name="status" class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-base px-2 py-1.5">
+                        <option value="">Select Status</option>
+                        {% for status in transaction_statuses %}
+                        <option value="{{ status.value }}" 
+                            {% if current_filters.status == status.value %}selected{% endif %}>
+                            {{ status.value.title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" id="search" name="search" value="{{ current_filters.search or '' }}" 
+                       placeholder="Transaction ID, User, etc." class="form-control" />
+            </div>
+
+            <div class="flex-shrink-0">
+                <label for="wallet_id" class="form-label">Wallet ID</label>
+                <input type="text" id="wallet_id" name="wallet_id" value="{{ current_filters.wallet_id or '' }}" 
+                       placeholder="Wallet ID" class="form-control" />
+            </div>
+
+            <div class="flex flex-shrink-0 gap-2">
+                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-[11px]">
+                    Search
+                </button>
+                <a href="{{ url_for('transaction_management.transactions_page') }}" 
+                   class="btn bg-gray-600 hover:bg-gray-700 text-white rounded-lg px-5 py-[11px]">
+                    Clear
+                </a>
+                <button type="button" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-5 py-[11px]">
+                    Export-Excel
+                </button>
+                <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-5 py-[11px]">
+                    Export-PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="grid grid-cols-12">
+    <div class="col-span-12">
+        <div class="border border-gray-300 rounded">
+            <div class="card-body border border-gray-300 rounded bg-white">
+                {% if transactions and transactions.items %}
+                <div class="table-responsive scroll-sm overflow-x-auto hide-scrollbar">
+                    <table class="table mb-0 bg-white">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Sr. No</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Date & Time</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Transaction ID</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Type</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">User</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Wallet ID</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Amount</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Balance Before</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Balance After</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Fees</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Net Amount</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Description</label>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="border border-gray-300 bg-white rounded form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <label class="form-check-label">Actions</label>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions.items %}
+                            <tr>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">{{ transaction.wallet.wallet_id }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">Rs. {{ "{:,.2f}".format(transaction.amount) }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">Rs. {{ "{:,.2f}".format(transaction.balance_before) }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">Rs. {{ "{:,.2f}".format(transaction.balance_after) }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">Rs. {{ "{:,.2f}".format(transaction.fees) }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">Rs. {{ "{:,.2f}".format(transaction.net_amount) }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if transaction.status.value == 'COMPLETED' %}bg-green-100 text-green-800
+                                            {% elif transaction.status.value == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                            {% elif transaction.status.value == 'FAILED' %}bg-red-100 text-red-800
+                                            {% elif transaction.status.value == 'CANCELLED' %}bg-gray-100 text-gray-800
+                                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                            {{ transaction.status.value.title() }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 border border-gray-300 rounded py-2 px-4">
+                                        <label class="form-check-label">{{ transaction.description[:30] + '...' if transaction.description and transaction.description|length > 30 else transaction.description or '-' }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check style-check flex items-center gap-2 py-2 px-4">
+                                        <div class="flex gap-2">
+                                            <a href="{{ url_for('transaction_management.transaction_details_page', transaction_id=transaction.id) }}" 
+                                               class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-3 py-2 text-sm">
+                                                View
+                                            </a>
+                                            {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+                                            <a href="{{ url_for('transaction_management.edit_transaction_page', transaction_id=transaction.id) }}" 
+                                               class="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 text-sm">
+                                                Edit
+                                            </a>
+                                            {% if transaction.status.value not in ['COMPLETED', 'CANCELLED'] %}
+                                            <form method="POST" action="{{ url_for('transaction_management.cancel_transaction_page', transaction_id=transaction.id) }}" 
+                                                  style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this transaction?')">
+                                                <button type="submit" class="btn bg-red-600 hover:bg-red-700 text-white rounded-lg px-3 py-2 text-sm">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if transactions.pages > 1 %}
+                <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                    <div class="flex flex-1 justify-between sm:hidden">
+                        {% if transactions.has_prev %}
+                        <a href="{{ url_for('transaction_management.transactions_page', page=transactions.prev_num, **current_filters) }}" 
+                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Previous
+                        </a>
+                        {% endif %}
+                        {% if transactions.has_next %}
+                        <a href="{{ url_for('transaction_management.transactions_page', page=transactions.next_num, **current_filters) }}" 
+                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Next
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">{{ (transactions.page - 1) * transactions.per_page + 1 }}</span> 
+                                to <span class="font-medium">{{ transactions.page * transactions.per_page if transactions.page * transactions.per_page < transactions.total else transactions.total }}</span> 
+                                of <span class="font-medium">{{ transactions.total }}</span> results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                {% if transactions.has_prev %}
+                                <a href="{{ url_for('transaction_management.transactions_page', page=transactions.prev_num, **current_filters) }}" 
+                                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                {% endif %}
+
+                                {% for page_num in transactions.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != transactions.page %}
+                                        <a href="{{ url_for('transaction_management.transactions_page', page=page_num, **current_filters) }}" 
+                                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                            {{ page_num }}
+                                        </a>
+                                        {% else %}
+                                        <span class="relative z-10 inline-flex items-center bg-primary-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                                            {{ page_num }}
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if transactions.has_next %}
+                                <a href="{{ url_for('transaction_management.transactions_page', page=transactions.next_num, **current_filters) }}" 
+                                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No transactions found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try adjusting your search filters or check back later.</p>
+                    {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <div class="mt-6">
+                        <a href="{{ url_for('transaction_management.add_transaction_page') }}" 
+                           class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                            <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                            </svg>
+                            Add Transaction
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}">

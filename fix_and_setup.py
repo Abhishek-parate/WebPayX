@@ -3,6 +3,7 @@ PostgreSQL Database Setup for SaaS Platform
 ==========================================
 
 This script initializes the database using PostgreSQL instead of SQLite.
+It can also populate the database with a full hierarchy of dummy data for testing.
 """
 
 import os
@@ -11,6 +12,7 @@ import traceback
 from datetime import datetime, timedelta
 from decimal import Decimal
 import uuid
+import random
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -21,12 +23,14 @@ from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-# Import models and enums - UPDATED: Use db instead of Base
+# Import all necessary models and enums
 from models import (
     db, Tenant, User, UserRoleType, KYCStatus, Wallet,
     OrganizationBankAccount, BankAccountType, AccountPurpose, BankAccountStatus,
     CommissionPlan, ServiceType, CommissionMode, NotificationTemplate,
-    Permission, create_default_permissions, create_sample_tenant_data
+    Permission, create_default_permissions, create_sample_tenant_data,
+    Transaction, TransactionStatus, WalletTransaction, WalletTransactionType,
+    WalletTopupRequest, TopupMethod, TransactionMode
 )
 
 class PostgreSQLDatabaseInitializer:
@@ -89,7 +93,6 @@ class PostgreSQLDatabaseInitializer:
         try:
             print(f"🗄️  Checking if database '{self.config['database']}' exists...")
             
-            # Connect to postgres database to create our database
             conn = psycopg2.connect(
                 host=self.config['host'],
                 port=self.config['port'],
@@ -100,7 +103,6 @@ class PostgreSQLDatabaseInitializer:
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cursor = conn.cursor()
             
-            # Check if database exists
             cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.config['database'],))
             exists = cursor.fetchone()
             
@@ -136,7 +138,6 @@ class PostgreSQLDatabaseInitializer:
         """Drop all existing tables"""
         try:
             print("🗑️  Dropping existing tables...")
-            # UPDATED: Use db.metadata instead of Base.metadata
             db.metadata.drop_all(self.engine)
             print("✅ All tables dropped successfully")
         except Exception as e:
@@ -146,18 +147,16 @@ class PostgreSQLDatabaseInitializer:
         """Create all tables from models"""
         try:
             print("🔧 Creating database tables...")
-            # UPDATED: Use db.metadata instead of Base.metadata
             db.metadata.create_all(self.engine)
             print("✅ All tables created successfully")
             
-            # Verify critical tables were created
             critical_tables = ['tenants', 'users', 'wallets', 'organization_bank_accounts']
             for table in critical_tables:
                 if self.check_table_exists(table):
                     columns = self.get_table_columns(table)
-                    print(f"  ✓ {table}: {len(columns)} columns")
+                    print(f"   ✓ {table}: {len(columns)} columns")
                 else:
-                    print(f"  ❌ {table}: Table not created!")
+                    print(f"   ❌ {table}: Table not created!")
                     
         except Exception as e:
             print(f"❌ Error creating tables: {e}")
@@ -169,36 +168,20 @@ class PostgreSQLDatabaseInitializer:
         try:
             print("🏢 Creating default tenant...")
             
-            # Check if default tenant already exists
             existing_tenant = session.query(Tenant).filter_by(tenant_code='DEFAULT').first()
             if existing_tenant:
                 print("✅ Default tenant already exists")
                 return existing_tenant
             
-            # Create default tenant
             tenant = Tenant(
                 tenant_code='DEFAULT',
                 tenant_name='Default SaaS Tenant',
                 domain='localhost',
                 subdomain='default',
-                theme_config={
-                    "primary_color": "#007bff",
-                    "secondary_color": "#6c757d", 
-                    "accent_color": "#28a745",
-                    "logo_url": "/static/images/logo.png",
-                    "favicon_url": "/static/images/favicon.ico"
-                },
+                theme_config={"primary_color": "#007bff"},
                 is_active=True,
-                api_settings={
-                    "rate_limit": 1000,
-                    "timeout": 30,
-                    "max_requests_per_day": 10000
-                },
-                rate_limits={
-                    "api_calls_per_minute": 100,
-                    "transactions_per_hour": 500
-                },
-                meta_data={}
+                api_settings={"rate_limit": 1000},
+                rate_limits={"api_calls_per_minute": 100},
             )
             
             session.add(tenant)
@@ -221,17 +204,11 @@ class PostgreSQLDatabaseInitializer:
         try:
             print("👤 Creating super admin user...")
             
-            # Check if super admin already exists
-            existing_admin = session.query(User).filter_by(
-                username='superadmin',
-                tenant_id=tenant.id
-            ).first()
-            
+            existing_admin = session.query(User).filter_by(username='superadmin', tenant_id=tenant.id).first()
             if existing_admin:
                 print("✅ Super admin already exists")
                 return existing_admin
             
-            # Create super admin
             admin = User(
                 tenant_id=tenant.id,
                 user_code='SA001',
@@ -240,43 +217,27 @@ class PostgreSQLDatabaseInitializer:
                 phone='9999999999',
                 role=UserRoleType.SUPER_ADMIN,
                 full_name='Super Administrator',
-                business_name='Platform Administration',
-                address={
-                    "line1": "Platform Headquarters",
-                    "city": "System City",
-                    "state": "System State",
-                    "pincode": "000000",
-                    "country": "IN"
-                },
                 kyc_status=KYCStatus.APPROVED,
                 is_active=True,
                 is_verified=True,
                 email_verified=True,
                 phone_verified=True,
-                tree_path='',
-                level=0,
-                settings={
-                    "dashboard_preference": "advanced",
-                    "notification_email": True,
-                    "notification_sms": True
-                }
+                level=0
             )
             
-            admin.set_password('Admin@123')  # Default password
+            admin.set_password('Admin@123')
             admin.generate_api_key()
             
             session.add(admin)
             session.commit()
             session.refresh(admin)
             
-            # Update tree_path after creation
             admin.tree_path = str(admin.id)
             session.commit()
             
             print(f"✅ Super admin created:")
             print(f"   Username: {admin.username}")
             print(f"   Password: Admin@123")
-            print(f"   API Key: {admin.api_key}")
             
             return admin
             
@@ -286,152 +247,199 @@ class PostgreSQLDatabaseInitializer:
             raise
         finally:
             session.close()
-    
-    def create_admin_wallet(self, admin_user):
-        """Create wallet for admin user"""
+
+    def create_wallet_for_user(self, user, initial_balance=10000.00):
+        """Helper function to create a wallet for a given user."""
         session = self.SessionLocal()
         try:
-            print("💰 Creating admin wallet...")
-            
-            # Check if wallet already exists
-            existing_wallet = session.query(Wallet).filter_by(user_id=admin_user.id).first()
+            existing_wallet = session.query(Wallet).filter_by(user_id=user.id).first()
             if existing_wallet:
-                print("✅ Admin wallet already exists")
                 return existing_wallet
-            
-            # Create wallet
+
             wallet = Wallet(
-                user_id=admin_user.id,
-                balance=Decimal('100000.0000'),  # Initial balance
-                daily_limit=Decimal('1000000.0000'),
-                monthly_limit=Decimal('10000000.0000'),
+                user_id=user.id,
+                balance=Decimal(str(initial_balance)),
+                daily_limit=Decimal('50000.0000'),
+                monthly_limit=Decimal('200000.0000'),
                 is_active=True
             )
-            
             session.add(wallet)
             session.commit()
             session.refresh(wallet)
-            
-            print(f"✅ Admin wallet created with balance: ₹{wallet.balance}")
+            print(f"   - Created wallet for {user.username} with balance: ₹{wallet.balance}")
             return wallet
-            
         except Exception as e:
             session.rollback()
-            print(f"❌ Error creating admin wallet: {e}")
+            print(f"❌ Error creating wallet for {user.username}: {e}")
             raise
         finally:
             session.close()
-    
-    def create_default_bank_account(self, tenant, admin_user):
-        """Create default organization bank account"""
+
+    def create_full_dummy_hierarchy(self):
+        """Creates a full hierarchy of users with wallets and transactions."""
         session = self.SessionLocal()
         try:
-            print("🏦 Creating default bank account...")
+            print("\n" + "=" * 55)
+            print("🌱 Populating database with extensive dummy data...")
             
-            # Check if default bank account exists
-            existing_account = session.query(OrganizationBankAccount).filter_by(
-                tenant_id=tenant.id,
-                is_primary=True
-            ).first()
+            tenant = session.query(Tenant).filter_by(tenant_code='DEFAULT').first()
+            if not tenant:
+                print("❌ Default tenant not found. Run basic initialization first.")
+                return
+
+            super_admin = session.query(User).filter_by(role=UserRoleType.SUPER_ADMIN).first()
+            if not super_admin:
+                print("❌ Super Admin not found. Run basic initialization first.")
+                return
+
+            self.create_wallet_for_user(super_admin, initial_balance=1000000.00)
+
+            # 1. Create Admin
+            admin_user = self.create_dummy_user(session, tenant, super_admin, UserRoleType.ADMIN, 'Main Admin', 'admin01')
+            self.create_wallet_for_user(admin_user, 500000.00)
+
+            # 2. Create White Label
+            wl_user = self.create_dummy_user(session, tenant, admin_user, UserRoleType.WHITE_LABEL, 'Travel Portal', 'whitelabel01')
+            self.create_wallet_for_user(wl_user, 250000.00)
+
+            # 3. Create Master Distributor
+            md_user = self.create_dummy_user(session, tenant, wl_user, UserRoleType.MASTER_DISTRIBUTOR, 'North Zone MD', 'md01')
+            self.create_wallet_for_user(md_user, 100000.00)
+
+            # 4. Create multiple Distributors
+            for i in range(2):
+                dist_user = self.create_dummy_user(session, tenant, md_user, UserRoleType.DISTRIBUTOR, f'Distributor {i+1}', f'dist{i+1}')
+                self.create_wallet_for_user(dist_user, 50000.00)
+                
+                # 5. Create multiple Retailers under each Distributor
+                for j in range(3):
+                    retailer_user = self.create_dummy_user(session, tenant, dist_user, UserRoleType.RETAILER, f'Retailer {i+1}-{j+1}', f'retailer{i+1}{j+1}')
+                    self.create_wallet_for_user(retailer_user, 10000.00)
+                    
+                    # Create some transactions for each retailer
+                    self.create_dummy_transactions_for_user(session, retailer_user, tenant.id)
+                    # Create some topup requests for each retailer
+                    self.create_dummy_topup_requests(session, retailer_user, dist_user)
+
+
+            print("✅ Extensive dummy data hierarchy created successfully!")
+
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Error creating dummy data hierarchy: {e}")
+            traceback.print_exc()
+        finally:
+            session.close()
+
+    def create_dummy_user(self, session, tenant, parent, role, name, username_suffix):
+        """Helper to create a single dummy user."""
+        username = f"{role.value.lower()}_{username_suffix}"
+        existing_user = session.query(User).filter_by(username=username).first()
+        if existing_user:
+            print(f"   - User {username} already exists. Skipping.")
+            return existing_user
+
+        user = User(
+            tenant_id=tenant.id,
+            parent_id=parent.id,
+            user_code=f"{role.name[:2]}{random.randint(100, 999)}",
+            username=username,
+            email=f"{username}@example.com",
+            phone=f"9{random.randint(100000000, 999999999)}",
+            role=role,
+            full_name=name,
+            business_name=f"{name} Services",
+            kyc_status=KYCStatus.APPROVED,
+            is_active=True,
+            is_verified=True,
+            level=parent.level + 1,
+        )
+        user.set_password('password123')
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        user.tree_path = f"{parent.tree_path}/{user.id}"
+        session.commit()
+
+        print(f"   - Created {role.value}: {user.username} (Password: password123)")
+        return user
+
+    def create_dummy_transactions_for_user(self, session, user, tenant_id):
+        """Helper to create sample transactions for a user."""
+        print(f"   - Creating dummy transactions for {user.username}...")
+        wallet = session.query(Wallet).filter_by(user_id=user.id).one()
+        
+        services = [ServiceType.MOBILE_RECHARGE, ServiceType.DTH_RECHARGE, ServiceType.BILL_PAYMENT, ServiceType.MONEY_TRANSFER]
+        for i in range(random.randint(3, 8)):
+            service = random.choice(services)
+            amount = Decimal(str(random.uniform(50, 2500)))
+            commission = amount * Decimal('0.02') if service != ServiceType.MONEY_TRANSFER else 0
+            platform_charges = amount * Decimal('0.01') if service == ServiceType.MONEY_TRANSFER else 0
+            net_amount = amount - commission + platform_charges
             
-            if existing_account:
-                print("✅ Default bank account already exists")
-                return existing_account
-            
-            # Create default bank account
-            bank_account = OrganizationBankAccount(
-                tenant_id=tenant.id,
-                created_by=admin_user.id,
-                account_code='BA001',
-                account_name='Primary Collection Account',
-                account_number='1234567890123456',
-                ifsc_code='SBIN0123456',
-                bank_name='State Bank of India',
-                branch_name='Main Branch',
-                branch_address='Main Street, City Center',
-                account_type=BankAccountType.CURRENT,
-                account_holder_name='SaaS Platform Pvt Ltd',
-                pan_number='ABCDE1234F',
-                gstin='12ABCDE1234F1Z5',
-                status=BankAccountStatus.ACTIVE,
-                purpose=[AccountPurpose.WALLET_TOPUP.value, AccountPurpose.SETTLEMENT.value],
-                is_primary=True,
-                is_default_topup=True,
-                is_default_settlement=True,
-                daily_limit=Decimal('1000000.0000'),
-                monthly_limit=Decimal('50000000.0000'),
-                minimum_balance=Decimal('100000.0000'),
-                current_balance=Decimal('500000.0000'),
-                upi_id='saasplatform@sbi',
-                is_visible_to_users=True,
-                display_order=1
+            if wallet.balance < net_amount:
+                continue
+
+            balance_before = wallet.balance
+            wallet.balance -= net_amount
+            balance_after = wallet.balance
+
+            txn = Transaction(
+                tenant_id=tenant_id,
+                user_id=user.id,
+                transaction_id=f"DUMMY-TXN-{uuid.uuid4().hex[:10].upper()}",
+                service_type=service,
+                amount=amount,
+                commission=commission,
+                platform_charges=platform_charges,
+                net_amount=net_amount,
+                status=random.choice([TransactionStatus.SUCCESS, TransactionStatus.FAILED, TransactionStatus.PENDING]),
+                provider="DummyProvider",
+                customer_details={"number": f"987654321{i}", "name": "John Doe"},
+                service_details={"operator": "DummyOperator", "biller_id": "DUMMYBILLER"},
+                processed_at=datetime.utcnow() - timedelta(days=i, hours=i)
             )
+            session.add(txn)
             
-            session.add(bank_account)
-            session.commit()
-            session.refresh(bank_account)
+            wallet_txn = WalletTransaction(
+                wallet_id=wallet.id,
+                transaction_type=WalletTransactionType.DEBIT,
+                amount=net_amount,
+                balance_before=balance_before,
+                balance_after=balance_after,
+                reference_id=txn.id,
+                reference_type='Transaction',
+                description=f"{service.value} of INR {amount}"
+            )
+            session.add(wallet_txn)
+        session.commit()
+
+    def create_dummy_topup_requests(self, session, user, approver):
+        """Helper to create dummy wallet topup requests."""
+        print(f"   - Creating dummy topup requests for {user.username}...")
+        for i in range(random.randint(1, 3)):
+            amount = Decimal(str(random.choice([500, 1000, 2000, 5000])))
+            status = random.choice([TransactionStatus.SUCCESS, TransactionStatus.PENDING, TransactionStatus.FAILED])
             
-            print(f"✅ Default bank account created: {bank_account.account_name}")
-            return bank_account
-            
-        except Exception as e:
-            session.rollback()
-            print(f"❌ Error creating default bank account: {e}")
-            raise
-        finally:
-            session.close()
-    
-    def create_default_permissions(self):
-        """Create default system permissions"""
-        session = self.SessionLocal()
-        try:
-            print("🔐 Creating default permissions...")
-            
-            # Check if permissions already exist
-            existing_count = session.query(Permission).count()
-            if existing_count > 0:
-                print(f"✅ {existing_count} permissions already exist")
-                return
-            
-            # Create default permissions
-            permissions = create_default_permissions()
-            for permission in permissions:
-                session.add(permission)
-            
-            session.commit()
-            print(f"✅ Created {len(permissions)} default permissions")
-            
-        except Exception as e:
-            session.rollback()
-            print(f"❌ Error creating default permissions: {e}")
-            raise
-        finally:
-            session.close()
-    
-    def create_sample_data(self, tenant):
-        """Create sample data for the tenant"""
-        session = self.SessionLocal()
-        try:
-            print("📊 Creating sample data...")
-            
-            # Check if sample data already exists
-            existing_plans = session.query(CommissionPlan).filter_by(tenant_id=tenant.id).count()
-            if existing_plans > 0:
-                print("✅ Sample data already exists")
-                return
-            
-            create_sample_tenant_data(session, tenant.id)
-            session.commit()
-            
-            print("✅ Sample data created successfully")
-            
-        except Exception as e:
-            session.rollback()
-            print(f"❌ Error creating sample data: {e}")
-            # Don't raise here, sample data is optional
-        finally:
-            session.close()
-    
+            req = WalletTopupRequest(
+                request_id=f"DUMMY-REQ-{uuid.uuid4().hex[:10].upper()}",
+                user_id=user.id,
+                requested_by=user.id,
+                approved_by=approver.id if status == TransactionStatus.SUCCESS else None,
+                topup_method=TopupMethod.BANK_TRANSFER,
+                amount=amount,
+                net_amount=amount,
+                transaction_mode=TransactionMode.UPI,
+                external_transaction_id=f"DUMMY-UPI-{random.randint(100000, 999999)}",
+                status=status,
+                request_remarks="Please approve my topup.",
+                admin_remarks="Approved" if status == TransactionStatus.SUCCESS else "",
+                processed_at=datetime.utcnow() - timedelta(days=i) if status == TransactionStatus.SUCCESS else None
+            )
+            session.add(req)
+        session.commit()
+
     def run_full_initialization(self, force_recreate=False):
         """Run complete database initialization"""
         try:
@@ -443,38 +451,16 @@ class PostgreSQLDatabaseInitializer:
             
             self.create_all_tables()
             
-            # Create core data
             tenant = self.create_default_tenant()
-            admin = self.create_super_admin(tenant)
-            wallet = self.create_admin_wallet(admin)
-            bank_account = self.create_default_bank_account(tenant, admin)
-            
-            # Create optional data
-            self.create_default_permissions()
-            self.create_sample_data(tenant)
+            self.create_super_admin(tenant)
             
             print("\n" + "=" * 55)
             print("🎉 PostgreSQL Database initialization completed successfully!")
-            print(f"\n📊 Database Details:")
-            print(f"   🗄️  Host: {self.config['host']}:{self.config['port']}")
-            print(f"   📂 Database: {self.config['database']}")
-            print(f"   👤 User: {self.config['username']}")
-            print("\n📋 Application Summary:")
-            print(f"   🏢 Tenant: {tenant.tenant_name} ({tenant.tenant_code})")
-            print(f"   👤 Admin: {admin.username}")
-            print(f"   💰 Wallet Balance: ₹{wallet.balance}")
-            print(f"   🏦 Bank Account: {bank_account.account_name}")
-            print("\n🔑 Login Details:")
-            print(f"   Username: {admin.username}")
-            print(f"   Password: Admin@123")
-            print(f"   API Key: {admin.api_key}")
-            print("\n⚠️  Please change the default password after first login!")
             
             return True
             
         except Exception as e:
             print(f"\n❌ Database initialization failed: {e}")
-            print(f"Error type: {type(e).__name__}")
             traceback.print_exc()
             return False
 
@@ -485,17 +471,12 @@ def get_postgresql_config():
     print("🔧 PostgreSQL Configuration")
     print("=" * 30)
     
-    # Get configuration from environment variables or prompt user
     config['host'] = os.getenv('DB_HOST') or input("Host [localhost]: ").strip() or 'localhost'
     config['port'] = int(os.getenv('DB_PORT') or input("Port [5432]: ").strip() or '5432')
     config['username'] = os.getenv('DB_USER') or input("Username [postgres]: ").strip() or 'postgres'
     
-    # Get password securely
     import getpass
-    if os.getenv('DB_PASSWORD'):
-        config['password'] = os.getenv('DB_PASSWORD')
-    else:
-        config['password'] = getpass.getpass("Password: ")
+    config['password'] = os.getenv('DB_PASSWORD') or getpass.getpass("Password: ")
     
     config['database'] = os.getenv('DB_NAME') or input("Database name [saas_platform]: ").strip() or 'saas_platform'
     
@@ -508,12 +489,11 @@ def main():
     parser = argparse.ArgumentParser(description='Initialize SaaS Platform Database with PostgreSQL')
     parser.add_argument('--force', action='store_true', help='Force recreate all tables')
     parser.add_argument('--auto', action='store_true', help='Use default configuration without prompts')
+    parser.add_argument('--dummy-data', action='store_true', help='Populate the database with a full hierarchy of dummy data')
     
     args = parser.parse_args()
     
-    # Get PostgreSQL configuration
     if args.auto:
-        # UPDATED: Set your actual PostgreSQL password here
         config = {
             'host': 'localhost',
             'port': 5432,
@@ -525,20 +505,22 @@ def main():
     else:
         config = get_postgresql_config()
     
-    # Initialize database
     try:
         print("🚀 Starting database initialization...")
         initializer = PostgreSQLDatabaseInitializer(config)
-        success = initializer.run_full_initialization(force_recreate=args.force)
         
-        if success:
-            print("\n🚀 You can now start your application!")
-            print("💡 Don't forget to update your app's database URL to use PostgreSQL")
-            sys.exit(0)
-        else:
-            print("\n💥 Initialization failed. Please check the errors above.")
-            sys.exit(1)
-            
+        if args.dummy_data or args.force:
+            success = initializer.run_full_initialization(force_recreate=args.force)
+            if not success:
+                 sys.exit(1)
+        
+        if args.dummy_data:
+            initializer.create_full_dummy_hierarchy()
+
+        print("\n🚀 Process finished.")
+        if not args.dummy_data and not args.force:
+            print("💡 No actions performed. Use --force to create/recreate tables or --dummy-data to populate.")
+
     except KeyboardInterrupt:
         print("\n\n⚠️  Setup cancelled by user")
         sys.exit(1)

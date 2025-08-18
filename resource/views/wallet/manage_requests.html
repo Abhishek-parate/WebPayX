@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto mt-10">
+  <h2 class="text-2xl font-bold mb-6">Manage Wallet Top-up Requests</h2>
+
+  <table class="w-full border shadow bg-white">
+    <thead>
+      <tr class="bg-gray-100 text-sm text-left">
+        <th class="p-2 border">User</th>
+        <th class="p-2 border">Amount</th>
+        <th class="p-2 border">Mode</th>
+        <th class="p-2 border">Status</th>
+        <th class="p-2 border">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+      <tr class="hover:bg-gray-50">
+        <td class="p-2 border">{{ r.user.full_name }}</td>
+        <td class="p-2 border">₹{{ r.amount }}</td>
+        <td class="p-2 border">{{ r.transaction_mode }}</td>
+        <td class="p-2 border">{{ r.status.value }}</td>
+        <td class="p-2 border flex gap-2">
+          <form method="POST" action="{{ url_for('wallet.update_request', req_id=r.request_id, action='approve') }}">
+            <button class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Approve</button>
+          </form>
+          <form method="POST" action="{{ url_for('wallet.update_request', req_id=r.request_id, action='cancel') }}">
+            <input type="text" name="remarks" placeholder="Reason" class="border px-2 py-1 rounded text-sm">
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">Cancel</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

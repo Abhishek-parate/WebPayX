@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Admin Top-up Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .request-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .bulk-actions {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .action-buttons {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">{{ title }}</h2>
+                    <p class="mb-0 opacity-75">{{ subtitle }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="row">
+                        <div class="col-6">
+                            <h4 class="mb-0" id="pendingCount">-</h4>
+                            <small class="opacity-75">Pending</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0" id="todayCount">-</h4>
+                            <small class="opacity-75">Today</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <select class="form-control" id="statusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="PENDING" selected>Pending</option>
+                                    <option value="SUCCESS">Approved</option>
+                                    <option value="FAILED">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="date" class="form-control" id="dateFrom">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="date" class="form-control" id="dateTo">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search by Request ID, User, Phone">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary" onclick="applyFilters()">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                                <button class="btn btn-outline-secondary ms-2" onclick="clearFilters()">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </button>
+                                <button class="btn btn-success ms-2" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span id="selectedCount">0</span> requests selected
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="bulkApprove()">
+                        <i class="fas fa-check me-2"></i>Bulk Approve
+                    </button>
+                    <button class="btn btn-danger ms-2" onclick="bulkReject()">
+                        <i class="fas fa-times me-2"></i>Bulk Reject
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" onclick="clearSelection()">
+                        <i class="fas fa-times me-2"></i>Clear Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="card request-table">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Request ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Bank Account</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th width="200">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="text-muted mt-2">Loading requests...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted" id="paginationInfo">
+                Showing 0 of 0 results
+            </div>
+            <nav>
+                <ul class="pagination mb-0" id="paginationContainer">
+                    <!-- Pagination will be populated by JavaScript -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div class="modal fade" id="approvalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Approve Request
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Request ID:</strong> <span id="approveRequestId"></span><br>
+                        <strong>Amount:</strong> ₹<span id="approveAmount"></span><br>
+                        <strong>User:</strong> <span id="approveUser"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Admin Remarks (Optional)</label>
+                        <textarea class="form-control" id="approveRemarks" rows="3" placeholder="Enter any remarks..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="confirmApproval()">
+                        <i class="fas fa-check me-2"></i>Approve Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div class="modal fade" id="rejectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle me-2"></i>Reject Request
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Request ID:</strong> <span id="rejectRequestId"></span><br>
+                        <strong>Amount:</strong> ₹<span id="rejectAmount"></span><br>
+                        <strong>User:</strong> <span id="rejectUser"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                        <select class="form-control" id="rejectReason">
+                            <option value="">Select reason...</option>
+                            <option value="Invalid transaction proof">Invalid transaction proof</option>
+                            <option value="Insufficient bank details">Insufficient bank details</option>
+                            <option value="Duplicate request">Duplicate request</option>
+                            <option value="Amount mismatch">Amount mismatch</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Admin Remarks</label>
+                        <textarea class="form-control" id="rejectRemarks" rows="3" placeholder="Additional remarks..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmRejection()">
+                        <i class="fas fa-times me-2"></i>Reject Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentFilters = { status: 'PENDING' };
+        let selectedRequests = new Set();
+        let allRequests = [];
+
+        // Load requests data
+        function loadRequests(page = 1) {
+            currentPage = page;
+            const params = new URLSearchParams({
+                page: page,
+                per_page: 20,
+                ...currentFilters
+            });
+
+            fetch(`/topup/api/requests?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    allRequests = data.topups || [];
+                    renderRequestsTable(allRequests);
+                    renderPagination(data.pagination);
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Error loading requests:', error);
+                    document.getElementById('requestsTableBody').innerHTML = 
+                        '<tr><td colspan="8" class="text-center text-danger">Error loading requests</td></tr>';
+                });
+        }
+
+        function renderRequestsTable(requests) {
+            const tbody = document.getElementById('requestsTableBody');
+            
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No requests found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = requests.map(request => `
+                <tr class="request-row" data-request-id="${request.request_id}">
+                    <td>
+                        ${request.status === 'PENDING' ? 
+                            `<input type="checkbox" class="form-check-input request-checkbox" 
+                                    value="${request.request_id}" onchange="toggleRequestSelection()">` : ''
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="status-dot bg-${getStatusColor(request.status)}"></span>
+                            <span class="badge bg-light text-dark">${request.request_id}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <strong>${request.user ? request.user.full_name : 'N/A'}</strong><br>
+                            <small class="text-muted">${request.user ? request.user.phone : 'N/A'}</small>
+                        </div>
+                    </td>
+                    <td><strong class="text-primary">₹${parseFloat(request.amount).toLocaleString()}</strong></td>
+                    <td>
+                        ${request.bank_account ? `
+                            <div>
+                                <strong>${request.bank_account.bank_name}</strong><br>
+                                <small class="text-muted">${request.bank_account.account_number}</small>
+                            </div>
+                        ` : '<span class="text-muted">Not specified</span>'}
+                    </td>
+                    <td><span class="badge bg-${getStatusColor(request.status)}">${request.status}</span></td>
+                    <td>
+                        <div>
+                            ${formatDateTime(request.created_at)}<br>
+                            ${request.processed_at ? 
+                                `<small class="text-muted">Processed: ${formatDateTime(request.processed_at)}</small>` : 
+                                ''
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewRequestDetails('${request.request_id}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${request.proof_document ? 
+                                `<button class="btn btn-sm btn-outline-info ms-1" onclick="downloadProof('${request.request_id}')" title="Download Proof">
+                                    <i class="fas fa-download"></i>
+                                </button>` : ''
+                            }
+                            ${request.status === 'PENDING' ? `
+                                <button class="btn btn-sm btn-success ms-1" onclick="showApprovalModal('${request.request_id}')" title="Approve">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger ms-1" onclick="showRejectionModal('${request.request_id}')" title="Reject">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'PENDING': 'warning',
+                'SUCCESS': 'success',
+                'FAILED': 'danger',
+                'PROCESSING': 'info'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        function formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function updateStats() {
+            // Load statistics
+            fetch('/topup/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('pendingCount').textContent = data.pending_requests || 0;
+                    document.getElementById('todayCount').textContent = data.today_requests || 0;
+                })
+                .catch(error => console.error('Error loading stats:', error));
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            
+            updateSelectedRequests();
+        }
+
+        function toggleRequestSelection() {
+            updateSelectedRequests();
+        }
+
+        function updateSelectedRequests() {
+            selectedRequests.clear();
+            document.querySelectorAll('.request-checkbox:checked').forEach(checkbox => {
+                selectedRequests.add(checkbox.value);
+            });
+
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = selectedRequests.size;
+            bulkActions.style.display = selectedRequests.size > 0 ? 'block' : 'none';
+
+            // Update select all checkbox
+            const selectAll = document.getElementById('selectAll');
+            const allCheckboxes = document.querySelectorAll('.request-checkbox');
+            selectAll.checked = allCheckboxes.length > 0 && selectedRequests.size === allCheckboxes.length;
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.request-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('selectAll').checked = false;
+            updateSelectedRequests();
+        }
+
+        function showApprovalModal(requestId) {
+            const request = allRequests.find(r => r.request_id === requestId);
+            if (!request) return;
+
+            document.getElementById('approveRequestId').textContent = request.request_id;
+            document.getElementById('approveAmount').textContent = parseFloat(request.amount).toLocaleString();
+            document.getElementById('approveUser').textContent = request.user ? request.user.full_name : 'N/A';
+            document.getElementById('approveRemarks').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+            modal.show();
+            
+            // Store request ID for later use
+            document.getElementById('approvalModal').dataset.requestId = requestId;
+        }
+
+        function showRejectionModal(requestId) {
+            const request = allRequests.find(r => r.request_id === requestId);
+            if (!request) return;
+
+            document.getElementById('rejectRequestId').textContent = request.request_id;
+            document.getElementById('rejectAmount').textContent = parseFloat(request.amount).toLocaleString();
+            document.getElementById('rejectUser').textContent = request.user ? request.user.full_name : 'N/A';
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectRemarks').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('rejectionModal'));
+            modal.show();
+            
+            // Store request ID for later use
+            document.getElementById('rejectionModal').dataset.requestId = requestId;
+        }
+
+        function confirmApproval() {
+            const modal = document.getElementById('approvalModal');
+            const requestId = modal.dataset.requestId;
+            const remarks = document.getElementById('approveRemarks').value;
+
+            if (!requestId) return;
+
+            const data = {
+                admin_remarks: remarks
+            };
+
+            fetch(`/topup/api/requests/${requestId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Close modal and refresh data
+                bootstrap.Modal.getInstance(modal).hide();
+                loadRequests(currentPage);
+                
+                // Show success message
+                showAlert('success', `Request ${requestId} approved successfully!`);
+            })
+            .catch(error => {
+                showAlert('danger', 'Error: ' + error.message);
+            });
+        }
+
+        function confirmRejection() {
+            const modal = document.getElementById('rejectionModal');
+            const requestId = modal.dataset.requestId;
+            const reason = document.getElementById('rejectReason').value;
+            const remarks = document.getElementById('rejectRemarks').value;
+
+            if (!requestId) return;
+            if (!reason) {
+                showAlert('warning', 'Please select a reason for rejection');
+                return;
+            }
+
+            const data = {
+                failure_reason: reason,
+                admin_remarks: remarks
+            };
+
+            fetch(`/topup/api/requests/${requestId}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Close modal and refresh data
+                bootstrap.Modal.getInstance(modal).hide();
+                loadRequests(currentPage);
+                
+                // Show success message
+                showAlert('warning', `Request ${requestId} has been rejected.`);
+            })
+            .catch(error => {
+                showAlert('danger', 'Error: ' + error.message);
+            });
+        }
+
+        function bulkApprove() {
+            if (selectedRequests.size === 0) return;
+
+            if (!confirm(`Are you sure you want to approve ${selectedRequests.size} requests?`)) {
+                return;
+            }
+
+            const data = {
+                request_ids: Array.from(selectedRequests),
+                admin_remarks: 'Bulk approval'
+            };
+
+            fetch('/topup/api/requests/bulk-approve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                clearSelection();
+                loadRequests(currentPage);
+                showAlert('success', `Successfully approved ${data.approved_count} requests (₹${data.total_amount.toLocaleString()})`);
+            })
+            .catch(error => {
+                showAlert('danger', 'Error: ' + error.message);
+            });
+        }
+
+        function bulkReject() {
+            if (selectedRequests.size === 0) return;
+
+            const reason = prompt('Enter reason for bulk rejection:');
+            if (!reason) return;
+
+            if (!confirm(`Are you sure you want to reject ${selectedRequests.size} requests?`)) {
+                return;
+            }
+
+            // Implementation for bulk rejection would go here
+            showAlert('info', 'Bulk rejection feature will be implemented');
+        }
+
+        function viewRequestDetails(requestId) {
+            // Open request details in a new window or modal
+            window.location.href = `{{ url_for('enhanced_topup.topup_history_page') }}?request_id=${requestId}`;
+        }
+
+        function downloadProof(requestId) {
+            window.open(`/topup/api/requests/${requestId}/download-proof`, '_blank');
+        }
+
+        function applyFilters() {
+            currentFilters = {};
+            
+            const status = document.getElementById('statusFilter').value;
+            if (status) currentFilters.status = status;
+            
+            const dateFrom = document.getElementById('dateFrom').value;
+            if (dateFrom) currentFilters.date_from = dateFrom;
+            
+            const dateTo = document.getElementById('dateTo').value;
+            if (dateTo) currentFilters.date_to = dateTo;
+            
+            const search = document.getElementById('searchInput').value;
+            if (search) currentFilters.search = search;
+            
+            clearSelection();
+            loadRequests(1);
+        }
+
+        function clearFilters() {
+            document.getElementById('statusFilter').value = 'PENDING';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('searchInput').value = '';
+            currentFilters = { status: 'PENDING' };
+            clearSelection();
+            loadRequests(1);
+        }
+
+        function refreshData() {
+            clearSelection();
+            loadRequests(currentPage);
+        }
+
+        function renderPagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+            const info = document.getElementById('paginationInfo');
+            
+            if (!pagination) return;
+            
+            // Update pagination info
+            const start = ((pagination.page - 1) * pagination.per_page) + 1;
+            const end = Math.min(pagination.page * pagination.per_page, pagination.total);
+            info.textContent = `Showing ${start}-${end} of ${pagination.total} results`;
+            
+            // Generate pagination buttons
+            if (pagination.pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            if (pagination.has_prev) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="loadRequests(${pagination.page - 1})">Previous</a>
+                </li>`;
+            }
+
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.pages, pagination.page + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<li class="page-item ${i === pagination.page ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="loadRequests(${i})">${i}</a>
+                </li>`;
+            }
+
+            if (pagination.has_next) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="loadRequests(${pagination.page + 1})">Next</a>
+                </li>`;
+            }
+
+            container.innerHTML = paginationHTML;
+        }
+
+        function showAlert(type, message) {
+            // Create and show bootstrap alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRequests();
+            
+            // Auto refresh every 2 minutes
+            setInterval(refreshData, 120000);
+        });
+    </script>
+</body>
+</html>

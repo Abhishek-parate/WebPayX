@@ -1,0 +1,263 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<!-- Edit Transaction Form -->
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Edit Transaction</h1>
+            <p class="text-gray-600">Modify transaction details</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('transaction_management.transaction_details_page', transaction_id=transaction.id) }}" 
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+                ← Back to Details
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow border">
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('transaction_management.edit_transaction_page', transaction_id=transaction.id) }}">
+                <!-- Transaction Info (Read-only) -->
+                <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Information (Read-only)</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Transaction ID:</span>
+                            <span class="font-medium text-gray-900 ml-2 font-mono">{{ transaction.id[:16] }}...</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Type:</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2
+                                {% if transaction.type.value == 'DEPOSIT' %}bg-green-100 text-green-800
+                                {% elif transaction.type.value == 'WITHDRAWAL' %}bg-red-100 text-red-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ transaction.type.value.title() }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Amount:</span>
+                            <span class="font-medium text-gray-900 ml-2">Rs. {{ "{:,.2f}".format(transaction.amount) }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">User:</span>
+                            <span class="font-medium text-gray-900 ml-2">{{ transaction.wallet.user.username }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Wallet:</span>
+                            <span class="font-medium text-gray-900 ml-2">{{ transaction.wallet.wallet_id }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Created:</span>
+                            <span class="font-medium text-gray-900 ml-2">{{ transaction.created_at.strftime('%d-%m-%Y %H:%M') if transaction.created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Status -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status" id="status" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                                {% if transaction.status.value in ['COMPLETED', 'CANCELLED'] %}disabled{% endif %}>
+                            {% for status in transaction_statuses %}
+                            <option value="{{ status.value }}" {% if status.value == transaction.status.value %}selected{% endif %}>
+                                {{ status.value.title() }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if transaction.status.value in ['COMPLETED', 'CANCELLED'] %}
+                        <p class="mt-1 text-sm text-gray-500">Status cannot be changed for {{ transaction.status.value.lower() }} transactions</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- External Reference -->
+                    <div>
+                        <label for="external_reference" class="block text-sm font-medium text-gray-700 mb-2">External Reference</label>
+                        <input type="text" name="external_reference" id="external_reference" 
+                               value="{{ transaction.external_reference or '' }}"
+                               placeholder="External system reference"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+
+                    <!-- Fees -->
+                    <div>
+                        <label for="fees" class="block text-sm font-medium text-gray-700 mb-2">Fees</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rs.</span>
+                            </div>
+                            <input type="number" name="fees" id="fees" step="0.01" min="0" 
+                                   value="{{ transaction.fees }}"
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+
+                    <!-- Tax Amount -->
+                    <div>
+                        <label for="tax_amount" class="block text-sm font-medium text-gray-700 mb-2">Tax Amount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rs.</span>
+                            </div>
+                            <input type="number" name="tax_amount" id="tax_amount" step="0.01" min="0" 
+                                   value="{{ transaction.tax_amount }}"
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="lg:col-span-2">
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea name="description" id="description" rows="3" 
+                                  placeholder="Enter transaction description..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">{{ transaction.description or '' }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Net Amount Display -->
+                <div id="amount-summary" class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-blue-700 mb-2">Updated Amount Summary</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="text-blue-600">Original Amount:</span>
+                            <span class="font-medium text-blue-900 ml-2">Rs. {{ "{:,.2f}".format(transaction.amount) }}</span>
+                        </div>
+                        <div>
+                            <span class="text-blue-600">Total Fees:</span>
+                            <span id="display-fees" class="font-medium text-blue-900 ml-2">Rs. {{ "{:,.2f}".format(transaction.fees + transaction.tax_amount) }}</span>
+                        </div>
+                        <div>
+                            <span class="text-blue-600">Net Amount:</span>
+                            <span id="display-net" class="font-medium text-blue-900 ml-2">Rs. {{ "{:,.2f}".format(transaction.net_amount) }}</span>
+                        </div>
+                        <div>
+                            <span class="text-blue-600">Current Net:</span>
+                            <span class="font-medium text-gray-500 ml-2">Rs. {{ "{:,.2f}".format(transaction.net_amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Warnings -->
+                <div id="validation-warnings" class="mt-4 hidden">
+                    <div class="rounded-md bg-yellow-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-800">Please Note</h3>
+                                <div class="mt-2 text-sm text-yellow-700">
+                                    <ul class="list-disc list-inside space-y-1" id="warning-list">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 mt-6">
+                    <a href="{{ url_for('transaction_management.transaction_details_page', transaction_id=transaction.id) }}" 
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Update Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const feesInput = document.getElementById('fees');
+    const taxInput = document.getElementById('tax_amount');
+    const statusSelect = document.getElementById('status');
+    const warningsDiv = document.getElementById('validation-warnings');
+    const warningsList = document.getElementById('warning-list');
+    
+    const originalAmount = {{ transaction.amount }};
+    const originalFees = {{ transaction.fees }};
+    const originalTax = {{ transaction.tax_amount }};
+    const originalStatus = '{{ transaction.status.value }}';
+
+    // Update amount summary when values change
+    function updateAmountSummary() {
+        const fees = parseFloat(feesInput.value) || 0;
+        const tax = parseFloat(taxInput.value) || 0;
+        const totalFees = fees + tax;
+        const netAmount = originalAmount - totalFees;
+
+        document.getElementById('display-fees').textContent = 'Rs. ' + totalFees.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('display-net').textContent = 'Rs. ' + netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        
+        showValidationWarnings();
+    }
+
+    // Show validation warnings
+    function showValidationWarnings() {
+        const warnings = [];
+        const fees = parseFloat(feesInput.value) || 0;
+        const tax = parseFloat(taxInput.value) || 0;
+        const status = statusSelect.value;
+
+        // Check for changes
+        if (fees !== originalFees || tax !== originalTax) {
+            warnings.push('Changing fees or tax amounts will affect the net amount calculation.');
+        }
+
+        if (status !== originalStatus) {
+            if (originalStatus === 'COMPLETED') {
+                warnings.push('Cannot change status of completed transactions.');
+            } else if (originalStatus === 'CANCELLED') {
+                warnings.push('Cannot change status of cancelled transactions.');
+            } else {
+                warnings.push(`Status will be changed from ${originalStatus.toLowerCase()} to ${status.toLowerCase()}.`);
+            }
+        }
+
+        if (fees + tax > originalAmount) {
+            warnings.push('Total fees exceed the transaction amount, resulting in negative net amount.');
+        }
+
+        // Show/hide warnings
+        if (warnings.length > 0) {
+            warningsList.innerHTML = warnings.map(warning => `<li>${warning}</li>`).join('');
+            warningsDiv.classList.remove('hidden');
+        } else {
+            warningsDiv.classList.add('hidden');
+        }
+    }
+
+    // Event listeners
+    feesInput.addEventListener('input', updateAmountSummary);
+    taxInput.addEventListener('input', updateAmountSummary);
+    statusSelect.addEventListener('change', showValidationWarnings);
+
+    // Initialize
+    updateAmountSummary();
+});
+</script>
+
+{% endblock %}
