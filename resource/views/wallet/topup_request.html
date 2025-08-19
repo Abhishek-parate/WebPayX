@@ -1,0 +1,279 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">
+                <i class="fas fa-wallet mr-2 text-primary"></i>
+                Wallet Top-up Request
+            </h3>
+            
+            <form id="topupForm" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <!-- Top-up Method Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Top-up Method</label>
+                        <div class="space-y-2">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="topup_method" value="MANUAL_TRANSFER" class="form-radio h-4 w-4 text-primary" checked>
+                                <span class="ml-2 text-sm text-gray-700">Manual Bank Transfer</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="topup_method" value="PAYMENT_GATEWAY" class="form-radio h-4 w-4 text-primary">
+                                <span class="ml-2 text-sm text-gray-700">Payment Gateway</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="topup_method" value="ADMIN_CREDIT" class="form-radio h-4 w-4 text-primary">
+                                <span class="ml-2 text-sm text-gray-700">Admin Credit</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700">Amount *</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" name="amount" id="amount" required min="1" step="0.01" 
+                                   class="focus:ring-primary focus:border-primary block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Transfer Options -->
+                <div id="manualTransferOptions" class="space-y-6">
+                    <!-- Bank Account Selection -->
+                    {% if bank_accounts %}
+                    <div>
+                        <label for="bank_account_id" class="block text-sm font-medium text-gray-700">Select Bank Account</label>
+                        <select name="bank_account_id" id="bank_account_id" 
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                            <option value="">Choose a bank account</option>
+                            {% for account in bank_accounts %}
+                            <option value="{{ account.id }}">{{ account.bank_name }} - {{ account.account_number[-4:] }} ({{ account.account_holder_name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Bank Details Display -->
+                    <div id="bankDetails" class="hidden bg-gray-50 p-4 rounded-md">
+                        <h4 class="font-medium text-gray-900 mb-3">Bank Transfer Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium text-gray-700">Account Holder:</span>
+                                <span id="accountHolder" class="ml-2 text-gray-900"></span>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-700">Bank Name:</span>
+                                <span id="bankName" class="ml-2 text-gray-900"></span>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-700">Account Number:</span>
+                                <span id="accountNumber" class="ml-2 text-gray-900 font-mono"></span>
+                                <button type="button" onclick="copyToClipboard('accountNumber')" class="ml-2 text-primary hover:text-blue-700">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-700">IFSC Code:</span>
+                                <span id="ifscCode" class="ml-2 text-gray-900 font-mono"></span>
+                                <button type="button" onclick="copyToClipboard('ifscCode')" class="ml-2 text-primary hover:text-blue-700">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div id="upiSection" class="hidden">
+                                <span class="font-medium text-gray-700">UPI ID:</span>
+                                <span id="upiId" class="ml-2 text-gray-900 font-mono"></span>
+                                <button type="button" onclick="copyToClipboard('upiId')" class="ml-2 text-primary hover:text-blue-700">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Payment Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="transaction_mode" class="block text-sm font-medium text-gray-700">Payment Mode</label>
+                            <select name="transaction_mode" id="transaction_mode" 
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                                <option value="">Select payment mode</option>
+                                <option value="NEFT">NEFT</option>
+                                <option value="RTGS">RTGS</option>
+                                <option value="IMPS">IMPS</option>
+                                <option value="UPI">UPI</option>
+                                <option value="CASH_DEPOSIT">Cash Deposit</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="utr_number" class="block text-sm font-medium text-gray-700">UTR/Reference Number</label>
+                            <input type="text" name="utr_number" id="utr_number" 
+                                   class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="Transaction reference number">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="external_transaction_id" class="block text-sm font-medium text-gray-700">External Transaction ID</label>
+                        <input type="text" name="external_transaction_id" id="external_transaction_id" 
+                               class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                               placeholder="External transaction ID (if any)">
+                    </div>
+
+                    <!-- Proof Document Upload -->
+                    <div>
+                        <label for="proof_document" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="proof_document" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                                        <span>Upload a file</span>
+                                        <input id="proof_document" name="proof_document" type="file" accept="image/*,.pdf" class="sr-only">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                                <div id="selectedFile" class="hidden text-sm text-green-600 mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remarks -->
+                <div>
+                    <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea name="remarks" id="remarks" rows="3" 
+                              class="mt-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                              placeholder="Additional remarks or notes"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" id="submitBtn" 
+                            class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Show/hide manual transfer options
+    $('input[name="topup_method"]').change(function() {
+        if ($(this).val() === 'MANUAL_TRANSFER') {
+            $('#manualTransferOptions').show();
+        } else {
+            $('#manualTransferOptions').hide();
+        }
+    });
+
+    // Bank account selection
+    $('#bank_account_id').change(function() {
+        const bankId = $(this).val();
+        if (bankId) {
+            loadBankDetails(bankId);
+        } else {
+            $('#bankDetails').hide();
+        }
+    });
+
+    // File upload preview
+    $('#proof_document').change(function() {
+        const file = this.files[0];
+        if (file) {
+            $('#selectedFile').text('Selected: ' + file.name).removeClass('hidden');
+        } else {
+            $('#selectedFile').addClass('hidden');
+        }
+    });
+
+    // Form submission
+    $('#topupForm').submit(function(e) {
+        e.preventDefault();
+        submitTopupRequest();
+    });
+});
+
+function loadBankDetails(bankId) {
+    $.get(`{{ url_for('wallet_topup.get_bank_details', bank_id='BANK_ID') }}`.replace('BANK_ID', bankId))
+        .done(function(data) {
+            if (data.success) {
+                const account = data.bank_account;
+                $('#accountHolder').text(account.account_holder_name);
+                $('#bankName').text(account.bank_name);
+                $('#accountNumber').text(account.account_number);
+                $('#ifscCode').text(account.ifsc_code);
+                
+                if (account.upi_id) {
+                    $('#upiId').text(account.upi_id);
+                    $('#upiSection').removeClass('hidden');
+                } else {
+                    $('#upiSection').addClass('hidden');
+                }
+                
+                $('#bankDetails').removeClass('hidden');
+            }
+        })
+        .fail(function() {
+            alert('Failed to load bank details');
+        });
+}
+
+function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const originalIcon = event.target.className;
+        event.target.className = 'fas fa-check text-green-600';
+        setTimeout(() => {
+            event.target.className = originalIcon;
+        }, 1000);
+    });
+}
+
+function submitTopupRequest() {
+    const formData = new FormData($('#topupForm')[0]);
+    const submitBtn = $('#submitBtn');
+    
+    // Disable submit button
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...');
+    
+    $.ajax({
+        url: '{{ url_for("wallet_topup.submit_topup_request") }}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                alert('Top-up request submitted successfully!');
+                window.location.href = '{{ url_for("wallet_topup.my_requests") }}';
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert('Error: ' + (response ? response.message : 'Unknown error occurred'));
+        },
+        complete: function() {
+            submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-2"></i>Submit Request');
+        }
+    });
+}
+</script>
+{% endblock %}
