@@ -80,7 +80,7 @@
                                     Wallet Top-up
                                 </a>                         
                             </li>
-                            {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+                            {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL','MASTER_DISTRIBUTOR','DISTRIBUTOR'] %}
                             <li>                             
                                 <a href="{{ url_for('user_management.index') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     <iconify-icon icon="mdi:account-group" class="text-base"></iconify-icon>

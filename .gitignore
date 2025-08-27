@@ -1,1 +1,42 @@
-.vercel
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env
+*.env
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Databases
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python specific
+*.sqlite3
+*.log
+
+# Build / static files
+staticfiles/
+uploads/
+*.lock
+*.tmp
+
+# Tailwind / CSS build artifacts
+*.css.map
+*.min.css
+*.min.js
+
+# VS Code / IDE settings
+.vscode/
+.idea/
