@@ -1,0 +1,564 @@
+<!-- templates/bank_management/accounts.html -->
+{% extends 'layout/layout.html' %} 
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 9999px;
+  }
+  .status-active { background-color: #dcfce7; color: #166534; }
+  .status-inactive { background-color: #fef2f2; color: #991b1b; }
+  .table-row:hover { background-color: #f9fafb; }
+</style>
+
+<!-- Bank Accounts Management -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('bank_management.add_account_page') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          Add New Account
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card border-0 mb-6">
+    <div class="card-header flex items-end gap-4 p-4 overflow-x-auto hide-scrollbar overflow-hidden bg-white rounded-lg shadow-md border">
+      <div class="flex-shrink-0">
+        <label for="searchInput" class="form-label text-sm font-medium text-gray-700">Search</label>
+        <input type="text" id="searchInput" name="search" placeholder="Account name, number, bank..." 
+               class="form-control border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+      </div>
+
+      <div class="flex-shrink-0">
+        <label class="form-label text-sm font-medium text-gray-700">Status</label>
+        <div>
+          <button id="statusDropdownBtn" data-dropdown-toggle="statusDropdown" data-dropdown-placement="bottom"
+                  class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center"
+                  type="button">
+            All Status
+            <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
+            </svg>
+          </button>
+          <div id="statusDropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-44">
+            <ul class="py-2 text-sm text-gray-700">
+              <li><a href="#" onclick="setStatusFilter('')" class="block px-4 py-2 hover:bg-gray-100">All Status</a></li>
+              <li><a href="#" onclick="setStatusFilter('ACTIVE')" class="block px-4 py-2 hover:bg-gray-100">Active</a></li>
+              <li><a href="#" onclick="setStatusFilter('INACTIVE')" class="block px-4 py-2 hover:bg-gray-100">Inactive</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-shrink-0">
+        <label class="form-label text-sm font-medium text-gray-700">Purpose</label>
+        <div>
+          <button id="purposeDropdownBtn" data-dropdown-toggle="purposeDropdown" data-dropdown-placement="bottom"
+                  class="text-primary-600 focus:bg-primary-600 hover:bg-primary-700 border border-primary-600 hover:text-white focus:text-white focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center"
+                  type="button">
+            All Purpose
+            <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
+            </svg>
+          </button>
+          <div id="purposeDropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-2xl w-48">
+            <ul class="py-2 text-sm text-gray-700">
+              <li><a href="#" onclick="setPurposeFilter('')" class="block px-4 py-2 hover:bg-gray-100">All Purpose</a></li>
+              <li><a href="#" onclick="setPurposeFilter('WALLET_TOPUP')" class="block px-4 py-2 hover:bg-gray-100">Wallet Topup</a></li>
+              <li><a href="#" onclick="setPurposeFilter('SETTLEMENT')" class="block px-4 py-2 hover:bg-gray-100">Settlement</a></li>
+              <li><a href="#" onclick="setPurposeFilter('REFUND')" class="block px-4 py-2 hover:bg-gray-100">Refund</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-shrink-0 gap-2">
+        <button type="button" onclick="searchAccounts()" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-2">
+          Search
+        </button>
+        <button type="button" onclick="clearFilters()" class="btn bg-gray-600 hover:bg-gray-700 text-white rounded-lg px-5 py-2">
+          Clear
+        </button>
+        <button type="button" onclick="exportAccounts()" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-5 py-2">
+          Export Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions -->
+  <div id="bulkActions" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <div class="flex items-center justify-between">
+      <span class="text-sm font-medium text-blue-800">
+        <span id="selectedCount">0</span> accounts selected
+      </span>
+      <div class="flex gap-2">
+        <button onclick="bulkAction('activate')" class="btn bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg">
+          Activate Selected
+        </button>
+        <button onclick="bulkAction('deactivate')" class="btn bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg">
+          Deactivate Selected
+        </button>
+        <button onclick="bulkAction('toggle_visibility')" class="btn bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded-lg">
+          Toggle Visibility
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts Table -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-3 text-left">
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" 
+                     class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+            </th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Account Details</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Bank Info</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Balance</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Purpose</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="accountsTableBody">
+          <!-- Loading state -->
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+              <div class="flex flex-col items-center">
+                <svg class="w-8 h-8 animate-spin text-primary-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Loading bank accounts...
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div id="pagination" class="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
+      <div class="text-sm text-gray-700">
+        Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> accounts
+      </div>
+      <div class="flex gap-2" id="paginationButtons">
+        <!-- Pagination buttons will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+let currentPage = 1;
+let currentFilters = { search: '', status: '', purpose: '' };
+let selectedAccounts = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadAccounts();
+  
+  // Search input debouncing
+  let searchTimeout;
+  document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentFilters.search = this.value;
+      currentPage = 1;
+      loadAccounts();
+    }, 500);
+  });
+});
+
+function loadAccounts(page = 1) {
+  currentPage = page;
+  const params = new URLSearchParams({
+    page: page,
+    per_page: 20,
+    ...currentFilters
+  });
+
+  fetch(`/bank-management/api/accounts?${params}`)
+    .then(response => response.json())
+    .then(data => {
+      displayAccounts(data.accounts || []);
+      updatePagination(data.pagination || {});
+    })
+    .catch(error => {
+      console.error('Error loading accounts:', error);
+      document.getElementById('accountsTableBody').innerHTML = 
+        '<tr><td colspan="7" class="px-4 py-8 text-center text-red-500">Error loading accounts</td></tr>';
+      Toast.fire({
+        icon: 'error',
+        title: 'Failed to load bank accounts'
+      });
+    });
+}
+
+function displayAccounts(accounts) {
+  const tbody = document.getElementById('accountsTableBody');
+  
+  if (accounts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No accounts found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = accounts.map(account => {
+    const purposes = account.purpose ? account.purpose.join(', ') : 'N/A';
+    const statusClass = account.status === 'ACTIVE' ? 'status-active' : 'status-inactive';
+    
+    return `
+      <tr class="table-row border-b">
+        <td class="px-4 py-4">
+          <input type="checkbox" value="${account.id}" onchange="toggleAccountSelection('${account.id}')" 
+                 class="account-checkbox rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+        </td>
+        <td class="px-4 py-4">
+          <div>
+            <h4 class="font-medium text-gray-800">${account.account_name}</h4>
+            <p class="text-sm text-gray-600">${account.account_code}</p>
+            <p class="text-sm text-gray-600">${account.account_number}</p>
+            ${account.is_primary ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Primary</span>' : ''}
+          </div>
+        </td>
+        <td class="px-4 py-4">
+          <div>
+            <p class="font-medium text-gray-800">${account.bank_name}</p>
+            <p class="text-sm text-gray-600">${account.ifsc_code}</p>
+            <p class="text-sm text-gray-600">${account.account_type || 'N/A'}</p>
+          </div>
+        </td>
+        <td class="px-4 py-4">
+          <div>
+            <p class="font-medium text-gray-800">₹${account.current_balance.toLocaleString()}</p>
+            <p class="text-xs text-gray-500">Daily: ₹${account.statistics?.available_daily_limit?.toLocaleString() || 0}</p>
+          </div>
+        </td>
+        <td class="px-4 py-4">
+          <div class="text-sm">
+            ${purposes.split(', ').map(p => `<span class="inline-block bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs mr-1 mb-1">${p}</span>`).join('')}
+          </div>
+        </td>
+        <td class="px-4 py-4">
+          <span class="status-badge ${statusClass}">${account.status}</span>
+        </td>
+        <td class="px-4 py-4">
+          <div class="flex gap-2">
+            <a href="/bank-management/account/${account.id}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              View
+            </a>
+            <button onclick="toggleAccountStatus('${account.id}', '${account.status}')" 
+                    class="text-${account.status === 'ACTIVE' ? 'red' : 'green'}-600 hover:text-${account.status === 'ACTIVE' ? 'red' : 'green'}-800 text-sm font-medium">
+              ${account.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updatePagination(pagination) {
+  document.getElementById('showingStart').textContent = ((pagination.page - 1) * pagination.per_page) + 1;
+  document.getElementById('showingEnd').textContent = Math.min(pagination.page * pagination.per_page, pagination.total);
+  document.getElementById('totalRecords').textContent = pagination.total;
+  
+  const paginationContainer = document.getElementById('paginationButtons');
+  let buttons = '';
+  
+  if (pagination.has_prev) {
+    buttons += `<button onclick="loadAccounts(${pagination.page - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Previous</button>`;
+  }
+  
+  const startPage = Math.max(1, pagination.page - 2);
+  const endPage = Math.min(pagination.pages, pagination.page + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const isActive = i === pagination.page;
+    buttons += `<button onclick="loadAccounts(${i})" class="px-3 py-2 text-sm font-medium ${isActive ? 'text-primary-600 bg-primary-50 border-primary-500' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-100'} border rounded-lg">${i}</button>`;
+  }
+  
+  if (pagination.has_next) {
+    buttons += `<button onclick="loadAccounts(${pagination.page + 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Next</button>`;
+  }
+  
+  paginationContainer.innerHTML = buttons;
+}
+
+function setStatusFilter(status) {
+  currentFilters.status = status;
+  document.getElementById('statusDropdownBtn').innerHTML = `
+    ${status ? status : 'All Status'}
+    <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
+    </svg>
+  `;
+  currentPage = 1;
+  loadAccounts();
+}
+
+function setPurposeFilter(purpose) {
+  currentFilters.purpose = purpose;
+  document.getElementById('purposeDropdownBtn').innerHTML = `
+    ${purpose ? purpose.replace('_', ' ') : 'All Purpose'}
+    <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
+    </svg>
+  `;
+  currentPage = 1;
+  loadAccounts();
+}
+
+function searchAccounts() {
+  currentFilters.search = document.getElementById('searchInput').value;
+  currentPage = 1;
+  loadAccounts();
+}
+
+function clearFilters() {
+  currentFilters = { search: '', status: '', purpose: '' };
+  document.getElementById('searchInput').value = '';
+  document.getElementById('statusDropdownBtn').innerHTML = `All Status <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" /></svg>`;
+  document.getElementById('purposeDropdownBtn').innerHTML = `All Purpose <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" /></svg>`;
+  currentPage = 1;
+  loadAccounts();
+}
+
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.account-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+    if (selectAll.checked) {
+      selectedAccounts.add(checkbox.value);
+    } else {
+      selectedAccounts.delete(checkbox.value);
+    }
+  });
+  
+  updateBulkActions();
+}
+
+function toggleAccountSelection(accountId) {
+  if (selectedAccounts.has(accountId)) {
+    selectedAccounts.delete(accountId);
+  } else {
+    selectedAccounts.add(accountId);
+  }
+  
+  updateBulkActions();
+}
+
+function updateBulkActions() {
+  const bulkActionsDiv = document.getElementById('bulkActions');
+  const selectedCount = document.getElementById('selectedCount');
+  
+  if (selectedAccounts.size > 0) {
+    bulkActionsDiv.classList.remove('hidden');
+    selectedCount.textContent = selectedAccounts.size;
+  } else {
+    bulkActionsDiv.classList.add('hidden');
+  }
+}
+
+function toggleAccountStatus(accountId, currentStatus) {
+  const action = currentStatus === 'ACTIVE' ? 'deactivate' : 'activate';
+  const actionText = currentStatus === 'ACTIVE' ? 'deactivate' : 'activate';
+  
+  Swal.fire({
+    title: `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Account`,
+    text: `Are you sure you want to ${actionText} this bank account?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: currentStatus === 'ACTIVE' ? '#dc2626' : '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: `Yes, ${actionText}!`,
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      performAccountAction(accountId, 'toggle-status');
+    }
+  });
+}
+
+function bulkAction(action) {
+  if (selectedAccounts.size === 0) return;
+  
+  const actionMap = {
+    'activate': 'activate selected accounts',
+    'deactivate': 'deactivate selected accounts', 
+    'toggle_visibility': 'toggle visibility for selected accounts'
+  };
+  
+  Swal.fire({
+    title: 'Bulk Action Confirmation',
+    text: `Are you sure you want to ${actionMap[action]}?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, proceed!',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      performBulkAction(action);
+    }
+  });
+}
+
+function performAccountAction(accountId, action) {
+  Swal.fire({
+    title: 'Processing...',
+    text: 'Please wait while we update the account',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  fetch(`/bank-management/api/accounts/${accountId}/${action}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    Swal.close();
+    if (data.error) {
+      Swal.fire({
+        title: 'Error!',
+        text: data.error,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6'
+      });
+    } else {
+      Toast.fire({
+        icon: 'success',
+        title: data.message
+      });
+      loadAccounts(currentPage);
+    }
+  })
+  .catch(error => {
+    Swal.close();
+    console.error('Error:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'An error occurred while performing the action',
+      icon: 'error',
+      confirmButtonColor: '#3b82f6'
+    });
+  });
+}
+
+function performBulkAction(action) {
+  Swal.fire({
+    title: 'Processing...',
+    text: 'Please wait while we update the accounts',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  fetch('/bank-management/api/accounts/bulk-update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      account_ids: Array.from(selectedAccounts),
+      action: action
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    Swal.close();
+    if (data.error) {
+      Swal.fire({
+        title: 'Error!',
+        text: data.error,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6'
+      });
+    } else {
+      Toast.fire({
+        icon: 'success',
+        title: data.message
+      });
+      selectedAccounts.clear();
+      document.getElementById('selectAll').checked = false;
+      updateBulkActions();
+      loadAccounts(currentPage);
+    }
+  })
+  .catch(error => {
+    Swal.close();
+    console.error('Error:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'An error occurred while performing bulk action',
+      icon: 'error',
+      confirmButtonColor: '#3b82f6'
+    });
+  });
+}
+
+function exportAccounts() {
+  const params = new URLSearchParams(currentFilters);
+  window.open(`/bank-management/api/accounts/export?${params}`, '_blank');
+  
+  Toast.fire({
+    icon: 'info',
+    title: 'Export started! File will download shortly.'
+  });
+}
+</script>
+
+{% endblock %}

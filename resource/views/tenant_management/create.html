@@ -1,0 +1,299 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em;
+    padding-right: 2.5rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div>
+        <a href="{{ url_for('tenant_management.index') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Form -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <form id="createTenantForm" method="POST" class="p-6">
+      
+      <!-- Organization Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Organization Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tenant_name" class="form-label">Organization Name *</label>
+            <input type="text" id="tenant_name" name="tenant_name" class="form-control" 
+                   placeholder="Enter organization name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="domain" class="form-label">Custom Domain (Optional)</label>
+            <input type="text" id="domain" name="domain" class="form-control" 
+                   placeholder="example.com">
+            <small class="text-gray-500">Leave empty to auto-generate subdomain</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscription Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Subscription Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="subscription_plan" class="form-label">Subscription Plan</label>
+            <select id="subscription_plan" name="subscription_plan" class="form-control form-select">
+              <option value="BASIC">Basic Plan</option>
+              <option value="STANDARD">Standard Plan</option>
+              <option value="PREMIUM">Premium Plan</option>
+              <option value="ENTERPRISE">Enterprise Plan</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="subscription_months" class="form-label">Subscription Duration (Months)</label>
+            <select id="subscription_months" name="subscription_months" class="form-control form-select">
+              <option value="1">1 Month</option>
+              <option value="3">3 Months</option>
+              <option value="6">6 Months</option>
+              <option value="12" selected>12 Months</option>
+              <option value="24">24 Months</option>
+              <option value="36">36 Months</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin User Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Admin User Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin_full_name" class="form-label">Full Name *</label>
+            <input type="text" id="admin_full_name" name="admin_full_name" class="form-control" 
+                   placeholder="Enter admin full name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="admin_username" class="form-label">Username *</label>
+            <input type="text" id="admin_username" name="admin_username" class="form-control" 
+                   placeholder="Enter username" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin_email" class="form-label">Email Address *</label>
+            <input type="email" id="admin_email" name="admin_email" class="form-control" 
+                   placeholder="Enter email address" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="admin_phone" class="form-label">Phone Number *</label>
+            <input type="tel" id="admin_phone" name="admin_phone" class="form-control" 
+                   placeholder="Enter phone number" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="admin_password" class="form-label">Password *</label>
+          <input type="password" id="admin_password" name="admin_password" class="form-control" 
+                 placeholder="Enter secure password" required>
+          <small class="text-gray-500">Minimum 8 characters with uppercase, lowercase, number and special character</small>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex gap-4 pt-6 border-t">
+        <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create Tenant
+        </button>
+        <button type="button" onclick="resetForm()" class="btn bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium">
+          Reset Form
+        </button>
+        <a href="{{ url_for('tenant_management.index') }}" 
+           class="btn bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form submission confirmation
+  document.getElementById('createTenantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const tenantName = document.getElementById('tenant_name').value;
+    const adminName = document.getElementById('admin_full_name').value;
+    
+    if (!tenantName || !adminName) {
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in all required fields',
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
+      return;
+    }
+    
+    // Password validation
+    const password = document.getElementById('admin_password').value;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    
+    if (!passwordRegex.test(password)) {
+      Swal.fire({
+        title: 'Invalid Password',
+        text: 'Password must be at least 8 characters with uppercase, lowercase, number and special character',
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
+      return;
+    }
+    
+    Swal.fire({
+      title: 'Create Tenant Organization?',
+      html: `
+        <div style="text-align: left; margin: 20px 0;">
+          <p style="color: #6B7280; margin-bottom: 16px;">Please confirm the tenant details:</p>
+          <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
+            <div style="margin-bottom: 8px;"><strong>Organization:</strong> ${tenantName}</div>
+            <div style="margin-bottom: 8px;"><strong>Admin User:</strong> ${adminName}</div>
+            <div><strong>Username:</strong> ${document.getElementById('admin_username').value}</div>
+          </div>
+          <p style="font-size: 14px; color: #6B7280; margin-top: 16px;">Once created, the admin can login and manage the organization.</p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Create Tenant',
+      cancelButtonText: 'Review Details',
+      confirmButtonColor: '#3B82F6',
+      cancelButtonColor: '#6B7280'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading
+        Swal.fire({
+          title: 'Creating Tenant...',
+          text: 'Please wait while we set up the organization',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
+        // Submit the form
+        this.submit();
+      }
+    });
+  });
+
+  // Auto-generate username from full name
+  document.getElementById('admin_full_name').addEventListener('input', function() {
+    const fullName = this.value.toLowerCase().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '');
+    if (fullName && !document.getElementById('admin_username').value) {
+      document.getElementById('admin_username').value = fullName;
+    }
+  });
+
+  // Auto-generate domain from tenant name
+  document.getElementById('tenant_name').addEventListener('input', function() {
+    const tenantName = this.value.toLowerCase().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '');
+    if (tenantName && !document.getElementById('domain').value) {
+      // Just clear the placeholder, let user decide
+    }
+  });
+});
+
+function resetForm() {
+  Swal.fire({
+    title: 'Reset Form?',
+    text: 'All entered data will be lost',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Reset',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#EF4444'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      document.getElementById('createTenantForm').reset();
+      Swal.fire({
+        title: 'Form Reset',
+        text: 'All fields have been cleared',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }
+  });
+}
+</script>
+
+{% endblock %}

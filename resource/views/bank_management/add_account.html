@@ -1,0 +1,793 @@
+<!-- templates/bank_management/add_account.html -->
+{% extends 'layout/layout.html' %} 
+{% block content %}
+
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em;
+    padding-right: 2.5rem;
+  }
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .checkbox-group input[type="checkbox"] {
+    margin: 0;
+  }
+  .purpose-checkbox {
+    background: #f9fafb;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  .error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  .success-message {
+    color: #059669;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* SweetAlert2 Custom Styles */
+  .swal2-container {
+    z-index: 10000 !important;
+  }
+  
+  .swal2-popup {
+    font-family: inherit !important;
+    border-radius: 12px !important;
+  }
+  
+  .swal2-actions {
+    gap: 12px !important;
+    margin-top: 24px !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+  
+  .swal2-confirm {
+    background-color: #3B82F6 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    min-width: 120px !important;
+  }
+  
+  .swal2-cancel {
+    background-color: #6B7280 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    min-width: 120px !important;
+  }
+  
+  .swal2-confirm:hover {
+    background-color: #2563EB !important;
+  }
+  
+  .swal2-cancel:hover {
+    background-color: #4B5563 !important;
+  }
+  
+  .swal2-html-container {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+</style>
+
+<!-- Include SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Add Bank Account -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div>
+        <button onclick="goBackToAccounts()" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          Back to Accounts
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Form -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <form id="addAccountForm" class="p-6">
+      
+      <!-- Basic Information -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Basic Information</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="account_name" class="form-label">Account Name *</label>
+            <input type="text" id="account_name" name="account_name" class="form-control" 
+                   placeholder="Enter account name" required>
+            <div id="account_name_error" class="error-message hidden"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="account_holder_name" class="form-label">Account Holder Name *</label>
+            <input type="text" id="account_holder_name" name="account_holder_name" class="form-control" 
+                   placeholder="Enter account holder name" required>
+            <div id="account_holder_name_error" class="error-message hidden"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="account_number" class="form-label">Account Number *</label>
+            <input type="text" id="account_number" name="account_number" class="form-control" 
+                   placeholder="Enter account number" required>
+            <div id="account_number_error" class="error-message hidden"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="account_type" class="form-label">Account Type *</label>
+            <select id="account_type" name="account_type" class="form-control form-select" required>
+              <option value="">Select account type</option>
+              <option value="CURRENT">Current Account</option>
+              <option value="SAVINGS">Savings Account</option>
+              <option value="ESCROW">Escrow Account</option>
+              <option value="NODAL">Nodal Account</option>
+            </select>
+            <div id="account_type_error" class="error-message hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bank Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Bank Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bank_name" class="form-label">Bank Name *</label>
+            <input type="text" id="bank_name" name="bank_name" class="form-control" 
+                   placeholder="Enter bank name" required>
+            <div id="bank_name_error" class="error-message hidden"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="ifsc_code" class="form-label">IFSC Code *</label>
+            <input type="text" id="ifsc_code" name="ifsc_code" class="form-control" 
+                   placeholder="Enter IFSC code" required>
+            <div id="ifsc_code_error" class="error-message hidden"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branch_name" class="form-label">Branch Name</label>
+            <input type="text" id="branch_name" name="branch_name" class="form-control" 
+                   placeholder="Enter branch name">
+          </div>
+          
+          <div class="form-group">
+            <label for="upi_id" class="form-label">UPI ID</label>
+            <input type="text" id="upi_id" name="upi_id" class="form-control" 
+                   placeholder="Enter UPI ID">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="branch_address" class="form-label">Branch Address</label>
+          <textarea id="branch_address" name="branch_address" class="form-control" 
+                    rows="3" placeholder="Enter branch address"></textarea>
+        </div>
+      </div>
+
+      <!-- Financial Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Financial Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="current_balance" class="form-label">Current Balance</label>
+            <input type="number" id="current_balance" name="current_balance" class="form-control" 
+                   placeholder="0" min="0" step="0.01" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="minimum_balance" class="form-label">Minimum Balance</label>
+            <input type="number" id="minimum_balance" name="minimum_balance" class="form-control" 
+                   placeholder="10000" min="0" step="0.01" value="10000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="daily_limit" class="form-label">Daily Limit</label>
+            <input type="number" id="daily_limit" name="daily_limit" class="form-control" 
+                   placeholder="500000" min="0" step="0.01" value="500000">
+          </div>
+          
+          <div class="form-group">
+            <label for="monthly_limit" class="form-label">Monthly Limit</label>
+            <input type="number" id="monthly_limit" name="monthly_limit" class="form-control" 
+                   placeholder="10000000" min="0" step="0.01" value="10000000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pan_number" class="form-label">PAN Number</label>
+            <input type="text" id="pan_number" name="pan_number" class="form-control" 
+                   placeholder="Enter PAN number" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+          </div>
+          
+          <div class="form-group">
+            <label for="gstin" class="form-label">GSTIN</label>
+            <input type="text" id="gstin" name="gstin" class="form-control" 
+                   placeholder="Enter GSTIN">
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Purpose -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Account Purpose</h3>
+        
+        <div class="purpose-checkbox">
+          <p class="text-sm text-gray-600 mb-3">Select the purposes this account will be used for:</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_wallet_topup" name="purpose" value="WALLET_TOPUP" checked>
+              <label for="purpose_wallet_topup" class="text-sm">Wallet Topup</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_settlement" name="purpose" value="SETTLEMENT">
+              <label for="purpose_settlement" class="text-sm">Settlement</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_refund" name="purpose" value="REFUND">
+              <label for="purpose_refund" class="text-sm">Refund</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_payout" name="purpose" value="PAYOUT">
+              <label for="purpose_payout" class="text-sm">Payout</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Account Settings</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priority" class="form-label">Priority</label>
+            <input type="number" id="priority" name="priority" class="form-control" 
+                   placeholder="1" min="1" max="10" value="1">
+            <small class="text-gray-500">1 = Highest priority, 10 = Lowest priority</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="display_order" class="form-label">Display Order</label>
+            <input type="number" id="display_order" name="display_order" class="form-control" 
+                   placeholder="1" min="1" value="1">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_primary" name="is_primary">
+              <label for="is_primary" class="text-sm font-medium">Primary Account</label>
+            </div>
+            
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_topup" name="is_default_topup">
+              <label for="is_default_topup" class="text-sm font-medium">Default for Topup</label>
+            </div>
+          </div>
+          
+          <div>
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_settlement" name="is_default_settlement">
+              <label for="is_default_settlement" class="text-sm font-medium">Default for Settlement</label>
+            </div>
+            
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_refund" name="is_default_refund">
+              <label for="is_default_refund" class="text-sm font-medium">Default for Refund</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkbox-group mb-3">
+          <input type="checkbox" id="is_visible_to_users" name="is_visible_to_users" checked>
+          <label for="is_visible_to_users" class="text-sm font-medium">Visible to Users</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="auto_settlement" name="auto_settlement">
+          <label for="auto_settlement" class="text-sm font-medium">Auto Settlement</label>
+        </div>
+      </div>
+
+      <!-- Settlement Settings -->
+      <div class="mb-8" id="settlement_settings" style="display: none;">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Settlement Settings</h3>
+        
+        <div class="form-group">
+          <label for="settlement_schedule" class="form-label">Settlement Schedule</label>
+          <select id="settlement_schedule" name="settlement_schedule" class="form-control form-select">
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="ON_DEMAND">On Demand</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex gap-4 pt-6 border-t">
+        <button type="submit" id="submitBtn" class="btn bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium">
+          Create Account
+        </button>
+        <button type="button" onclick="resetFormWithConfirmation()" class="btn bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium">
+          Reset
+        </button>
+        <button type="button" onclick="cancelForm()" class="btn bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium">
+          Cancel
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Show welcome message
+  Swal.fire({
+    title: 'Create New Account',
+    text: 'Fill in the details to create a new bank account',
+    icon: 'info',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    position: 'top-end',
+    toast: true
+  });
+
+  // Auto settlement toggle
+  document.getElementById('auto_settlement').addEventListener('change', function() {
+    const settlementSettings = document.getElementById('settlement_settings');
+    if (this.checked) {
+      settlementSettings.style.display = 'block';
+      Swal.fire({
+        title: 'Auto Settlement Enabled',
+        text: 'Please configure settlement schedule below',
+        icon: 'info',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    } else {
+      settlementSettings.style.display = 'none';
+    }
+  });
+
+  // IFSC code lookup and validation
+  document.getElementById('ifsc_code').addEventListener('blur', function() {
+    const ifsc = this.value.trim().toUpperCase();
+    if (ifsc.length === 11) {
+      this.value = ifsc;
+      // Show validation success
+      Swal.fire({
+        title: 'IFSC Code Valid',
+        text: 'IFSC code format is correct',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    } else if (ifsc.length > 0 && ifsc.length !== 11) {
+      Swal.fire({
+        title: 'Invalid IFSC Code',
+        text: 'IFSC code must be 11 characters long',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }
+  });
+
+  // Form submission with SweetAlert confirmation
+  document.getElementById('addAccountForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showSubmissionConfirmation();
+  });
+
+  // Primary account warning
+  document.getElementById('is_primary').addEventListener('change', function() {
+    if (this.checked) {
+      Swal.fire({
+        title: 'Primary Account',
+        text: 'This account will be set as the primary account for operations',
+        icon: 'warning',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }
+  });
+});
+
+// SweetAlert confirmation before form submission - FIXED VERSION
+function showSubmissionConfirmation() {
+  const accountName = document.getElementById('account_name').value;
+  const accountNumber = document.getElementById('account_number').value;
+  const bankName = document.getElementById('bank_name').value;
+  const accountType = document.getElementById('account_type').value;
+  
+  // Basic validation
+  if (!accountName || !accountNumber || !bankName || !accountType) {
+    Swal.fire({
+      title: 'Missing Information',
+      text: 'Please fill in all required fields marked with *',
+      icon: 'error',
+      confirmButtonColor: '#EF4444',
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+
+  // Fixed SweetAlert configuration - simpler approach that works
+  Swal.fire({
+    title: 'Create Bank Account?',
+    html: `
+      <div style="text-align: left; margin: 20px 0;">
+        <p style="color: #6B7280; margin-bottom: 16px;">Please confirm the account details:</p>
+        <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; margin: 16px 0;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 500;">Account Name:</span>
+            <span>${accountName}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 500;">Account Number:</span>
+            <span>${accountNumber}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 500;">Bank:</span>
+            <span>${bankName}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 500;">Type:</span>
+            <span>${accountType}</span>
+          </div>
+        </div>
+        <p style="font-size: 14px; color: #6B7280;">Once created, you can modify these details from the account settings.</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Create Account',
+    cancelButtonText: 'Review Details',
+    confirmButtonColor: '#3B82F6',
+    cancelButtonColor: '#6B7280',
+    allowOutsideClick: false,
+    allowEscapeKey: true,
+    buttonsStyling: true,
+    focusConfirm: true,
+    width: '500px'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      submitForm();
+    }
+  });
+}
+
+function submitForm() {
+  // Show loading state
+  Swal.fire({
+    title: 'Creating Account...',
+    html: `
+      <div style="text-align: center;">
+        <div style="display: inline-block; width: 32px; height: 32px; border: 3px solid #f3f3f3; border-top: 3px solid #3B82F6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+        <p>Please wait while we create your account...</p>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false
+  });
+
+  const form = document.getElementById('addAccountForm');
+  
+  // Clear previous errors
+  clearErrors();
+  
+  // Collect form data
+  const formData = new FormData(form);
+  const data = {};
+  
+  // Convert FormData to object
+  for (let [key, value] of formData.entries()) {
+    if (key === 'purpose') {
+      if (!data[key]) data[key] = [];
+      data[key].push(value);
+    } else if (['is_primary', 'is_default_topup', 'is_default_settlement', 'is_default_refund', 'is_visible_to_users', 'auto_settlement'].includes(key)) {
+      data[key] = true;
+    } else {
+      data[key] = value;
+    }
+  }
+  
+  // Set unchecked checkboxes to false
+  const checkboxFields = ['is_primary', 'is_default_topup', 'is_default_settlement', 'is_default_refund', 'is_visible_to_users', 'auto_settlement'];
+  checkboxFields.forEach(field => {
+    if (!data[field]) data[field] = false;
+  });
+  
+  // Convert numeric fields
+  const numericFields = ['current_balance', 'minimum_balance', 'daily_limit', 'monthly_limit', 'priority', 'display_order'];
+  numericFields.forEach(field => {
+    if (data[field]) {
+      data[field] = parseFloat(data[field]);
+    }
+  });
+
+  // Submit to API
+  fetch('/bank-management/api/accounts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.error) {
+      handleErrors(result.error);
+    } else {
+      showSuccessAlert(result);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    Swal.fire({
+      title: 'Account Creation Failed',
+      html: `
+        <div style="text-align: center;">
+          <div style="font-size: 48px; color: #EF4444; margin-bottom: 16px;">❌</div>
+          <p style="color: #374151;">An error occurred while creating the account. Please try again.</p>
+          <p style="font-size: 12px; color: #6B7280; margin-top: 8px;">Error: ${error.message}</p>
+        </div>
+      `,
+      icon: 'error',
+      confirmButtonText: 'Try Again',
+      confirmButtonColor: '#EF4444'
+    });
+  });
+}
+
+function showSuccessAlert(result) {
+  Swal.fire({
+    title: 'Account Created Successfully!',
+    html: `
+      <div style="text-align: center;">
+        <div style="font-size: 48px; color: #10B981; margin-bottom: 16px;">✅</div>
+        <p style="color: #374151; margin-bottom: 16px;">The bank account has been created successfully and is ready to use.</p>
+        <div style="background: #ECFDF5; padding: 16px; border-radius: 8px; margin: 16px 0;">
+          <p style="font-size: 14px; color: #065F46;"><strong>Account ID:</strong> ${result.account_id || 'Generated'}</p>
+        </div>
+      </div>
+    `,
+    icon: 'success',
+    showCancelButton: true,
+    confirmButtonText: 'View All Accounts',
+    cancelButtonText: 'Create Another',
+    confirmButtonColor: '#10B981',
+    cancelButtonColor: '#6B7280'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = "{{ url_for('bank_management.bank_accounts_page') }}";
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      resetForm();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+function handleErrors(error) {
+  Swal.close(); // Close loading dialog
+  
+  if (typeof error === 'string') {
+    Swal.fire({
+      title: 'Validation Error',
+      text: error,
+      icon: 'error',
+      confirmButtonColor: '#EF4444'
+    });
+  } else if (typeof error === 'object') {
+    // Handle field-specific errors
+    let errorMessages = [];
+    Object.keys(error).forEach(field => {
+      const errorElement = document.getElementById(`${field}_error`);
+      if (errorElement) {
+        errorElement.textContent = error[field];
+        errorElement.classList.remove('hidden');
+      }
+      errorMessages.push(`${field.replace('_', ' ')}: ${error[field]}`);
+    });
+    
+    Swal.fire({
+      title: 'Please Fix These Errors',
+      html: `<ul style="text-align: left; font-size: 14px;">${errorMessages.map(msg => `<li style="margin-bottom: 4px;">• ${msg}</li>`).join('')}</ul>`,
+      icon: 'error',
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+function clearErrors() {
+  const errorElements = document.querySelectorAll('.error-message');
+  errorElements.forEach(element => {
+    element.textContent = '';
+    element.classList.add('hidden');
+  });
+}
+
+function resetFormWithConfirmation() {
+  Swal.fire({
+    title: 'Reset Form?',
+    text: 'All entered data will be lost. This action cannot be undone.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Reset',
+    cancelButtonText: 'Keep Data',
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#6B7280'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      resetForm();
+      Swal.fire({
+        title: 'Form Reset',
+        text: 'All fields have been cleared successfully',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }
+  });
+}
+
+function resetForm() {
+  document.getElementById('addAccountForm').reset();
+  
+  // Reset checkboxes to default state
+  document.getElementById('purpose_wallet_topup').checked = true;
+  document.getElementById('is_visible_to_users').checked = true;
+  
+  // Hide settlement settings
+  document.getElementById('settlement_settings').style.display = 'none';
+  
+  // Clear any error messages
+  clearErrors();
+}
+
+function cancelForm() {
+  Swal.fire({
+    title: 'Cancel Account Creation?',
+    text: 'Any unsaved data will be lost.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Cancel',
+    cancelButtonText: 'Continue Editing',
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#6B7280'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = "{{ url_for('bank_management.bank_accounts_page') }}";
+    }
+  });
+}
+
+function goBackToAccounts() {
+  // Check if form has data
+  const form = document.getElementById('addAccountForm');
+  const formData = new FormData(form);
+  let hasData = false;
+  
+  for (let [key, value] of formData.entries()) {
+    if (value && value.trim() !== '' && value !== '0') {
+      hasData = true;
+      break;
+    }
+  }
+  
+  if (hasData) {
+    Swal.fire({
+      title: 'Unsaved Changes',
+      text: 'You have unsaved changes. Are you sure you want to go back?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Go Back',
+      cancelButtonText: 'Stay Here',
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "{{ url_for('bank_management.bank_accounts_page') }}";
+      }
+    });
+  } else {
+    window.location.href = "{{ url_for('bank_management.bank_accounts_page') }}";
+  }
+}
+</script>
+
+{% endblock %}

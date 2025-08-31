@@ -1,0 +1,667 @@
+<!-- templates/bank_management/edit_account.html -->
+{% extends 'layout/layout.html' %} 
+{% block content %}
+
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-control:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+  }
+  .form-select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em;
+    padding-right: 2.5rem;
+  }
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .checkbox-group input[type="checkbox"] {
+    margin: 0;
+  }
+  .purpose-checkbox {
+    background: #f9fafb;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  .error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+</style>
+
+<!-- Edit Bank Account -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Edit Bank Account</h1>
+        <p class="text-gray-600 mt-1">Update bank account information and settings</p>
+      </div>
+      <div class="flex gap-3">
+        <a id="backToDetails" href="#" class="btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+          Back to Details
+        </a>
+        <a href="{{ url_for('bank_management.bank_accounts_page') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          Back to Accounts
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Form -->
+  <div class="bg-white rounded-lg shadow-md border relative" id="formContainer">
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="flex flex-col items-center">
+        <svg class="w-8 h-8 animate-spin text-primary-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <p class="text-gray-600">Loading account details...</p>
+      </div>
+    </div>
+
+    <form id="editAccountForm" class="p-6">
+      
+      <!-- Basic Information -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Basic Information</h3>
+        
+        <div class="info-box">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <p class="text-sm text-blue-800 font-medium">Important Note</p>
+              <p class="text-sm text-blue-700 mt-1">Account number and IFSC code cannot be modified for security reasons. Contact support if these need to be changed.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="account_name" class="form-label">Account Name *</label>
+            <input type="text" id="account_name" name="account_name" class="form-control" 
+                   placeholder="Enter account name" required>
+            <div id="account_name_error" class="error-message hidden"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="account_holder_name" class="form-label">Account Holder Name *</label>
+            <input type="text" id="account_holder_name" name="account_holder_name" class="form-control" 
+                   placeholder="Enter account holder name" required>
+            <div id="account_holder_name_error" class="error-message hidden"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="account_number" class="form-label">Account Number</label>
+            <input type="text" id="account_number" name="account_number" class="form-control" 
+                   placeholder="Account number" disabled>
+            <small class="text-gray-500">Account number cannot be modified</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="account_type" class="form-label">Account Type</label>
+            <input type="text" id="account_type" name="account_type" class="form-control" 
+                   placeholder="Account type" disabled>
+            <small class="text-gray-500">Account type cannot be modified</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bank Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Bank Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bank_name" class="form-label">Bank Name</label>
+            <input type="text" id="bank_name" name="bank_name" class="form-control" 
+                   placeholder="Bank name" disabled>
+            <small class="text-gray-500">Bank name cannot be modified</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="ifsc_code" class="form-label">IFSC Code</label>
+            <input type="text" id="ifsc_code" name="ifsc_code" class="form-control" 
+                   placeholder="IFSC code" disabled>
+            <small class="text-gray-500">IFSC code cannot be modified</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branch_name" class="form-label">Branch Name</label>
+            <input type="text" id="branch_name" name="branch_name" class="form-control" 
+                   placeholder="Enter branch name">
+          </div>
+          
+          <div class="form-group">
+            <label for="upi_id" class="form-label">UPI ID</label>
+            <input type="text" id="upi_id" name="upi_id" class="form-control" 
+                   placeholder="Enter UPI ID">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="branch_address" class="form-label">Branch Address</label>
+          <textarea id="branch_address" name="branch_address" class="form-control" 
+                    rows="3" placeholder="Enter branch address"></textarea>
+        </div>
+      </div>
+
+      <!-- Financial Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Financial Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="current_balance" class="form-label">Current Balance</label>
+            <input type="number" id="current_balance" name="current_balance" class="form-control" 
+                   placeholder="0" min="0" step="0.01">
+            <small class="text-gray-500">Current account balance</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="minimum_balance" class="form-label">Minimum Balance</label>
+            <input type="number" id="minimum_balance" name="minimum_balance" class="form-control" 
+                   placeholder="10000" min="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="daily_limit" class="form-label">Daily Limit</label>
+            <input type="number" id="daily_limit" name="daily_limit" class="form-control" 
+                   placeholder="500000" min="0" step="0.01">
+          </div>
+          
+          <div class="form-group">
+            <label for="monthly_limit" class="form-label">Monthly Limit</label>
+            <input type="number" id="monthly_limit" name="monthly_limit" class="form-control" 
+                   placeholder="10000000" min="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pan_number" class="form-label">PAN Number</label>
+            <input type="text" id="pan_number" name="pan_number" class="form-control" 
+                   placeholder="Enter PAN number" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+          </div>
+          
+          <div class="form-group">
+            <label for="gstin" class="form-label">GSTIN</label>
+            <input type="text" id="gstin" name="gstin" class="form-control" 
+                   placeholder="Enter GSTIN">
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Purpose -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Account Purpose</h3>
+        
+        <div class="purpose-checkbox">
+          <p class="text-sm text-gray-600 mb-3">Select the purposes this account will be used for:</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_wallet_topup" name="purpose" value="WALLET_TOPUP">
+              <label for="purpose_wallet_topup" class="text-sm">Wallet Topup</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_settlement" name="purpose" value="SETTLEMENT">
+              <label for="purpose_settlement" class="text-sm">Settlement</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_refund" name="purpose" value="REFUND">
+              <label for="purpose_refund" class="text-sm">Refund</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="purpose_payout" name="purpose" value="PAYOUT">
+              <label for="purpose_payout" class="text-sm">Payout</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Account Settings</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priority" class="form-label">Priority</label>
+            <input type="number" id="priority" name="priority" class="form-control" 
+                   placeholder="1" min="1" max="10">
+            <small class="text-gray-500">1 = Highest priority, 10 = Lowest priority</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="display_order" class="form-label">Display Order</label>
+            <input type="number" id="display_order" name="display_order" class="form-control" 
+                   placeholder="1" min="1">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_primary" name="is_primary">
+              <label for="is_primary" class="text-sm font-medium">Primary Account</label>
+              <div class="text-xs text-gray-500 ml-6">Only one account can be primary</div>
+            </div>
+            
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_topup" name="is_default_topup">
+              <label for="is_default_topup" class="text-sm font-medium">Default for Topup</label>
+            </div>
+          </div>
+          
+          <div>
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_settlement" name="is_default_settlement">
+              <label for="is_default_settlement" class="text-sm font-medium">Default for Settlement</label>
+            </div>
+            
+            <div class="checkbox-group mb-3">
+              <input type="checkbox" id="is_default_refund" name="is_default_refund">
+              <label for="is_default_refund" class="text-sm font-medium">Default for Refund</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkbox-group mb-3">
+          <input type="checkbox" id="is_visible_to_users" name="is_visible_to_users">
+          <label for="is_visible_to_users" class="text-sm font-medium">Visible to Users</label>
+          <div class="text-xs text-gray-500 ml-6">Whether users can see this account in the interface</div>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="auto_settlement" name="auto_settlement">
+          <label for="auto_settlement" class="text-sm font-medium">Auto Settlement</label>
+          <div class="text-xs text-gray-500 ml-6">Enable automatic settlement for this account</div>
+        </div>
+      </div>
+
+      <!-- Settlement Settings -->
+      <div class="mb-8" id="settlement_settings" style="display: none;">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Settlement Settings</h3>
+        
+        <div class="form-group">
+          <label for="settlement_schedule" class="form-label">Settlement Schedule</label>
+          <select id="settlement_schedule" name="settlement_schedule" class="form-control form-select">
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="ON_DEMAND">On Demand</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex gap-4 pt-6 border-t">
+        <button type="submit" id="submitBtn" class="btn bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium">
+          Update Account
+        </button>
+        <button type="button" onclick="resetForm()" class="btn bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-3 rounded-lg font-medium">
+          Reset Changes
+        </button>
+        <button type="button" id="cancelBtn" class="btn bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium">
+          Cancel
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+    <div class="p-6 text-center">
+      <div class="mb-4">
+        <svg class="w-16 h-16 text-green-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Account Updated Successfully!</h3>
+      <p class="text-gray-600 mb-4">The bank account details have been updated successfully.</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="goBackToDetails()" class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          Back to Account Details
+        </button>
+        <a href="{{ url_for('bank_management.bank_accounts_page') }}" 
+           class="btn bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+          All Accounts
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentAccountId = null;
+let originalAccountData = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Extract account ID from URL
+  const pathParts = window.location.pathname.split('/');
+  const editIndex = pathParts.indexOf('edit-account');
+  if (editIndex !== -1 && editIndex + 1 < pathParts.length) {
+    currentAccountId = pathParts[editIndex + 1];
+  }
+  
+  // Set back button URL
+  if (currentAccountId) {
+    document.getElementById('backToDetails').href = `/bank-management/account/${currentAccountId}`;
+    loadAccountData();
+  }
+
+  // Auto settlement toggle
+  document.getElementById('auto_settlement').addEventListener('change', function() {
+    const settlementSettings = document.getElementById('settlement_settings');
+    if (this.checked) {
+      settlementSettings.style.display = 'block';
+    } else {
+      settlementSettings.style.display = 'none';
+    }
+  });
+
+  // Form submission
+  document.getElementById('editAccountForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitForm();
+  });
+
+  // Cancel button
+  document.getElementById('cancelBtn').addEventListener('click', function() {
+    if (hasUnsavedChanges()) {
+      if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+        goBackToDetails();
+      }
+    } else {
+      goBackToDetails();
+    }
+  });
+});
+
+function loadAccountData() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  
+  fetch(`/bank-management/api/accounts/${currentAccountId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        showAlert(data.error, 'error');
+        return;
+      }
+      
+      populateForm(data.account);
+      originalAccountData = { ...data.account };
+    })
+    .catch(error => {
+      console.error('Error loading account data:', error);
+      showAlert('Error loading account data', 'error');
+    })
+    .finally(() => {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    });
+}
+
+function populateForm(account) {
+  // Basic Information
+  document.getElementById('account_name').value = account.account_name || '';
+  document.getElementById('account_holder_name').value = account.account_holder_name || '';
+  document.getElementById('account_number').value = account.account_number || '';
+  document.getElementById('account_type').value = account.account_type || '';
+  
+  // Bank Details
+  document.getElementById('bank_name').value = account.bank_name || '';
+  document.getElementById('ifsc_code').value = account.ifsc_code || '';
+  document.getElementById('branch_name').value = account.branch_name || '';
+  document.getElementById('upi_id').value = account.upi_id || '';
+  document.getElementById('branch_address').value = account.branch_address || '';
+  
+  // Financial Details
+  document.getElementById('current_balance').value = account.current_balance || 0;
+  document.getElementById('minimum_balance').value = account.minimum_balance || 0;
+  document.getElementById('daily_limit').value = account.daily_limit || 0;
+  document.getElementById('monthly_limit').value = account.monthly_limit || 0;
+  document.getElementById('pan_number').value = account.pan_number || '';
+  document.getElementById('gstin').value = account.gstin || '';
+  
+  // Purpose checkboxes
+  const purposes = account.purpose || [];
+  document.getElementById('purpose_wallet_topup').checked = purposes.includes('WALLET_TOPUP');
+  document.getElementById('purpose_settlement').checked = purposes.includes('SETTLEMENT');
+  document.getElementById('purpose_refund').checked = purposes.includes('REFUND');
+  document.getElementById('purpose_payout').checked = purposes.includes('PAYOUT');
+  
+  // Settings
+  document.getElementById('priority').value = account.priority || 1;
+  document.getElementById('display_order').value = account.display_order || 1;
+  document.getElementById('is_primary').checked = account.is_primary || false;
+  document.getElementById('is_default_topup').checked = account.is_default_topup || false;
+  document.getElementById('is_default_settlement').checked = account.is_default_settlement || false;
+  document.getElementById('is_default_refund').checked = account.is_default_refund || false;
+  document.getElementById('is_visible_to_users').checked = account.is_visible_to_users || false;
+  document.getElementById('auto_settlement').checked = account.auto_settlement || false;
+  document.getElementById('settlement_schedule').value = account.settlement_schedule || 'DAILY';
+  
+  // Show settlement settings if auto settlement is enabled
+  if (account.auto_settlement) {
+    document.getElementById('settlement_settings').style.display = 'block';
+  }
+}
+
+function submitForm() {
+  const form = document.getElementById('editAccountForm');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  // Disable submit button
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Updating...';
+  
+  // Clear previous errors
+  clearErrors();
+  
+  // Collect form data
+  const formData = new FormData(form);
+  const data = {};
+  
+  // Convert FormData to object
+  for (let [key, value] of formData.entries()) {
+    if (key === 'purpose') {
+      if (!data[key]) data[key] = [];
+      data[key].push(value);
+    } else if (['is_primary', 'is_default_topup', 'is_default_settlement', 'is_default_refund', 'is_visible_to_users', 'auto_settlement'].includes(key)) {
+      data[key] = true; // Checkbox is checked if present
+    } else {
+      data[key] = value;
+    }
+  }
+  
+  // Set unchecked checkboxes to false
+  const checkboxFields = ['is_primary', 'is_default_topup', 'is_default_settlement', 'is_default_refund', 'is_visible_to_users', 'auto_settlement'];
+  checkboxFields.forEach(field => {
+    if (!data[field]) data[field] = false;
+  });
+  
+  // Convert numeric fields
+  const numericFields = ['current_balance', 'minimum_balance', 'daily_limit', 'monthly_limit', 'priority', 'display_order'];
+  numericFields.forEach(field => {
+    if (data[field]) {
+      data[field] = parseFloat(data[field]);
+    }
+  });
+
+  // Submit to API
+  fetch(`/bank-management/api/accounts/${currentAccountId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.error) {
+      handleErrors(result.error);
+    } else {
+      showSuccessModal();
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('An error occurred while updating the account', 'error');
+  })
+  .finally(() => {
+    // Re-enable submit button
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Update Account';
+  });
+}
+
+function handleErrors(error) {
+  if (typeof error === 'string') {
+    showAlert(error, 'error');
+  } else if (typeof error === 'object') {
+    // Handle field-specific errors
+    Object.keys(error).forEach(field => {
+      const errorElement = document.getElementById(`${field}_error`);
+      if (errorElement) {
+        errorElement.textContent = error[field];
+        errorElement.classList.remove('hidden');
+      }
+    });
+  }
+}
+
+function clearErrors() {
+  const errorElements = document.querySelectorAll('.error-message');
+  errorElements.forEach(element => {
+    element.textContent = '';
+    element.classList.add('hidden');
+  });
+}
+
+function resetForm() {
+  if (hasUnsavedChanges()) {
+    if (confirm('Are you sure you want to reset all changes?')) {
+      populateForm(originalAccountData);
+      clearErrors();
+    }
+  }
+}
+
+function hasUnsavedChanges() {
+  // Simple check for unsaved changes
+  const form = document.getElementById('editAccountForm');
+  const formData = new FormData(form);
+  const currentData = {};
+  
+  for (let [key, value] of formData.entries()) {
+    currentData[key] = value;
+  }
+  
+  // Compare with original data (simplified check)
+  return JSON.stringify(currentData) !== JSON.stringify(originalAccountData);
+}
+
+function showSuccessModal() {
+  document.getElementById('successModal').classList.remove('hidden');
+}
+
+function goBackToDetails() {
+  window.location.href = `/bank-management/account/${currentAccountId}`;
+}
+
+function showAlert(message, type) {
+  // Create alert element
+  const alert = document.createElement('div');
+  alert.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+    type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+    'bg-red-100 text-red-800 border border-red-200'
+  }`;
+  alert.textContent = message;
+  
+  document.body.appendChild(alert);
+  
+  // Remove after 5 seconds
+  setTimeout(() => {
+    alert.remove();
+  }, 5000);
+}
+</script>
+
+{% endblock %}

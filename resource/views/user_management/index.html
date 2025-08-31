@@ -1,293 +1,249 @@
 {% extends 'layout/layout.html' %}
-
 {% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
   .stats-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(102,126,234,0.15);
-    min-width: 220px;
-    flex: 1 1 0;
-    margin-right: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .stats-card:last-child { margin-right: 0; }
+  .stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  .user-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .user-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
   .role-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    display: inline-block;
-    min-width: 90px;
-    text-align: center;
-  }
-  .role-super-admin { background: #dc3545; color: white; }
-  .role-admin { background: #fd7e14; color: white; }
-  .role-white-label { background: #6f42c1; color: white; }
-  .role-master-distributor { background: #0d6efd; color: white; }
-  .role-distributor { background: #198754; color: white; }
-  .role-retailer { background: #6c757d; color: white; }
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    transition: box-shadow 0.2s;
-  }
-  .card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
-  .card-header {
-    background: #f8f9fa;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-  }
-  .btn {
-    transition: background 0.2s, color 0.2s;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  }
-  .btn-outline-primary {
-    border: 1px solid #667eea;
-    color: #667eea;
-    background: transparent;
-  }
-  .btn-outline-primary:hover {
-    background: #667eea;
-    color: #fff;
-  }
-  .btn-outline-success {
-    border: 1px solid #28a745;
-    color: #28a745;
-    background: transparent;
-  }
-  .btn-outline-success:hover {
-    background: #28a745;
-    color: #fff;
-  }
-  .btn-outline-warning {
-    border: 1px solid #ffc107;
-    color: #ffc107;
-    background: transparent;
-  }
-  .btn-outline-warning:hover {
-    background: #ffc107;
-    color: #fff;
-  }
-  @media (max-width: 900px) {
-    .flex#statsContainer { flex-direction: column; }
-    .stats-card { margin-right: 0; margin-bottom: 16px; }
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
 </style>
 
-<div class="container mx-auto px-4 py-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-8">
-    <div>
-      <h1 class="text-3xl font-bold text-neutral-800 dark:text-white mb-1">User Management</h1>
-      <p class="text-neutral-600 dark:text-neutral-300">Manage users and hierarchy</p>
-    </div>
-    <a href="{{ url_for('user_management.create_user_page') }}" 
-       class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-5 py-2 flex items-center gap-2 shadow">
-      <iconify-icon icon="material-symbols:person-add" class="text-lg"></iconify-icon>
-      Create User
-    </a>
-  </div>
-
-  <!-- Stats Cards -->
-  <div class="flex mb-8" id="statsContainer">
-    <div class="stats-card">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm opacity-90">Total Users</p>
-          <h3 class="text-2xl font-bold mt-1" id="totalUsers">0</h3>
-        </div>
-        <iconify-icon icon="material-symbols:group" class="text-3xl opacity-70"></iconify-icon>
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
       </div>
-    </div>
-    <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm opacity-90">Active Users</p>
-          <h3 class="text-2xl font-bold mt-1" id="activeUsers">0</h3>
-        </div>
-        <iconify-icon icon="material-symbols:check-circle" class="text-3xl opacity-70"></iconify-icon>
-      </div>
-    </div>
-    <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm opacity-90">Pending KYC</p>
-          <h3 class="text-2xl font-bold mt-1" id="pendingKyc">0</h3>
-        </div>
-        <iconify-icon icon="material-symbols:pending-actions" class="text-3xl opacity-70"></iconify-icon>
-      </div>
-    </div>
-    <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8 0%, #6610f2 100%);">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm opacity-90">This Month</p>
-          <h3 class="text-2xl font-bold mt-1" id="recentRegistrations">0</h3>
-        </div>
-        <iconify-icon icon="material-symbols:trending-up" class="text-3xl opacity-70"></iconify-icon>
+      <div class="flex gap-3">
+        {% if allowed_roles %}
+        <a href="{{ url_for('user_management.create_user') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create User
+        </a>
+        {% endif %}
+        <a href="{{ url_for('user_management.user_list') }}" 
+           class="btn bg-success-600 hover:bg-success-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          All Users
+        </a>
+        <a href="{{ url_for('user_management.user_hierarchy') }}" 
+           class="btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+          Hierarchy
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-          <iconify-icon icon="material-symbols:person-add" class="text-primary-600 text-xl"></iconify-icon>
-        </div>
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
         <div>
-          <h6 class="font-semibold text-neutral-800 dark:text-white">Create User</h6>
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Add new user to hierarchy</p>
+          <p class="text-sm font-medium text-gray-500">Total Users</p>
+          <p class="text-2xl font-bold text-gray-800">{{ total_users }}</p>
+        </div>
+        <div class="bg-blue-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
         </div>
       </div>
-      <a href="{{ url_for('user_management.create_user_page') }}" 
-         class="btn btn-outline-primary w-full rounded-lg py-2 text-sm">
-        Create New User
-      </a>
     </div>
-    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 bg-success-100 dark:bg-success-900 rounded-lg flex items-center justify-center">
-          <iconify-icon icon="material-symbols:list" class="text-success-600 text-xl"></iconify-icon>
-        </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
         <div>
-          <h6 class="font-semibold text-neutral-800 dark:text-white">Manage Users</h6>
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">View and edit user details</p>
+          <p class="text-sm font-medium text-gray-500">Active Users</p>
+          <p class="text-2xl font-bold text-green-600">{{ active_users }}</p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
         </div>
       </div>
-      <a href="{{ url_for('user_management.user_list_page') }}" 
-         class="btn btn-outline-success w-full rounded-lg py-2 text-sm">
-        View All Users
-      </a>
     </div>
-    <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg p-6">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center">
-          <iconify-icon icon="material-symbols:account-tree" class="text-warning-600 text-xl"></iconify-icon>
-        </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
         <div>
-          <h6 class="font-semibold text-neutral-800 dark:text-white">User Hierarchy</h6>
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">View user tree structure</p>
+          <p class="text-sm font-medium text-gray-500">Inactive Users</p>
+          <p class="text-2xl font-bold text-red-600">{{ inactive_users }}</p>
+        </div>
+        <div class="bg-red-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
         </div>
       </div>
-      <button onclick="viewHierarchy()" class="btn btn-outline-warning w-full rounded-lg py-2 text-sm">
-        View Hierarchy
-      </button>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">This Month</p>
+          <p class="text-2xl font-bold text-purple-600">{{ monthly_registrations }}</p>
+        </div>
+        <div class="bg-purple-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Role Distribution -->
+  {% if role_stats %}
+  <div class="bg-white rounded-lg shadow-md border mb-8">
+    <div class="p-6 border-b">
+      <h3 class="text-lg font-semibold text-gray-800">User Distribution by Role</h3>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for role, count in role_stats.items() %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 rounded-full mr-3 
+                        {{ 'bg-purple-500' if role == 'ADMIN' 
+                        else 'bg-blue-500' if role == 'WHITE_LABEL'
+                        else 'bg-green-500' if role == 'MASTER_DISTRIBUTOR'
+                        else 'bg-yellow-500' if role == 'DISTRIBUTOR'
+                        else 'bg-gray-500' }}"></div>
+            <span class="text-sm font-medium text-gray-700">{{ role.replace('_', ' ').title() }}</span>
+          </div>
+          <span class="text-lg font-bold text-gray-800">{{ count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Recent Users -->
-  <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg overflow-hidden">
-    <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
-      <h6 class="card-title text-lg font-semibold">Recent Users</h6>
-      <a href="{{ url_for('user_management.user_list_page') }}" 
-         class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-        View All
-      </a>
-    </div>
-    <div class="card-body p-0">
-      <div class="overflow-x-auto">
-        <table class="w-full" id="recentUsersTable">
-          <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900">
-              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">User</th>
-              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Role</th>
-              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Status</th>
-              <th class="text-left py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Created</th>
-              <th class="text-right py-4 px-6 text-sm font-semibold text-neutral-800 dark:text-white">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="recentUsersBody">
-            <!-- Users will be loaded here -->
-          </tbody>
-        </table>
+  <div class="bg-white rounded-lg shadow-md border">
+    <div class="p-6 border-b">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">Recent Users</h3>
+        <a href="{{ url_for('user_management.user_list') }}" 
+           class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+          View All →
+        </a>
       </div>
     </div>
+    <div class="p-6">
+      {% if recent_users %}
+      <div class="space-y-4">
+        {% for user in recent_users %}
+        <div class="user-card flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {{ user.full_name[:2].upper() }}
+            </div>
+            <div class="ml-4">
+              <h4 class="font-semibold text-gray-800">{{ user.full_name }}</h4>
+              <p class="text-sm text-gray-600">@{{ user.username }} - {{ user.user_code }}</p>
+              <div class="flex items-center mt-1">
+                <span class="role-badge inline-flex px-2 py-1 rounded-full font-medium
+                             {{ 'bg-purple-100 text-purple-800' if user.role.value == 'ADMIN' 
+                             else 'bg-blue-100 text-blue-800' if user.role.value == 'WHITE_LABEL'
+                             else 'bg-green-100 text-green-800' if user.role.value == 'MASTER_DISTRIBUTOR'
+                             else 'bg-yellow-100 text-yellow-800' if user.role.value == 'DISTRIBUTOR'
+                             else 'bg-gray-100 text-gray-800' }}">
+                  {{ user.role.value.replace('_', ' ').title() }}
+                </span>
+                <span class="ml-2 text-xs text-gray-500">
+                  {% if user.wallet %}
+                    Wallet: ₹{{ "%.2f"|format(user.wallet.balance) }}
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                         {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-red-100 text-red-800' }}">
+              {{ 'Active' if user.is_active else 'Inactive' }}
+            </span>
+            <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
+               class="bg-primary-600 hover:bg-primary-700 text-white text-xs px-3 py-1 rounded">
+              View
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center text-gray-500 py-8">
+        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        <p>No users found</p>
+        {% if allowed_roles %}
+        <a href="{{ url_for('user_management.create_user') }}" 
+           class="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+          Create your first user →
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
   </div>
+
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  loadDashboardStats();
-  loadRecentUsers();
-});
+  // Welcome animation
+  Swal.fire({
+    title: 'User Management Dashboard',
+    text: 'Manage your network and hierarchy',
+    icon: 'info',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    position: 'top-end',
+    toast: true
+  });
 
-function loadDashboardStats() {
-  fetch('/user-management/api/stats')
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById('totalUsers').textContent = data.total_users || 0;
-      document.getElementById('activeUsers').textContent = data.active_users || 0;
-      document.getElementById('pendingKyc').textContent = data.by_kyc_status?.PENDING || 0;
-      document.getElementById('recentRegistrations').textContent = data.recent_registrations || 0;
-    })
-    .catch(error => console.error('Error loading stats:', error));
-}
-
-function loadRecentUsers() {
-  fetch('/user-management/api/users?per_page=5')
-    .then(response => response.json())
-    .then(data => {
-      const tbody = document.getElementById('recentUsersBody');
-      tbody.innerHTML = '';
-      if (data.users && data.users.length > 0) {
-        data.users.forEach(user => {
-          const row = `
-            <tr class="border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition">
-              <td class="py-4 px-6">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                    <span class="text-xs font-medium text-primary-600">${user.full_name?.charAt(0) || 'U'}</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-neutral-800 dark:text-white">${user.full_name}</p>
-                    <p class="text-xs text-neutral-500">${user.user_code}</p>
-                  </div>
-                </div>
-              </td>
-              <td class="py-4 px-6">
-                <span class="role-badge role-${user.role?.toLowerCase().replace('_', '-')}">${user.role}</span>
-              </td>
-              <td class="py-4 px-6">
-                <span class="px-2 py-1 text-xs rounded-full ${user.is_active ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'}">
-                  ${user.is_active ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td class="py-4 px-6 text-sm text-neutral-600 dark:text-neutral-400">
-                ${new Date(user.created_at).toLocaleDateString()}
-              </td>
-              <td class="py-4 px-6 text-right">
-                <a href="/user-management/user/${user.id}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                  View
-                </a>
-              </td>
-            </tr>
-          `;
-          tbody.innerHTML += row;
-        });
-      } else {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-neutral-500">No users found</td></tr>';
-      }
-    })
-    .catch(error => {
-      console.error('Error loading recent users:', error);
-      document.getElementById('recentUsersBody').innerHTML = 
-        '<tr><td colspan="5" class="text-center py-8 text-danger-500">Error loading users</td></tr>';
+  // Add hover effects to cards
+  document.querySelectorAll('.stats-card, .user-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
     });
-}
-
-function viewHierarchy() {
-  alert('User hierarchy view - implementation needed');
-}
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+});
 </script>
-
 
 {% endblock %}

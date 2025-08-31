@@ -1,0 +1,237 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('tenant_management.create_tenant') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create Tenant
+        </a>
+        <a href="{{ url_for('tenant_management.index') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="bg-white rounded-lg shadow-md border mb-6 p-4">
+    <div class="flex flex-wrap gap-4 items-center">
+      <div class="flex-1 min-w-64">
+        <input type="text" id="searchInput" placeholder="Search tenants by name, code, or domain..." 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+      </div>
+      <div>
+        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div>
+        <select id="planFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option value="">All Plans</option>
+          <option value="BASIC">Basic</option>
+          <option value="STANDARD">Standard</option>
+          <option value="PREMIUM">Premium</option>
+          <option value="ENTERPRISE">Enterprise</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tenants List -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tenantsTableBody">
+          {% for tenant in tenants %}
+          <tr class="hover:bg-gray-50 tenant-row" 
+              data-name="{{ tenant.tenant_name.lower() }}" 
+              data-code="{{ tenant.tenant_code.lower() }}"
+              data-domain="{{ (tenant.domain or tenant.subdomain).lower() }}"
+              data-status="{{ 'active' if tenant.is_active else 'inactive' }}"
+              data-plan="{{ tenant.subscription_plan or 'BASIC' }}">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                  {{ tenant.tenant_code[:2] }}
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ tenant.tenant_name }}</div>
+                  <div class="text-sm text-gray-500">{{ tenant.subdomain }}.example.com</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+              {{ tenant.tenant_code }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {{ tenant.domain or (tenant.subdomain + '.example.com') }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                           {{ 'bg-purple-100 text-purple-800' if (tenant.subscription_plan or 'BASIC') == 'ENTERPRISE' 
+                           else 'bg-blue-100 text-blue-800' if (tenant.subscription_plan or 'BASIC') == 'PREMIUM'
+                           else 'bg-green-100 text-green-800' if (tenant.subscription_plan or 'BASIC') == 'STANDARD'
+                           else 'bg-gray-100 text-gray-800' }}">
+                {{ tenant.subscription_plan or 'BASIC' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                           {{ 'bg-green-100 text-green-800' if tenant.is_active else 'bg-red-100 text-red-800' }}">
+                {{ 'Active' if tenant.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {{ tenant.created_at.strftime('%d %b %Y') }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex items-center space-x-2">
+                <a href="{{ url_for('tenant_management.view_tenant', tenant_id=tenant.id) }}" 
+                   class="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 px-2 py-1 rounded">
+                  View
+                </a>
+                {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+                <a href="{{ url_for('tenant_management.edit_tenant', tenant_id=tenant.id) }}" 
+                   class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-2 py-1 rounded">
+                  Edit
+                </a>
+                {% if current_user.role.value == 'SUPER_ADMIN' %}
+                <button onclick="toggleTenantStatus('{{ tenant.id }}', '{{ tenant.tenant_name }}', {{ 'true' if tenant.is_active else 'false' }})"
+                        class="text-{{ 'red' if tenant.is_active else 'green' }}-600 hover:text-{{ 'red' if tenant.is_active else 'green' }}-900 
+                               bg-{{ 'red' if tenant.is_active else 'green' }}-50 hover:bg-{{ 'red' if tenant.is_active else 'green' }}-100 px-2 py-1 rounded">
+                  {{ 'Deactivate' if tenant.is_active else 'Activate' }}
+                </button>
+                {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    {% if not tenants %}
+    <div class="text-center text-gray-500 py-12">
+      <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+      </svg>
+      <p class="text-lg">No tenants found</p>
+      <a href="{{ url_for('tenant_management.create_tenant') }}" 
+         class="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+        Create your first tenant →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const planFilter = document.getElementById('planFilter');
+  const tenantRows = document.querySelectorAll('.tenant-row');
+
+  function filterTenants() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const statusValue = statusFilter.value;
+    const planValue = planFilter.value;
+
+    tenantRows.forEach(row => {
+      const name = row.dataset.name;
+      const code = row.dataset.code;
+      const domain = row.dataset.domain;
+      const status = row.dataset.status;
+      const plan = row.dataset.plan;
+
+      const matchesSearch = !searchTerm || 
+        name.includes(searchTerm) || 
+        code.includes(searchTerm) || 
+        domain.includes(searchTerm);
+      
+      const matchesStatus = !statusValue || status === statusValue;
+      const matchesPlan = !planValue || plan === planValue;
+
+      if (matchesSearch && matchesStatus && matchesPlan) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  searchInput.addEventListener('input', filterTenants);
+  statusFilter.addEventListener('change', filterTenants);
+  planFilter.addEventListener('change', filterTenants);
+});
+
+function toggleTenantStatus(tenantId, tenantName, isActive) {
+  const action = isActive ? 'deactivate' : 'activate';
+  const actionText = isActive ? 'Deactivate' : 'Activate';
+  
+  Swal.fire({
+    title: `${actionText} Tenant?`,
+    html: `Are you sure you want to ${action} <strong>${tenantName}</strong>?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: `Yes, ${actionText}`,
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: isActive ? '#EF4444' : '#10B981',
+    cancelButtonColor: '#6B7280'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Show loading
+      Swal.fire({
+        title: `${actionText}ing Tenant...`,
+        text: 'Please wait',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Submit form to toggle status
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/tenant-management/tenant/${tenantId}/toggle-status`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+</script>
+
+{% endblock %}

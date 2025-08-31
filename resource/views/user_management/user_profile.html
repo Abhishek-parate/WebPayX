@@ -1,606 +1,243 @@
 {% extends 'layout/layout.html' %}
-
 {% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!--! tailwindcss v3.3.0 | MIT License | https://tailwindcss.com -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Remix Icon CDN for action buttons -->
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-  .profile-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 24px;
-  }
-  
-  .stat-card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    padding: 20px;
-    text-align: center;
-  }
-  
-  .dark .stat-card {
-    background: #374151;
-    border-color: #4b5563;
-  }
-  
-  .role-badge {
-    padding: 6px 16px;
-    border-radius: 25px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  .wallet-card {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border-radius: 16px;
-    padding: 24px;
-  }
+    body {
+        font-family: 'Inter', sans-serif;
+    }
 </style>
 
-<!-- User Profile Page -->
-<div class="container mx-auto px-4 py-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-neutral-800 dark:text-white">User Profile</h1>
-      <p class="text-neutral-600 dark:text-neutral-300">View and manage user details</p>
-    </div>
-    <div class="flex gap-3">
-      <a href="{{ url_for('user_management.user_list_page') }}" 
-         class="btn bg-neutral-500 hover:bg-neutral-600 text-white rounded-lg px-4 py-2 flex items-center gap-2">
-        <iconify-icon icon="material-symbols:arrow-back" class="text-lg"></iconify-icon>
-        Back to List
-      </a>
-      <button onclick="editUser()" 
-              class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 flex items-center gap-2">
-        <iconify-icon icon="material-symbols:edit" class="text-lg"></iconify-icon>
-        Edit User
-      </button>
-    </div>
-  </div>
-
-  <!-- User Profile Card -->
-  <div class="profile-card" id="profileCard">
-    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-      <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-3xl font-bold">
-        {{ user.full_name[0] if user.full_name else 'U' }}
-      </div>
-      <div class="flex-1">
-        <h2 class="text-2xl font-bold mb-2">{{ user.full_name }}</h2>
-        <div class="flex flex-wrap items-center gap-4 mb-4">
-          <span class="role-badge">{{ user.role.value.replace('_', ' ').title() }}</span>
-          <span class="text-sm opacity-90">{{ user.user_code }}</span>
-          <span class="px-3 py-1 rounded-full text-xs font-medium {{ 'bg-green-500' if user.is_active else 'bg-red-500' }}">
-            {{ 'Active' if user.is_active else 'Inactive' }}
-          </span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p class="opacity-75">Email</p>
-            <p class="font-medium">{{ user.email }}</p>
-          </div>
-          <div>
-            <p class="opacity-75">Phone</p>
-            <p class="font-medium">{{ user.phone }}</p>
-          </div>
-          <div>
-            <p class="opacity-75">Joined</p>
-            <p class="font-medium">{{ user.created_at.strftime('%B %d, %Y') }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="statsContainer">
-    <div class="stat-card">
-      <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <iconify-icon icon="material-symbols:group" class="text-primary-600 text-2xl"></iconify-icon>
-      </div>
-      <h3 class="text-2xl font-bold text-neutral-800 dark:text-white" id="childrenCount">0</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400">Sub Users</p>
-    </div>
+<div class="min-h-screen bg-slate-50/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
-    <div class="stat-card">
-      <div class="w-12 h-12 bg-success-100 dark:bg-success-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <iconify-icon icon="material-symbols:account-balance-wallet" class="text-success-600 text-2xl"></iconify-icon>
-      </div>
-      <h3 class="text-2xl font-bold text-neutral-800 dark:text-white" id="walletBalance">₹0</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400">Wallet Balance</p>
-    </div>
-    
-    <div class="stat-card">
-      <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <iconify-icon icon="material-symbols:receipt-long" class="text-warning-600 text-2xl"></iconify-icon>
-      </div>
-      <h3 class="text-2xl font-bold text-neutral-800 dark:text-white" id="transactionCount">0</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400">Transactions</p>
-    </div>
-    
-    <div class="stat-card">
-      <div class="w-12 h-12 bg-info-100 dark:bg-info-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-        <iconify-icon icon="material-symbols:verified-user" class="text-info-600 text-2xl"></iconify-icon>
-      </div>
-      <h3 class="text-lg font-bold text-neutral-800 dark:text-white" id="kycStatus">{{ user.kyc_status.value.replace('_', ' ').title() }}</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400">KYC Status</p>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- User Details -->
-    <div class="lg:col-span-2 space-y-6">
-      <!-- Basic Information -->
-      <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-        <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-          <h6 class="card-title text-lg font-semibold flex items-center gap-2">
-            <iconify-icon icon="material-symbols:person" class="text-primary-600"></iconify-icon>
-            Basic Information
-          </h6>
-        </div>
-        <div class="card-body p-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Full Name</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.full_name }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Username</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.username }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.email }}</p>
-            </div>
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Phone</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.phone }}</p>
-            </div>
-            {% if user.business_name %}
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Business Name</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.business_name }}</p>
-            </div>
-            {% endif %}
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="{{ url_for('user_management.index') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+            <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+              <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L9 5.414V17a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5.414l2.293 2.293a1 1 0 0 0 1.414-1.414Z"/>
+            </svg>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+            </svg>
+            <a href="{{ url_for('user_management.user_list') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2">Users</a>
           </div>
-        </div>
-      </div>
-
-      <!-- Address Information -->
-      {% if user.address %}
-      <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-        <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-          <h6 class="card-title text-lg font-semibold flex items-center gap-2">
-            <iconify-icon icon="material-symbols:location-on" class="text-primary-600"></iconify-icon>
-            Address Information
-          </h6>
-        </div>
-        <div class="card-body p-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {% if user.address.line1 %}
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Address</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.address.line1 }}</p>
-            </div>
-            {% endif %}
-            {% if user.address.city %}
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">City</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.address.city }}</p>
-            </div>
-            {% endif %}
-            {% if user.address.state %}
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">State</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.address.state }}</p>
-            </div>
-            {% endif %}
-            {% if user.address.pincode %}
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">PIN Code</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.address.pincode }}</p>
-            </div>
-            {% endif %}
-            {% if user.address.country %}
-            <div>
-              <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Country</label>
-              <p class="mt-1 text-neutral-800 dark:text-white">{{ user.address.country }}</p>
-            </div>
-            {% endif %}
+        </li>
+        <li aria-current="page">
+          <div class="flex items-center">
+            <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+            </svg>
+            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ user.full_name }}</span>
           </div>
-        </div>
-      </div>
-      {% endif %}
+        </li>
+      </ol>
+    </nav>
 
-      <!-- Sub Users -->
-      <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-        <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-          <div class="flex justify-between items-center">
-            <h6 class="card-title text-lg font-semibold flex items-center gap-2">
-              <iconify-icon icon="material-symbols:account-tree" class="text-primary-600"></iconify-icon>
-              Sub Users
-            </h6>
-            <button onclick="loadSubUsers()" class="text-primary-600 hover:text-primary-700 text-sm">
-              Refresh
-            </button>
+    <!-- Header Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex items-center space-x-6">
+          <!-- Avatar -->
+          <div class="relative">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+              <span class="text-3xl font-bold text-white">{{ user.full_name[:2].upper() }}</span>
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 {{ 'bg-emerald-500' if user.is_active else 'bg-red-500' }} border-2 border-white rounded-full flex items-center justify-center">
+              {% if user.is_active %}<i class="ri-check-line text-white text-base"></i>{% else %}<i class="ri-close-line text-white text-base"></i>{% endif %}
+            </div>
           </div>
-        </div>
-        <div class="card-body p-6">
-          <div id="subUsersContainer">
-            <!-- Sub users will be loaded here -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="space-y-6">
-      <!-- Wallet Information -->
-      <div class="wallet-card">
-        <div class="flex items-center justify-between mb-4">
-          <h6 class="text-lg font-semibold">Wallet Details</h6>
-          <iconify-icon icon="material-symbols:account-balance-wallet" class="text-2xl"></iconify-icon>
-        </div>
-        <div id="walletDetails">
-          <!-- Wallet details will be loaded here -->
-        </div>
-        <div class="flex gap-2 mt-4">
-          <button onclick="creditWallet()" class="btn bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg px-4 py-2 flex-1 text-sm">
-            Credit
-          </button>
-          <button onclick="debitWallet()" class="btn bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg px-4 py-2 flex-1 text-sm">
-            Debit
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-        <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-          <h6 class="card-title text-lg font-semibold">Quick Actions</h6>
-        </div>
-        <div class="card-body p-6 space-y-3">
-          <button onclick="toggleUserStatus()" id="statusToggleBtn"
-                  class="btn {{ 'bg-danger-600 hover:bg-danger-700' if user.is_active else 'bg-success-600 hover:bg-success-700' }} text-white rounded-lg px-4 py-3 w-full flex items-center justify-center gap-2">
-            <iconify-icon icon="material-symbols:{{ 'block' if user.is_active else 'check-circle' }}" class="text-lg"></iconify-icon>
-            {{ 'Deactivate User' if user.is_active else 'Activate User' }}
-          </button>
           
-          <button onclick="resetPassword()"
-                  class="btn bg-warning-600 hover:bg-warning-700 text-white rounded-lg px-4 py-3 w-full flex items-center justify-center gap-2">
-            <iconify-icon icon="material-symbols:key" class="text-lg"></iconify-icon>
-            Reset Password
-          </button>
-          
-          <button onclick="viewTransactions()"
-                  class="btn bg-info-600 hover:bg-info-700 text-white rounded-lg px-4 py-3 w-full flex items-center justify-center gap-2">
-            <iconify-icon icon="material-symbols:receipt-long" class="text-lg"></iconify-icon>
-            View Transactions
+          <!-- User Info -->
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ user.full_name }}</h1>
+            <div class="flex items-center space-x-4 mb-3">
+              <p class="text-lg text-gray-600">@{{ user.username }}</p>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-300">{{ user.user_code }}</span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ 'bg-emerald-50 text-emerald-700 border border-emerald-200' if user.is_active else 'bg-red-50 text-red-700 border border-red-200' }}">
+                <span class="w-2 h-2 mr-2 rounded-full {{ 'bg-emerald-500' if user.is_active else 'bg-red-500' }}"></span>
+                {{ 'Active' if user.is_active else 'Inactive' }}
+              </span>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if user.role.value == 'ADMIN' %}bg-purple-50 text-purple-700 border border-purple-200{% elif user.role.value == 'WHITE_LABEL' %}bg-blue-50 text-blue-700 border border-blue-200{% elif user.role.value == 'MASTER_DISTRIBUTOR' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif user.role.value == 'DISTRIBUTOR' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-gray-50 text-gray-700 border border-gray-200{% endif %}">
+                {{ user.role.value.replace('_', ' ').title() }}
+              </span>
+              {% if user.kyc_status.value == 'APPROVED' %}
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <i class="ri-shield-check-line text-base mr-1.5"></i>KYC Verified
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 lg:mt-0 flex items-center space-x-3">
+          <a href="{{ url_for('user_management.edit_user', user_id=user.id) }}" class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200"><i class="ri-pencil-line text-base mr-2"></i>Edit Profile</a>
+          <button onclick="toggleUserStatus('{{ user.full_name }}', '{{ 'true' if user.is_active else 'false' }}', '{{ url_for('user_management.toggle_user_status', user_id=user.id) }}')"
+                  class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white shadow-sm {{ 'bg-red-600 hover:bg-red-700 focus:ring-red-500' if user.is_active else 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500' }} transition-all duration-200">
+            {% if user.is_active %}<i class="ri-indeterminate-circle-line text-base mr-2"></i>Deactivate{% else %}<i class="ri-play-circle-line text-base mr-2"></i>Activate{% endif %}
           </button>
         </div>
       </div>
-
-      <!-- Hierarchy -->
-      {% if user.parent %}
-      <div class="card border border-neutral-200 dark:border-neutral-600 rounded-lg">
-        <div class="card-header p-6 border-b border-neutral-200 dark:border-neutral-600">
-          <h6 class="card-title text-lg font-semibold">Hierarchy</h6>
-        </div>
-        <div class="card-body p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-              <span class="text-sm font-medium text-primary-600">{{ user.parent.full_name[0] }}</span>
-            </div>
-            <div>
-              <p class="font-medium text-neutral-800 dark:text-white">{{ user.parent.full_name }}</p>
-              <p class="text-xs text-neutral-500">{{ user.parent.user_code }} • Parent</p>
-            </div>
-          </div>
-          <div class="text-sm text-neutral-600 dark:text-neutral-400">
-            <p><strong>Level:</strong> {{ user.level }}</p>
-            <p><strong>Tree Path:</strong> {{ user.tree_path }}</p>
-          </div>
-        </div>
-      </div>
-      {% endif %}
     </div>
-  </div>
-</div>
 
-<!-- Modals -->
-<!-- Credit Wallet Modal -->
-<div id="creditWalletModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-white dark:bg-neutral-800 rounded-lg p-6 w-full max-w-md mx-4">
-    <h5 class="text-lg font-semibold mb-4">Credit Wallet</h5>
-    <form id="creditWalletForm">
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Amount (₹)</label>
-        <input type="number" name="amount" step="0.01" min="1" required
-               class="form-input w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-700 py-2 px-3">
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Description</label>
-        <textarea name="description" rows="2"
-                  class="form-textarea w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-700 py-2 px-3"
-                  placeholder="Enter description..."></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button type="button" onclick="closeCreditModal()" class="btn bg-neutral-500 hover:bg-neutral-600 text-white rounded-lg px-4 py-2 flex-1">
-          Cancel
-        </button>
-        <button type="submit" class="btn bg-success-600 hover:bg-success-700 text-white rounded-lg px-4 py-2 flex-1">
-          Credit
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    <!-- Wallet Stats -->
+    {% if user.wallet %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+            <p class="text-emerald-100 text-sm font-medium mb-1">Current Balance</p>
+            <p class="text-4xl font-bold">₹{{ "%.2f"|format(user.wallet.balance) }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+             <p class="text-gray-600 text-sm font-medium mb-1">Hold Balance</p>
+             <p class="text-3xl font-bold text-amber-600">₹{{ "%.2f"|format(user.wallet.hold_balance) }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+             <p class="text-gray-600 text-sm font-medium mb-1">Available Balance</p>
+             <p class="text-3xl font-bold text-blue-600">₹{{ "%.2f"|format(user.wallet.available_balance) }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+            <p class="text-gray-600 text-sm font-medium mb-1">Sub Users</p>
+            <p class="text-3xl font-bold text-purple-600">{{ children|length if children else 0 }}</p>
+        </div>
+    </div>
+    {% endif %}
 
-<!-- Debit Wallet Modal -->
-<div id="debitWalletModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-white dark:bg-neutral-800 rounded-lg p-6 w-full max-w-md mx-4">
-    <h5 class="text-lg font-semibold mb-4">Debit Wallet</h5>
-    <form id="debitWalletForm">
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Amount (₹)</label>
-        <input type="number" name="amount" step="0.01" min="1" required
-               class="form-input w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-700 py-2 px-3">
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Recent Transactions -->
+        {% if recent_transactions %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900">Recent Transactions</h3>
+                <p class="text-gray-600 mt-1">Latest wallet activity</p>
+            </div>
+            <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-800">View All</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-700">
+                <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Transaction</th>
+                        <th scope="col" class="px-6 py-3">Date & Time</th>
+                        <th scope="col" class="px-6 py-3 text-right">Amount</th>
+                        <th scope="col" class="px-6 py-3 text-right">Balance After</th>
+                        <th scope="col" class="px-6 py-3 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                   {% for transaction in recent_transactions %}
+                    <tr class="bg-white border-b hover:bg-gray-50 align-middle">
+                        <td class="px-6 py-4">
+                          <div class="flex items-center">
+                             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-sm {% if transaction.transaction_type.value == 'CREDIT' %}bg-gradient-to-br from-emerald-500 to-emerald-600{% elif transaction.transaction_type.value == 'DEBIT' %}bg-gradient-to-br from-red-500 to-red-600{% else %}bg-gradient-to-br from-amber-500 to-amber-600{% endif %}">
+                              {% if transaction.transaction_type.value == 'CREDIT' %}<i class="ri-add-line text-xl"></i>{% elif transaction.transaction_type.value == 'DEBIT' %}<i class="ri-subtract-line text-xl"></i>{% else %}<i class="ri-lock-line text-xl"></i>{% endif %}
+                            </div>
+                            <div class="ml-4">
+                              <div class="font-semibold text-gray-800">{{ transaction.transaction_type.value.title() }}</div>
+                              <div class="text-xs text-gray-500">{{ transaction.description or 'No description' }}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div>{{ transaction.created_at.strftime('%d %b %Y') }}</div>
+                            <div class="text-xs text-gray-500">{{ transaction.created_at.strftime('%I:%M %p') }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-right font-medium {% if transaction.transaction_type.value == 'CREDIT' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                            {{ '+' if transaction.transaction_type.value == 'CREDIT' else '-' }}₹{{ "%.2f"|format(transaction.amount) }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-medium text-gray-800">
+                            ₹{{ "%.2f"|format(transaction.balance_after) }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="badge text-xs font-semibold {% if transaction.status == 'SUCCESS' %} text-emerald-700 bg-emerald-100 {% elif transaction.status == 'PENDING' %} text-amber-700 bg-amber-100 {% else %} text-red-700 bg-red-100 {% endif %} px-3 py-1 rounded-full">
+                            {{ transaction.status.title() if transaction.status else 'Success' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
       </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Description</label>
-        <textarea name="description" rows="2"
-                  class="form-textarea w-full rounded-lg border-neutral-300 dark:border-neutral-600 dark:bg-neutral-700 py-2 px-3"
-                  placeholder="Enter description..."></textarea>
+
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div class="px-6 py-5 border-b border-gray-200"><h3 class="text-lg font-semibold text-gray-900">Security & Verification</h3></div>
+          <div class="p-6 space-y-4">
+            <div class="flex items-center justify-between"><span class="text-sm font-medium text-gray-700">KYC Status</span><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if user.kyc_status.value == 'APPROVED' %}bg-emerald-100 text-emerald-800{% elif user.kyc_status.value == 'PENDING' %}bg-amber-100 text-amber-800{% elif user.kyc_status.value == 'REJECTED' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">{{ user.kyc_status.value.replace('_', ' ').title() }}</span></div>
+            <div class="flex items-center justify-between"><span class="text-sm font-medium text-gray-700">Email Verified</span><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ 'bg-emerald-100 text-emerald-800' if user.email_verified else 'bg-red-100 text-red-800' }}">{{ 'Yes' if user.email_verified else 'No' }}</span></div>
+            <div class="flex items-center justify-between"><span class="text-sm font-medium text-gray-700">Phone Verified</span><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ 'bg-emerald-100 text-emerald-800' if user.phone_verified else 'bg-red-100 text-red-800' }}">{{ 'Yes' if user.phone_verified else 'No' }}</span></div>
+            <div class="flex items-center justify-between"><span class="text-sm font-medium text-gray-700">Two Factor Auth</span><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ 'bg-emerald-100 text-emerald-800' if user.two_factor_enabled else 'bg-gray-100 text-gray-800' }}">{{ 'Enabled' if user.two_factor_enabled else 'Disabled' }}</span></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div class="px-6 py-5 border-b border-gray-200"><h3 class="text-lg font-semibold text-gray-900">System Information</h3></div>
+          <div class="p-6 space-y-4">
+            <div><span class="text-sm font-medium text-gray-700">Account Created</span><p class="text-sm text-gray-900 mt-1">{{ user.created_at.strftime('%d %B %Y') }}</p><p class="text-xs text-gray-500">{{ user.created_at.strftime('%I:%M %p') }}</p></div>
+            <div><span class="text-sm font-medium text-gray-700">Last Updated</span><p class="text-sm text-gray-900 mt-1">{{ user.updated_at.strftime('%d %B %Y') if user.updated_at else 'Never' }}</p>{% if user.updated_at %}<p class="text-xs text-gray-500">{{ user.updated_at.strftime('%I:%M %p') }}</p>{% endif %}</div>
+            <div><span class="text-sm font-medium text-gray-700">Last Login</span><p class="text-sm text-gray-900 mt-1">{{ user.last_login.strftime('%d %B %Y') if user.last_login else 'Never logged in' }}</p>{% if user.last_login %}<p class="text-xs text-gray-500">{{ user.last_login.strftime('%I:%M %p') }}</p>{% endif %}</div>
+            <div class="pt-4 border-t border-gray-200"><span class="text-xs font-medium text-gray-500">User ID</span><p class="text-xs font-mono text-gray-600 break-all mt-1 bg-gray-50 rounded p-2">{{ user.id }}</p></div>
+          </div>
+        </div>
       </div>
-      <div class="flex gap-3">
-        <button type="button" onclick="closeDebitModal()" class="btn bg-neutral-500 hover:bg-neutral-600 text-white rounded-lg px-4 py-2 flex-1">
-          Cancel
-        </button>
-        <button type="submit" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-4 py-2 flex-1">
-          Debit
-        </button>
-      </div>
-    </form>
+
+    </div>
+
   </div>
 </div>
 
 <script>
-const userId = '{{ user.id }}';
-const userActive = {{ user.is_active|tojson }};
-
-document.addEventListener('DOMContentLoaded', function() {
-  loadUserDetails();
-  loadSubUsers();
+function toggleUserStatus(userName, isActiveStr, url) {
+  const isActive = isActiveStr === 'true';
+  const action = isActive ? 'deactivate' : 'activate';
+  const actionColor = isActive ? '#ef4444' : '#10b981';
   
-  // Form handlers
-  document.getElementById('creditWalletForm').addEventListener('submit', handleCreditWallet);
-  document.getElementById('debitWalletForm').addEventListener('submit', handleDebitWallet);
-});
-
-function loadUserDetails() {
-  fetch(`/user-management/api/users/${userId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.user) {
-        updateUserStats(data.user);
-        updateWalletDetails(data.user.wallet);
-      }
-    })
-    .catch(error => console.error('Error loading user details:', error));
-}
-
-function updateUserStats(user) {
-  document.getElementById('childrenCount').textContent = user.children?.length || 0;
-  document.getElementById('walletBalance').textContent = `₹${parseFloat(user.wallet?.balance || 0).toLocaleString()}`;
-  // Transaction count would come from another API call
-}
-
-function updateWalletDetails(wallet) {
-  const container = document.getElementById('walletDetails');
-  if (wallet) {
-    container.innerHTML = `
-      <div class="space-y-3">
-        <div class="flex justify-between">
-          <span class="opacity-90">Balance:</span>
-          <span class="font-bold">₹${parseFloat(wallet.balance).toLocaleString()}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="opacity-90">Available:</span>
-          <span>₹${parseFloat(wallet.available_balance).toLocaleString()}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="opacity-90">Hold:</span>
-          <span>₹${parseFloat(wallet.hold_balance).toLocaleString()}</span>
-        </div>
-        <hr class="border-white border-opacity-30">
-        <div class="flex justify-between">
-          <span class="opacity-90">Daily Limit:</span>
-          <span>₹${parseFloat(wallet.daily_limit).toLocaleString()}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="opacity-90">Monthly Limit:</span>
-          <span>₹${parseFloat(wallet.monthly_limit).toLocaleString()}</span>
-        </div>
-      </div>
-    `;
-  } else {
-    container.innerHTML = '<p class="text-center opacity-75">No wallet found</p>';
-  }
-}
-
-function loadSubUsers() {
-  fetch(`/user-management/api/users/${userId}/children`)
-    .then(response => response.json())
-    .then(data => {
-      const container = document.getElementById('subUsersContainer');
-      if (data.children && data.children.length > 0) {
-        let html = '<div class="space-y-3">';
-        data.children.forEach(child => {
-          html += `
-            <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
-              <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                <span class="text-sm font-medium text-primary-600">${child.full_name.charAt(0)}</span>
-              </div>
-              <div class="flex-1">
-                <p class="font-medium text-neutral-800 dark:text-white">${child.full_name}</p>
-                <p class="text-xs text-neutral-500">${child.user_code} • ${child.role.replace('_', ' ')}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-sm font-medium">₹${parseFloat(child.wallet_balance || 0).toLocaleString()}</p>
-                <p class="text-xs text-neutral-500">Wallet</p>
-              </div>
-            </div>
-          `;
-        });
-        html += '</div>';
-        container.innerHTML = html;
-      } else {
-        container.innerHTML = '<p class="text-center text-neutral-500">No sub users found</p>';
-      }
-    })
-    .catch(error => {
-      console.error('Error loading sub users:', error);
-      document.getElementById('subUsersContainer').innerHTML = 
-        '<p class="text-center text-red-500">Error loading sub users</p>';
-    });
-}
-
-function editUser() {
-  // Implement edit user functionality
-  alert('Edit user functionality - implementation needed');
-}
-
-function toggleUserStatus() {
-  const action = userActive ? 'deactivate' : 'activate';
-  const confirmMsg = `Are you sure you want to ${action} this user?`;
-  
-  if (confirm(confirmMsg)) {
-    fetch(`/user-management/api/users/${userId}/toggle-status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        alert('Error: ' + data.error);
-      } else {
-        alert(data.message);
-        location.reload(); // Reload page to reflect changes
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error updating user status');
-    });
-  }
-}
-
-function resetPassword() {
-  const newPassword = prompt('Enter new password (minimum 6 characters):');
-  if (newPassword && newPassword.length >= 6) {
-    fetch(`/user-management/api/users/${userId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: newPassword })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        alert('Error: ' + data.error);
-      } else {
-        alert('Password reset successfully!');
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error resetting password');
-    });
-  }
-}
-
-function viewTransactions() {
-  // Implement view transactions functionality
-  alert('View transactions functionality - implementation needed');
-}
-
-// Wallet Management
-function creditWallet() {
-  document.getElementById('creditWalletModal').classList.remove('hidden');
-}
-
-function debitWallet() {
-  document.getElementById('debitWalletModal').classList.remove('hidden');
-}
-
-function closeCreditModal() {
-  document.getElementById('creditWalletModal').classList.add('hidden');
-  document.getElementById('creditWalletForm').reset();
-}
-
-function closeDebitModal() {
-  document.getElementById('debitWalletModal').classList.add('hidden');
-  document.getElementById('debitWalletForm').reset();
-}
-
-function handleCreditWallet(e) {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const data = {
-    amount: parseFloat(formData.get('amount')),
-    description: formData.get('description') || 'Admin credit'
-  };
-
-  fetch(`/user-management/api/users/${userId}/wallet/credit`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error: ' + data.error);
-    } else {
-      alert(data.message);
-      closeCreditModal();
-      loadUserDetails(); // Reload user details
+  Swal.fire({
+    title: `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
+    text: `Are you sure you want to ${action} ${userName}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: actionColor,
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: `Yes, ${action}!`,
+    cancelButtonText: 'Cancel',
+    customClass: {
+      popup: 'rounded-2xl',
+      confirmButton: 'rounded-xl px-6 py-3 font-medium',
+      cancelButton: 'rounded-xl px-6 py-3 font-medium'
+    },
+    buttonsStyling: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      document.body.appendChild(form);
+      form.submit();
     }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error crediting wallet');
-  });
-}
-
-function handleDebitWallet(e) {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const data = {
-    amount: parseFloat(formData.get('amount')),
-    description: formData.get('description') || 'Admin debit'
-  };
-
-  fetch(`/user-management/api/users/${userId}/wallet/debit`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error: ' + data.error);
-    } else {
-      alert(data.message);
-      closeDebitModal();
-      loadUserDetails(); // Reload user details
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error debiting wallet');
   });
 }
 </script>
+
 {% endblock %}
+

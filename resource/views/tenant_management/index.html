@@ -1,0 +1,213 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+  .stats-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  .tenant-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .tenant-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+        <a href="{{ url_for('tenant_management.create_tenant') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create Tenant
+        </a>
+        {% endif %}
+        <a href="{{ url_for('tenant_management.list_tenants') }}" 
+           class="btn bg-success-600 hover:bg-success-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+          View All Tenants
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Total Tenants</p>
+          <p class="text-2xl font-bold text-gray-800">{{ total_count }}</p>
+        </div>
+        <div class="bg-blue-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Active Tenants</p>
+          <p class="text-2xl font-bold text-green-600">{{ active_count }}</p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Inactive Tenants</p>
+          <p class="text-2xl font-bold text-red-600">{{ inactive_count }}</p>
+        </div>
+        <div class="bg-red-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">This Month</p>
+          <p class="text-2xl font-bold text-purple-600">
+            {{ tenants|selectattr('created_at', 'ge', (moment().startOf('month')))|list|length if moment else 0 }}
+          </p>
+        </div>
+        <div class="bg-purple-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Tenants -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <div class="p-6 border-b">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">Recent Tenants</h3>
+        <a href="{{ url_for('tenant_management.list_tenants') }}" 
+           class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+          View All →
+        </a>
+      </div>
+    </div>
+    <div class="p-6">
+      {% if recent_tenants %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for tenant in recent_tenants %}
+        <div class="tenant-card bg-gray-50 rounded-lg p-4 border">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                {{ tenant.tenant_code[:2] }}
+              </div>
+              <div class="ml-3">
+                <h4 class="font-semibold text-gray-800">{{ tenant.tenant_name }}</h4>
+                <p class="text-sm text-gray-500">{{ tenant.tenant_code }}</p>
+              </div>
+            </div>
+            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                         {{ 'bg-green-100 text-green-800' if tenant.is_active else 'bg-red-100 text-red-800' }}">
+              {{ 'Active' if tenant.is_active else 'Inactive' }}
+            </span>
+          </div>
+          
+          <div class="space-y-2 mb-4">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Plan:</span>
+              <span class="text-gray-800">{{ tenant.subscription_plan or 'BASIC' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Domain:</span>
+              <span class="text-gray-800">{{ tenant.domain or tenant.subdomain + '.example.com' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Created:</span>
+              <span class="text-gray-800">{{ tenant.created_at.strftime('%d %b %Y') }}</span>
+            </div>
+          </div>
+          
+          <div class="flex gap-2">
+            <a href="{{ url_for('tenant_management.view_tenant', tenant_id=tenant.id) }}" 
+               class="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-center py-2 px-3 rounded text-sm font-medium">
+              View Details
+            </a>
+            {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+            <a href="{{ url_for('tenant_management.edit_tenant', tenant_id=tenant.id) }}" 
+               class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center text-gray-500 py-8">
+        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+        </svg>
+        <p>No tenants found</p>
+        {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+        <a href="{{ url_for('tenant_management.create_tenant') }}" 
+           class="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+          Create your first tenant →
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Welcome message
+  Swal.fire({
+    title: 'Tenant Management',
+    text: 'Manage your white label organizations',
+    icon: 'info',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    position: 'top-end',
+    toast: true
+  });
+});
+</script>
+
+{% endblock %}

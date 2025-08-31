@@ -1,0 +1,298 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em;
+    padding-right: 2.5rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('tenant_management.view_tenant', tenant_id=tenant.id) }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to View
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <form id="editTenantForm" method="POST" class="p-6">
+      
+      <!-- Basic Information -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Basic Information</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tenant_name" class="form-label">Organization Name *</label>
+            <input type="text" id="tenant_name" name="tenant_name" class="form-control" 
+                   value="{{ tenant.tenant_name }}" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="domain" class="form-label">Custom Domain</label>
+            <input type="text" id="domain" name="domain" class="form-control" 
+                   value="{{ tenant.domain or '' }}" placeholder="example.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="subscription_plan" class="form-label">Subscription Plan</label>
+          <select id="subscription_plan" name="subscription_plan" class="form-control form-select">
+            <option value="BASIC" {{ 'selected' if (tenant.subscription_plan or 'BASIC') == 'BASIC' }}>Basic Plan</option>
+            <option value="STANDARD" {{ 'selected' if tenant.subscription_plan == 'STANDARD' }}>Standard Plan</option>
+            <option value="PREMIUM" {{ 'selected' if tenant.subscription_plan == 'PREMIUM' }}>Premium Plan</option>
+            <option value="ENTERPRISE" {{ 'selected' if tenant.subscription_plan == 'ENTERPRISE' }}>Enterprise Plan</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Theme Configuration -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Theme Configuration</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="primary_color" class="form-label">Primary Color</label>
+            <input type="color" id="primary_color" name="primary_color" class="form-control" 
+                   value="{{ tenant.theme_config.get('primary_color', '#3B82F6') if tenant.theme_config else '#3B82F6' }}">
+          </div>
+          
+          <div class="form-group">
+            <label for="secondary_color" class="form-label">Secondary Color</label>
+            <input type="color" id="secondary_color" name="secondary_color" class="form-control" 
+                   value="{{ tenant.theme_config.get('secondary_color', '#10B981') if tenant.theme_config else '#10B981' }}">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="brand_name" class="form-label">Brand Name</label>
+            <input type="text" id="brand_name" name="brand_name" class="form-control" 
+                   value="{{ tenant.theme_config.get('brand_name', tenant.tenant_name) if tenant.theme_config else tenant.tenant_name }}">
+          </div>
+          
+          <div class="form-group">
+            <label for="logo_url" class="form-label">Logo URL</label>
+            <input type="url" id="logo_url" name="logo_url" class="form-control" 
+                   value="{{ tenant.theme_config.get('logo_url', '') if tenant.theme_config else '' }}" 
+                   placeholder="https://example.com/logo.png">
+          </div>
+        </div>
+      </div>
+
+      <!-- API Configuration -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">API Configuration</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="max_requests_per_minute" class="form-label">Max Requests Per Minute</label>
+            <input type="number" id="max_requests_per_minute" name="max_requests_per_minute" class="form-control" 
+                   value="{{ tenant.api_settings.get('max_requests_per_minute', 1000) if tenant.api_settings else 1000 }}"
+                   min="1" max="10000">
+          </div>
+          
+          <div class="form-group">
+            <label for="max_users" class="form-label">Max Users</label>
+            <input type="number" id="max_users" name="max_users" class="form-control" 
+                   value="{{ tenant.api_settings.get('max_users', 10000) if tenant.api_settings else 10000 }}"
+                   min="1" max="100000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="transactions_per_minute" class="form-label">Transactions Per Minute</label>
+            <input type="number" id="transactions_per_minute" name="transactions_per_minute" class="form-control" 
+                   value="{{ tenant.rate_limits.get('transactions_per_minute', 100) if tenant.rate_limits else 100 }}"
+                   min="1" max="1000">
+          </div>
+          
+          <div class="form-group">
+            <label for="api_calls_per_hour" class="form-label">API Calls Per Hour</label>
+            <input type="number" id="api_calls_per_hour" name="api_calls_per_hour" class="form-control" 
+                   value="{{ tenant.rate_limits.get('api_calls_per_hour', 10000) if tenant.rate_limits else 10000 }}"
+                   min="1" max="100000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscription Extension -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Subscription Extension</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="extend_months" class="form-label">Extend Subscription (Months)</label>
+            <select id="extend_months" name="extend_months" class="form-control form-select">
+              <option value="">Don't extend</option>
+              <option value="1">Extend by 1 Month</option>
+              <option value="3">Extend by 3 Months</option>
+              <option value="6">Extend by 6 Months</option>
+              <option value="12">Extend by 1 Year</option>
+              <option value="24">Extend by 2 Years</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Current Expiry</label>
+            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+              {% if tenant.subscription_expires_at %}
+                {{ tenant.subscription_expires_at.strftime('%d %B %Y at %I:%M %p') }}
+              {% else %}
+                No expiry set
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex gap-4 pt-6 border-t">
+        <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Update Tenant
+        </button>
+        <button type="button" onclick="resetForm()" class="btn bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium">
+          Reset Changes
+        </button>
+        <a href="{{ url_for('tenant_management.view_tenant', tenant_id=tenant.id) }}" 
+           class="btn bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form submission confirmation
+  document.getElementById('editTenantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const tenantName = document.getElementById('tenant_name').value;
+    const extendMonths = document.getElementById('extend_months').value;
+    
+    let confirmMessage = `Update tenant settings for <strong>${tenantName}</strong>?`;
+    if (extendMonths) {
+      confirmMessage += `<br><br><small class="text-blue-600">Subscription will be extended by ${extendMonths} month(s).</small>`;
+    }
+    
+    Swal.fire({
+      title: 'Update Tenant?',
+      html: confirmMessage,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Update',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#3B82F6',
+      cancelButtonColor: '#6B7280'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading
+        Swal.fire({
+          title: 'Updating Tenant...',
+          text: 'Please wait while we save the changes',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
+        // Submit the form
+        this.submit();
+      }
+    });
+  });
+
+  // Color picker preview
+  const primaryColor = document.getElementById('primary_color');
+  const secondaryColor = document.getElementById('secondary_color');
+  
+  primaryColor.addEventListener('change', function() {
+    // You can add preview functionality here
+  });
+
+  secondaryColor.addEventListener('change', function() {
+    // You can add preview functionality here
+  });
+});
+
+function resetForm() {
+  Swal.fire({
+    title: 'Reset Changes?',
+    text: 'All unsaved changes will be lost',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Reset',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#EF4444'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      location.reload();
+    }
+  });
+}
+</script>
+
+{% endblock %}

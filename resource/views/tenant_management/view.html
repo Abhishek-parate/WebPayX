@@ -1,0 +1,300 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+        <a href="{{ url_for('tenant_management.edit_tenant', tenant_id=tenant.id) }}" 
+           class="btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Edit Tenant
+        </a>
+        {% endif %}
+        <a href="{{ url_for('tenant_management.list_tenants') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          Back to List
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Tenant Information -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Basic Information -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Tenant Information</h3>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Organization Name</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.tenant_name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Tenant Code</label>
+              <p class="mt-1 text-sm font-mono font-medium text-gray-900">{{ tenant.tenant_code }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Domain</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.domain or (tenant.subdomain + '.example.com') }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Subdomain</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.subdomain }}.example.com</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Status</label>
+              <span class="mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                           {{ 'bg-green-100 text-green-800' if tenant.is_active else 'bg-red-100 text-red-800' }}">
+                {{ 'Active' if tenant.is_active else 'Inactive' }}
+              </span>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Created Date</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.created_at.strftime('%d %B %Y at %I:%M %p') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscription Details -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Subscription Details</h3>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Subscription Plan</label>
+              <span class="mt-1 inline-flex px-3 py-1 text-sm font-medium rounded-full 
+                           {{ 'bg-purple-100 text-purple-800' if (tenant.subscription_plan or 'BASIC') == 'ENTERPRISE' 
+                           else 'bg-blue-100 text-blue-800' if (tenant.subscription_plan or 'BASIC') == 'PREMIUM'
+                           else 'bg-green-100 text-green-800' if (tenant.subscription_plan or 'BASIC') == 'STANDARD'
+                           else 'bg-gray-100 text-gray-800' }}">
+                {{ tenant.subscription_plan or 'BASIC' }}
+              </span>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Subscription Status</label>
+              <span class="mt-1 inline-flex px-3 py-1 text-sm font-medium rounded-full 
+                           {{ 'bg-green-100 text-green-800' if tenant.is_subscription_active else 'bg-red-100 text-red-800' }}">
+                {{ 'Active' if tenant.is_subscription_active else 'Expired' }}
+              </span>
+            </div>
+            {% if tenant.subscription_expires_at %}
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-500">Expires On</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.subscription_expires_at.strftime('%d %B %Y at %I:%M %p') }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Theme Configuration -->
+      {% if tenant.theme_config %}
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Theme Configuration</h3>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Primary Color</label>
+              <div class="mt-1 flex items-center">
+                <div class="w-6 h-6 rounded border" style="background-color: {{ tenant.theme_config.get('primary_color', '#3B82F6') }}"></div>
+                <span class="ml-2 text-sm text-gray-900">{{ tenant.theme_config.get('primary_color', '#3B82F6') }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Secondary Color</label>
+              <div class="mt-1 flex items-center">
+                <div class="w-6 h-6 rounded border" style="background-color: {{ tenant.theme_config.get('secondary_color', '#10B981') }}"></div>
+                <span class="ml-2 text-sm text-gray-900">{{ tenant.theme_config.get('secondary_color', '#10B981') }}</span>
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-500">Brand Name</label>
+              <p class="mt-1 text-sm text-gray-900">{{ tenant.theme_config.get('brand_name', tenant.tenant_name) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent Users -->
+      {% if users %}
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Users</h3>
+            <a href="{{ url_for('tenant_management.tenant_users', tenant_id=tenant.id) }}" 
+               class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+              View All →
+            </a>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="space-y-4">
+            {% for user in users %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                  {{ user.full_name[:2].upper() }}
+                </div>
+                <div class="ml-3">
+                  <h4 class="font-medium text-gray-800">{{ user.full_name }}</h4>
+                  <p class="text-sm text-gray-600">{{ user.username }} - {{ user.role.value.replace('_', ' ').title() }}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                             {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-red-100 text-red-800' }}">
+                  {{ 'Active' if user.is_active else 'Inactive' }}
+                </span>
+                <p class="text-xs text-gray-500 mt-1">{{ user.created_at.strftime('%d %b %Y') }}</p>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Statistics Sidebar -->
+    <div class="space-y-6">
+      
+      <!-- User Statistics -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">User Statistics</h3>
+        </div>
+        <div class="p-6">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-500">Total Users</span>
+              <span class="text-lg font-bold text-gray-800">{{ total_users }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-500">Active Users</span>
+              <span class="text-lg font-bold text-green-600">{{ active_users }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-500">Admin Users</span>
+              <span class="text-lg font-bold text-blue-600">{{ admin_users }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Quick Actions</h3>
+        </div>
+        <div class="p-6 space-y-3">
+          <a href="{{ url_for('tenant_management.tenant_users', tenant_id=tenant.id) }}" 
+             class="block w-full bg-primary-600 hover:bg-primary-700 text-white text-center py-2 px-4 rounded-lg font-medium">
+            Manage Users
+          </a>
+          {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN'] %}
+          <a href="{{ url_for('tenant_management.edit_tenant', tenant_id=tenant.id) }}" 
+             class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg font-medium">
+            Edit Settings
+          </a>
+          {% endif %}
+          {% if current_user.role.value == 'SUPER_ADMIN' %}
+          <button onclick="toggleTenantStatus('{{ tenant.id }}', '{{ tenant.tenant_name }}', {{ 'true' if tenant.is_active else 'false' }})"
+                  class="block w-full {{ 'bg-red-600 hover:bg-red-700' if tenant.is_active else 'bg-green-600 hover:bg-green-700' }} text-white text-center py-2 px-4 rounded-lg font-medium">
+            {{ 'Deactivate Tenant' if tenant.is_active else 'Activate Tenant' }}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- System Information -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">System Information</h3>
+        </div>
+        <div class="p-6 space-y-3">
+          <div class="text-sm">
+            <span class="font-medium text-gray-500">Created:</span>
+            <p class="text-gray-800">{{ tenant.created_at.strftime('%d %B %Y') }}</p>
+          </div>
+          <div class="text-sm">
+            <span class="font-medium text-gray-500">Last Updated:</span>
+            <p class="text-gray-800">{{ tenant.updated_at.strftime('%d %B %Y') if tenant.updated_at else 'Never' }}</p>
+          </div>
+          <div class="text-sm">
+            <span class="font-medium text-gray-500">Tenant ID:</span>
+            <p class="text-gray-800 font-mono text-xs">{{ tenant.id }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function toggleTenantStatus(tenantId, tenantName, isActive) {
+  const action = isActive ? 'deactivate' : 'activate';
+  const actionText = isActive ? 'Deactivate' : 'Activate';
+  
+  Swal.fire({
+    title: `${actionText} Tenant?`,
+    html: `Are you sure you want to ${action} <strong>${tenantName}</strong>?<br><br>
+           <small class="text-gray-500">This will affect all users and services under this tenant.</small>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: `Yes, ${actionText}`,
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: isActive ? '#EF4444' : '#10B981',
+    cancelButtonColor: '#6B7280'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Show loading
+      Swal.fire({
+        title: `${actionText}ing Tenant...`,
+        text: 'Please wait',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Submit form to toggle status
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/tenant-management/tenant/${tenantId}/toggle-status`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+</script>
+
+{% endblock %}

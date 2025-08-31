@@ -54,6 +54,29 @@ def add_account_page():
         subtitle='Add New Organization Bank Account'
     )
 
+@bank_management_bp.route('/edit-account/<account_id>')
+@login_required
+def edit_account_page(account_id):
+    """Edit bank account page"""
+    if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN']:
+        flash('Access denied', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    account = OrganizationBankAccount.query.filter(
+        OrganizationBankAccount.id == account_id,
+        OrganizationBankAccount.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not account:
+        flash('Bank account not found', 'error')
+        return redirect(url_for('bank_management.bank_accounts_page'))
+    
+    return render_template('bank_management/edit_account.html',
+        title=f'Edit Bank Account - {account.account_name}',
+        subtitle='Update account information and settings',
+        account=account
+    )
+
 @bank_management_bp.route('/account/<account_id>')
 @login_required
 def account_details_page(account_id):
@@ -325,8 +348,8 @@ def update_bank_account(account_id):
         
         # Update allowed fields
         updatable_fields = [
-            'account_name', 'branch_name', 'branch_address', 'pan_number',
-            'gstin', 'upi_id', 'priority', 'daily_limit', 'monthly_limit',
+            'account_name', 'account_holder_name', 'branch_name', 'branch_address', 
+            'pan_number', 'gstin', 'upi_id', 'priority', 'daily_limit', 'monthly_limit',
             'minimum_balance', 'current_balance', 'bank_charges',
             'auto_settlement', 'settlement_schedule', 'is_visible_to_users',
             'display_order', 'additional_info'
@@ -351,23 +374,43 @@ def update_bank_account(account_id):
         if 'purpose' in data:
             account.purpose = data['purpose']
         
-        # Handle flags
-        if 'is_primary' in data and data['is_primary']:
-            # Remove primary flag from other accounts
-            OrganizationBankAccount.query.filter(
-                OrganizationBankAccount.tenant_id == current_user.tenant_id,
-                OrganizationBankAccount.id != account.id,
-                OrganizationBankAccount.is_primary == True
-            ).update({'is_primary': False})
-            account.is_primary = True
+        # Handle flags with mutual exclusivity
+        if 'is_primary' in data:
+            if data['is_primary']:
+                # Remove primary flag from other accounts
+                OrganizationBankAccount.query.filter(
+                    OrganizationBankAccount.tenant_id == current_user.tenant_id,
+                    OrganizationBankAccount.id != account.id,
+                    OrganizationBankAccount.is_primary == True
+                ).update({'is_primary': False})
+            account.is_primary = data['is_primary']
         
-        if 'is_default_topup' in data and data['is_default_topup']:
-            OrganizationBankAccount.query.filter(
-                OrganizationBankAccount.tenant_id == current_user.tenant_id,
-                OrganizationBankAccount.id != account.id,
-                OrganizationBankAccount.is_default_topup == True
-            ).update({'is_default_topup': False})
-            account.is_default_topup = True
+        if 'is_default_topup' in data:
+            if data['is_default_topup']:
+                OrganizationBankAccount.query.filter(
+                    OrganizationBankAccount.tenant_id == current_user.tenant_id,
+                    OrganizationBankAccount.id != account.id,
+                    OrganizationBankAccount.is_default_topup == True
+                ).update({'is_default_topup': False})
+            account.is_default_topup = data['is_default_topup']
+        
+        if 'is_default_settlement' in data:
+            if data['is_default_settlement']:
+                OrganizationBankAccount.query.filter(
+                    OrganizationBankAccount.tenant_id == current_user.tenant_id,
+                    OrganizationBankAccount.id != account.id,
+                    OrganizationBankAccount.is_default_settlement == True
+                ).update({'is_default_settlement': False})
+            account.is_default_settlement = data['is_default_settlement']
+        
+        if 'is_default_refund' in data:
+            if data['is_default_refund']:
+                OrganizationBankAccount.query.filter(
+                    OrganizationBankAccount.tenant_id == current_user.tenant_id,
+                    OrganizationBankAccount.id != account.id,
+                    OrganizationBankAccount.is_default_refund == True
+                ).update({'is_default_refund': False})
+            account.is_default_refund = data['is_default_refund']
         
         account.last_updated_by = current_user.id
         account.updated_at = datetime.utcnow()

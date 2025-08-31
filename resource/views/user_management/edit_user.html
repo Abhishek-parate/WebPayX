@@ -43,12 +43,6 @@
       grid-template-columns: 1fr;
     }
   }
-  .password-strength {
-    margin-top: 0.5rem;
-    height: 4px;
-    border-radius: 2px;
-    transition: all 0.3s ease;
-  }
 </style>
 
 <div class="container-fluid px-4 py-6">
@@ -60,21 +54,21 @@
         <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
         <p class="text-gray-600 mt-1">{{ subtitle }}</p>
       </div>
-      <div>
-        <a href="{{ url_for('user_management.index') }}" 
+      <div class="flex gap-3">
+        <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
            class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
           <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
-          Back to Dashboard
+          Back to Profile
         </a>
       </div>
     </div>
   </div>
 
-  <!-- Create User Form -->
+  <!-- Edit User Form -->
   <div class="bg-white rounded-lg shadow-md border">
-    <form id="createUserForm" method="POST" class="p-6">
+    <form id="editUserForm" method="POST" class="p-6">
       
       <!-- Personal Information -->
       <div class="mb-8">
@@ -84,13 +78,13 @@
           <div class="form-group">
             <label for="full_name" class="form-label">Full Name *</label>
             <input type="text" id="full_name" name="full_name" class="form-control" 
-                   placeholder="Enter full name" required>
+                   value="{{ user.full_name }}" required>
           </div>
           
           <div class="form-group">
             <label for="business_name" class="form-label">Business Name</label>
             <input type="text" id="business_name" name="business_name" class="form-control" 
-                   placeholder="Enter business/shop name">
+                   value="{{ user.business_name or '' }}">
           </div>
         </div>
       </div>
@@ -101,20 +95,19 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="username" class="form-label">Username *</label>
-            <input type="text" id="username" name="username" class="form-control" 
-                   placeholder="Enter username" required>
-            <small class="text-gray-500">Username will be used for login</small>
+            <label for="role" class="form-label">User Role</label>
+            <select id="role" name="role" class="form-control form-select">
+              {% for role in allowed_roles %}
+              <option value="{{ role.value }}" {{ 'selected' if user.role == role else '' }}>
+                {{ role.value.replace('_', ' ').title() }}
+              </option>
+              {% endfor %}
+            </select>
           </div>
           
           <div class="form-group">
-            <label for="role" class="form-label">User Role *</label>
-            <select id="role" name="role" class="form-control form-select" required>
-              <option value="">Select Role</option>
-              {% for role in allowed_roles %}
-              <option value="{{ role.value }}">{{ role.value.replace('_', ' ').title() }}</option>
-              {% endfor %}
-            </select>
+            <label class="form-label">User Code (Read Only)</label>
+            <input type="text" value="{{ user.user_code }}" class="form-control bg-gray-100" readonly>
           </div>
         </div>
 
@@ -122,43 +115,56 @@
           <div class="form-group">
             <label for="email" class="form-label">Email Address *</label>
             <input type="email" id="email" name="email" class="form-control" 
-                   placeholder="Enter email address" required>
+                   value="{{ user.email }}" required>
           </div>
           
           <div class="form-group">
             <label for="phone" class="form-label">Phone Number *</label>
             <input type="tel" id="phone" name="phone" class="form-control" 
-                   placeholder="Enter phone number" required>
+                   value="{{ user.phone }}" required>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="password" class="form-label">Password *</label>
+          <label for="password" class="form-label">New Password (Leave blank to keep current)</label>
           <input type="password" id="password" name="password" class="form-control" 
-                 placeholder="Enter secure password" required>
-          <div id="passwordStrength" class="password-strength bg-gray-200"></div>
-          <small class="text-gray-500">Password must be at least 8 characters with uppercase, lowercase, number and special character</small>
+                 placeholder="Enter new password to change">
+          <small class="text-gray-500">Only fill this if you want to change the user's password</small>
         </div>
       </div>
 
       <!-- Wallet Configuration -->
+      {% if user.wallet %}
       <div class="mb-8">
         <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Wallet Configuration</h3>
         
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Current Balance (Read Only)</label>
+            <input type="text" value="₹{{ '%.2f'|format(user.wallet.balance) }}" class="form-control bg-gray-100" readonly>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Available Balance (Read Only)</label>
+            <input type="text" value="₹{{ '%.2f'|format(user.wallet.available_balance) }}" class="form-control bg-gray-100" readonly>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
             <label for="daily_limit" class="form-label">Daily Limit (₹)</label>
             <input type="number" id="daily_limit" name="daily_limit" class="form-control" 
-                   value="50000" min="1000" max="1000000">
+                   value="{{ user.wallet.daily_limit }}" min="1000" max="1000000">
           </div>
           
           <div class="form-group">
             <label for="monthly_limit" class="form-label">Monthly Limit (₹)</label>
             <input type="number" id="monthly_limit" name="monthly_limit" class="form-control" 
-                   value="200000" min="10000" max="10000000">
+                   value="{{ user.wallet.monthly_limit }}" min="10000" max="10000000">
           </div>
         </div>
       </div>
+      {% endif %}
 
       <!-- Account Settings -->
       <div class="mb-8">
@@ -166,9 +172,43 @@
         
         <div class="flex items-center space-x-6">
           <label class="flex items-center">
-            <input type="checkbox" id="is_active" name="is_active" checked class="mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+            <input type="checkbox" id="is_active" name="is_active" {{ 'checked' if user.is_active else '' }} class="mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
             <span class="text-sm font-medium text-gray-700">Active User</span>
           </label>
+        </div>
+      </div>
+
+      <!-- Verification Status -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Verification Status</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Email Verification</label>
+            <span class="mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                         {{ 'bg-green-100 text-green-800' if user.email_verified else 'bg-red-100 text-red-800' }}">
+              {{ 'Verified' if user.email_verified else 'Not Verified' }}
+            </span>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Phone Verification</label>
+            <span class="mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                         {{ 'bg-green-100 text-green-800' if user.phone_verified else 'bg-red-100 text-red-800' }}">
+              {{ 'Verified' if user.phone_verified else 'Not Verified' }}
+            </span>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-500">KYC Status</label>
+            <span class="mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full
+                         {{ 'bg-green-100 text-green-800' if user.kyc_status.value == 'APPROVED' 
+                         else 'bg-yellow-100 text-yellow-800' if user.kyc_status.value == 'PENDING'
+                         else 'bg-red-100 text-red-800' if user.kyc_status.value == 'REJECTED'
+                         else 'bg-gray-100 text-gray-800' }}">
+              {{ user.kyc_status.value.replace('_', ' ').title() }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -176,14 +216,14 @@
       <div class="flex gap-4 pt-6 border-t">
         <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium">
           <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
-          Create User
+          Update User
         </button>
         <button type="button" onclick="resetForm()" class="btn bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium">
-          Reset Form
+          Reset Changes
         </button>
-        <a href="{{ url_for('user_management.index') }}" 
+        <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
            class="btn bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium">
           Cancel
         </a>
@@ -196,70 +236,39 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Auto-generate username from full name
-  document.getElementById('full_name').addEventListener('input', function() {
-    const fullName = this.value.toLowerCase()
-      .replace(/[^a-zA-Z0-9\s]/g, '')
-      .replace(/\s+/g, '')
-      .substring(0, 15);
-    
-    if (fullName && !document.getElementById('username').value) {
-      document.getElementById('username').value = fullName;
-    }
-  });
-
-  // Password strength checker
-  const passwordInput = document.getElementById('password');
-  const strengthIndicator = document.getElementById('passwordStrength');
-
-  passwordInput.addEventListener('input', function() {
-    const password = this.value;
-    const strength = calculatePasswordStrength(password);
-    
-    strengthIndicator.className = 'password-strength ' + getStrengthClass(strength);
-  });
-
   // Form submission
-  document.getElementById('createUserForm').addEventListener('submit', function(e) {
+  document.getElementById('editUserForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Validate form
-    if (!validateForm()) {
+    const fullName = document.getElementById('full_name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    
+    if (!fullName || !email || !phone) {
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in all required fields',
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
       return;
     }
 
-    const formData = new FormData(this);
-    const userData = {};
-    for (let [key, value] of formData.entries()) {
-      userData[key] = value;
-    }
-
     Swal.fire({
-      title: 'Create User?',
-      html: `
-        <div style="text-align: left; margin: 20px 0;">
-          <p style="color: #6B7280; margin-bottom: 16px;">Please confirm the user details:</p>
-          <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
-            <div style="margin-bottom: 8px;"><strong>Name:</strong> ${userData.full_name}</div>
-            <div style="margin-bottom: 8px;"><strong>Username:</strong> ${userData.username}</div>
-            <div style="margin-bottom: 8px;"><strong>Email:</strong> ${userData.email}</div>
-            <div style="margin-bottom: 8px;"><strong>Role:</strong> ${userData.role.replace('_', ' ')}</div>
-            <div><strong>Status:</strong> ${userData.is_active ? 'Active' : 'Inactive'}</div>
-          </div>
-        </div>
-      `,
+      title: 'Update User?',
+      text: `Are you sure you want to update ${fullName}?`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Yes, Create User',
-      cancelButtonText: 'Review Details',
+      confirmButtonText: 'Yes, Update',
+      cancelButtonText: 'Cancel',
       confirmButtonColor: '#3B82F6',
       cancelButtonColor: '#6B7280'
     }).then((result) => {
       if (result.isConfirmed) {
         // Show loading
         Swal.fire({
-          title: 'Creating User...',
-          text: 'Please wait while we create the user account',
+          title: 'Updating User...',
+          text: 'Please wait while we save the changes',
           allowOutsideClick: false,
           allowEscapeKey: false,
           showConfirmButton: false,
@@ -275,79 +284,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-function calculatePasswordStrength(password) {
-  let strength = 0;
-  
-  // Length check
-  if (password.length >= 8) strength += 25;
-  
-  // Uppercase check
-  if (/[A-Z]/.test(password)) strength += 25;
-  
-  // Lowercase check
-  if (/[a-z]/.test(password)) strength += 25;
-  
-  // Number check
-  if (/[0-9]/.test(password)) strength += 12.5;
-  
-  // Special character check
-  if (/[^A-Za-z0-9]/.test(password)) strength += 12.5;
-  
-  return strength;
-}
-
-function getStrengthClass(strength) {
-  if (strength < 25) return 'bg-red-500';
-  if (strength < 50) return 'bg-orange-500';
-  if (strength < 75) return 'bg-yellow-500';
-  return 'bg-green-500';
-}
-
-function validateForm() {
-  const requiredFields = ['full_name', 'username', 'email', 'phone', 'password', 'role'];
-  let valid = true;
-
-  requiredFields.forEach(field => {
-    const element = document.getElementById(field);
-    if (!element.value.trim()) {
-      element.classList.add('border-red-500');
-      valid = false;
-    } else {
-      element.classList.remove('border-red-500');
-    }
-  });
-
-  // Password validation
-  const password = document.getElementById('password').value;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  
-  if (!passwordRegex.test(password)) {
-    document.getElementById('password').classList.add('border-red-500');
-    Swal.fire({
-      title: 'Invalid Password',
-      text: 'Password must be at least 8 characters with uppercase, lowercase, number and special character',
-      icon: 'error',
-      confirmButtonColor: '#EF4444'
-    });
-    return false;
-  }
-
-  if (!valid) {
-    Swal.fire({
-      title: 'Missing Information',
-      text: 'Please fill in all required fields',
-      icon: 'error',
-      confirmButtonColor: '#EF4444'
-    });
-  }
-
-  return valid;
-}
-
 function resetForm() {
   Swal.fire({
-    title: 'Reset Form?',
-    text: 'All entered data will be lost',
+    title: 'Reset Changes?',
+    text: 'All unsaved changes will be lost',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Yes, Reset',
@@ -355,8 +295,7 @@ function resetForm() {
     confirmButtonColor: '#EF4444'
   }).then((result) => {
     if (result.isConfirmed) {
-      document.getElementById('createUserForm').reset();
-      document.getElementById('passwordStrength').className = 'password-strength bg-gray-200';
+      location.reload();
     }
   });
 }

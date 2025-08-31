@@ -28,6 +28,8 @@ from routes.settings import settings_bp
 from routes.table import table_bp
 from routes.user import user_bp
 from routes.transaction import transaction_management_bp
+from routes.tenant_management import tenant_management_bp
+
 
 # Import new enhanced routes
 from routes.user_management import user_management_bp
@@ -110,6 +112,8 @@ def create_app(config_name='development'):
     app.register_blueprint(settings_bp)
     app.register_blueprint(table_bp)
     app.register_blueprint(transaction_management_bp)
+    app.register_blueprint(tenant_management_bp)
+
 
     # New enhanced routes (SINGLE REGISTRATION)
     app.register_blueprint(user_management_bp)

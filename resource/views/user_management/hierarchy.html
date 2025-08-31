@@ -1,0 +1,238 @@
+<!-- templates/user_management/hierarchy.html -->
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<style>
+  .hierarchy-tree { font-family: 'Inter', sans-serif; }
+  .tree-node { position: relative; margin: 10px 0; }
+  .tree-children { margin-left: 30px; border-left: 2px dashed #e5e7eb; padding-left: 20px; }
+  .tree-connector::before {
+    content: ''; position: absolute; left: -22px; top: 50%;
+    width: 20px; height: 2px; background: #e5e7eb;
+  }
+  .user-node {
+    background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s; position: relative; text-decoration: none;
+    display: block; color: inherit;
+  }
+  .user-node:hover { 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+  }
+  .level-indicator {
+    position: absolute; top: -5px; left: 10px; background: #3b82f6;
+    color: white; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: bold;
+  }
+  .focus-user { border: 2px solid #10b981; background: #f0fdf4; }
+  .retailer-node { opacity: 0.7; }
+</style>
+
+{# MACRO DEFINITION AT TOP #}
+{% macro render_user_node(node, index) %}
+<div class="tree-node">
+  {% if index > 0 %}
+  <div class="tree-connector"></div>
+  {% endif %}
+  
+  {# CHANGED: From div with onclick to direct link #}
+  <a href="{{ url_for('user_management.user_profile', user_id=node.user.id) }}" 
+     class="user-node {{ 'focus-user' if node.is_focus else '' }} {{ 'retailer-node' if node.user.role.value == 'RETAILER' else '' }}">
+    <div class="level-indicator">L{{ node.user.level }}</div>
+    
+    {% if node.is_focus %}
+    <div class="absolute top-2 right-2">
+      <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">You</span>
+    </div>
+    {% endif %}
+    
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm
+                    {{ 'bg-purple-500' if node.user.role.value == 'ADMIN' 
+                    else 'bg-blue-500' if node.user.role.value == 'WHITE_LABEL'
+                    else 'bg-green-500' if node.user.role.value == 'MASTER_DISTRIBUTOR'
+                    else 'bg-yellow-500' if node.user.role.value == 'DISTRIBUTOR'
+                    else 'bg-gray-400' }}">
+          {{ node.user.full_name[:2].upper() }}
+        </div>
+        <div class="ml-4">
+          <h4 class="font-semibold text-gray-800">{{ node.user.full_name }}</h4>
+          <p class="text-sm text-gray-600">@{{ node.user.username }}</p>
+          <p class="text-xs text-gray-500">{{ node.user.user_code }}</p>
+        </div>
+      </div>
+      
+      <div class="text-right">
+        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                     {{ 'bg-green-100 text-green-800' if node.user.is_active else 'bg-red-100 text-red-800' }}">
+          {{ 'Active' if node.user.is_active else 'Inactive' }}
+        </span>
+        
+        <div class="mt-2">
+          <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                       {{ 'bg-purple-100 text-purple-800' if node.user.role.value == 'ADMIN' 
+                       else 'bg-blue-100 text-blue-800' if node.user.role.value == 'WHITE_LABEL'
+                       else 'bg-green-100 text-green-800' if node.user.role.value == 'MASTER_DISTRIBUTOR'
+                       else 'bg-yellow-100 text-yellow-800' if node.user.role.value == 'DISTRIBUTOR'
+                       else 'bg-gray-100 text-gray-600' }}">
+            {{ node.user.role.value.replace('_', ' ').title() }}
+          </span>
+        </div>
+        
+        {# HIDE WALLET INFO FOR RETAILERS #}
+        {% if node.user.role.value != 'RETAILER' and node.user.wallet %}
+        <div class="mt-1 text-xs text-gray-500">
+          Wallet: ₹{{ "%.2f"|format(node.user.wallet.balance) }}
+        </div>
+        {% endif %}
+        
+        {% if node.children %}
+        <div class="mt-1 text-xs text-blue-600 font-medium">
+          {{ node.children|length }} sub-user{{ 's' if node.children|length != 1 else '' }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  
+  {% if node.children %}
+  <div class="tree-children">
+    {% for child in node.children %}
+      {{ render_user_node(child, loop.index0) }}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        {# HIDE CREATE USER BUTTON FOR RETAILERS #}
+        {% if current_user.role.value != 'RETAILER' %}
+        <a href="{{ url_for('user_management.create_user') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add User
+        </a>
+        {% endif %}
+        
+        <a href="{{ url_for('user_management.user_list') }}" 
+           class="btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+          List View
+        </a>
+        <a href="{{ url_for('user_management.index') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Network Info Card -->
+  <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md text-white p-6 mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Your Downline Network</h3>
+        <p class="text-blue-100 mt-1">View your complete downline network (no uplines shown)</p>
+      </div>
+      <div class="text-right">
+        <div class="text-2xl font-bold">{{ total_users }}</div>
+        <div class="text-blue-100 text-sm">Downline Network Users</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role Legend (Exclude Retailer) -->
+  <div class="bg-white rounded-lg shadow-md border p-4 mb-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-3">Role Legend</h3>
+    <div class="flex flex-wrap gap-4">
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+        <span class="text-sm">Admin</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+        <span class="text-sm">White Label</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+        <span class="text-sm">Master Distributor</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+        <span class="text-sm">Distributor</span>
+      </div>
+      {# SHOW RETAILER IN LEGEND BUT DIMMED #}
+      <div class="flex items-center opacity-60">
+        <div class="w-4 h-4 bg-gray-400 rounded-full mr-2"></div>
+        <span class="text-sm">Retailer (Limited Access)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Click to Navigate Info -->
+  <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-blue-700">
+          <strong>Click on any user card</strong> to view their detailed profile and manage their account.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hierarchy Tree -->
+  <div class="bg-white rounded-lg shadow-md border p-6">
+    {% if hierarchy_tree %}
+    <div class="hierarchy-tree">
+      {% for node in hierarchy_tree %}
+        {{ render_user_node(node, loop.index0) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-gray-500 py-12">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10"></path>
+      </svg>
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">No Network Found</h3>
+      <p class="text-gray-600 mb-4">Your network hierarchy will appear here</p>
+      
+      {# HIDE CREATE BUTTON FOR RETAILERS #}
+      {% if current_user.role.value != 'RETAILER' %}
+      <a href="{{ url_for('user_management.create_user') }}" 
+         class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add First User
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

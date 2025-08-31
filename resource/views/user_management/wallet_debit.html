@@ -1,0 +1,358 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  .amount-shortcuts {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .amount-shortcut {
+    padding: 0.25rem 0.75rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+  }
+  .amount-shortcut:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+  }
+</style>
+
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div>
+        <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Profile
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Debit Form -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Debit Wallet</h3>
+          <p class="text-sm text-gray-600 mt-1">Remove money from {{ user.full_name }}'s wallet</p>
+        </div>
+        
+        <form id="debitForm" method="POST" class="p-6">
+          
+          <div class="form-group">
+            <label for="amount" class="form-label">Amount to Debit (₹) *</label>
+            <input type="number" id="amount" name="amount" class="form-control" 
+                   placeholder="Enter amount" min="1" 
+                   max="{{ user.wallet.available_balance if user.wallet else 0 }}" 
+                   step="0.01" required>
+            
+            <div class="amount-shortcuts">
+              {% if user.wallet and user.wallet.available_balance >= 100 %}
+              <span class="amount-shortcut" onclick="setAmount(100)">₹100</span>
+              {% endif %}
+              {% if user.wallet and user.wallet.available_balance >= 500 %}
+              <span class="amount-shortcut" onclick="setAmount(500)">₹500</span>
+              {% endif %}
+              {% if user.wallet and user.wallet.available_balance >= 1000 %}
+              <span class="amount-shortcut" onclick="setAmount(1000)">₹1,000</span>
+              {% endif %}
+              {% if user.wallet and user.wallet.available_balance >= 2000 %}
+              <span class="amount-shortcut" onclick="setAmount(2000)">₹2,000</span>
+              {% endif %}
+              {% if user.wallet and user.wallet.available_balance >= 5000 %}
+              <span class="amount-shortcut" onclick="setAmount(5000)">₹5,000</span>
+              {% endif %}
+              {% if user.wallet %}
+              <span class="amount-shortcut" onclick="setAmount({{ user.wallet.available_balance }})">
+                Max: ₹{{ "%.0f"|format(user.wallet.available_balance) }}
+              </span>
+              {% endif %}
+            </div>
+            <small class="text-gray-500">
+              Maximum available: ₹{{ "%.2f"|format(user.wallet.available_balance if user.wallet else 0) }}
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="description" class="form-label">Description *</label>
+            <textarea id="description" name="description" class="form-control" rows="3"
+                      placeholder="Enter reason for debit (required)" required>Admin wallet debit</textarea>
+          </div>
+
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+              <svg class="w-5 h-5 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Critical Warning</h3>
+                <div class="mt-1 text-sm text-red-700">
+                  <p>• This action will immediately debit the specified amount from the user's wallet</p>
+                  <p>• The transaction will be recorded in the wallet transaction history</p>
+                  <p>• This action cannot be undone automatically</p>
+                  <p>• Ensure the user has sufficient balance before proceeding</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <button type="submit" class="btn bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium flex-1">
+              <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+              </svg>
+              Debit Wallet
+            </button>
+            <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
+               class="btn bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-medium">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- User Info Sidebar -->
+    <div class="space-y-6">
+      
+      <!-- User Card -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6">
+          <div class="text-center">
+            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
+              {{ user.full_name[:2].upper() }}
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">{{ user.full_name }}</h3>
+            <p class="text-sm text-gray-600">@{{ user.username }}</p>
+            <p class="text-xs text-gray-500">{{ user.user_code }}</p>
+            
+            <div class="mt-3">
+              <span class="inline-flex px-3 py-1 text-sm font-medium rounded-full 
+                           {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-red-100 text-red-800' }}">
+                {{ 'Active' if user.is_active else 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Wallet Status -->
+      {% if user.wallet %}
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Current Wallet Status</h3>
+        </div>
+        <div class="p-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Current Balance</label>
+              <p class="text-2xl font-bold text-green-600">₹{{ "%.2f"|format(user.wallet.balance) }}</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Hold Balance</label>
+              <p class="text-lg font-semibold text-orange-600">₹{{ "%.2f"|format(user.wallet.hold_balance) }}</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-500">Available Balance</label>
+              <p class="text-lg font-semibold text-blue-600">₹{{ "%.2f"|format(user.wallet.available_balance) }}</p>
+            </div>
+            
+            <div class="pt-4 border-t">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Total Credited:</span>
+                <span class="font-medium">₹{{ "%.2f"|format(user.wallet.total_credited) }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Total Debited:</span>
+                <span class="font-medium">₹{{ "%.2f"|format(user.wallet.total_debited) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Other Actions</h3>
+        </div>
+        <div class="p-6 space-y-3">
+          <a href="{{ url_for('user_management.credit_user_wallet', user_id=user.id) }}" 
+             class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg font-medium">
+            Credit Wallet
+          </a>
+          <a href="{{ url_for('user_management.edit_user', user_id=user.id) }}" 
+             class="block w-full bg-primary-600 hover:bg-primary-700 text-white text-center py-2 px-4 rounded-lg font-medium">
+            Edit User
+          </a>
+          <a href="{{ url_for('user_management.user_profile', user_id=user.id) }}" 
+             class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-4 rounded-lg font-medium">
+            View Profile
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function setAmount(amount) {
+  document.getElementById('amount').value = amount;
+  
+  // Add visual feedback
+  const shortcuts = document.querySelectorAll('.amount-shortcut');
+  shortcuts.forEach(s => s.classList.remove('bg-red-500', 'text-white'));
+  
+  event.target.classList.add('bg-red-500', 'text-white');
+  setTimeout(() => {
+    event.target.classList.remove('bg-red-500', 'text-white');
+  }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('debitForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const amount = parseFloat(document.getElementById('amount').value);
+    const description = document.getElementById('description').value;
+    const availableBalance = {{ user.wallet.available_balance if user.wallet else 0 }};
+    
+    if (!amount || amount <= 0) {
+      Swal.fire({
+        title: 'Invalid Amount',
+        text: 'Please enter a valid amount greater than 0',
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
+      return;
+    }
+
+    if (amount > availableBalance) {
+      Swal.fire({
+        title: 'Insufficient Balance',
+        text: `Amount exceeds available balance of ₹${availableBalance.toLocaleString()}`,
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
+      return;
+    }
+
+    if (!description.trim()) {
+      Swal.fire({
+        title: 'Description Required',
+        text: 'Please provide a reason for the debit',
+        icon: 'error',
+        confirmButtonColor: '#EF4444'
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Debit Wallet?',
+      html: `
+        <div style="text-align: left; margin: 20px 0;">
+          <p style="color: #6B7280; margin-bottom: 16px;">Please confirm the debit details:</p>
+          <div style="background: #FEF2F2; padding: 16px; border-radius: 8px; border: 1px solid #EF4444;">
+            <div style="margin-bottom: 8px;"><strong>User:</strong> {{ user.full_name }}</div>
+            <div style="margin-bottom: 8px;"><strong>Amount:</strong> ₹${amount.toLocaleString()}</div>
+            <div style="margin-bottom: 8px;"><strong>Description:</strong> ${description}</div>
+            <div><strong>New Balance:</strong> ₹${(availableBalance - amount).toLocaleString()}</div>
+          </div>
+          <p style="font-size: 14px; color: #DC2626; margin-top: 16px;">⚠️ This action cannot be undone automatically!</p>
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Debit ₹' + amount.toLocaleString(),
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading
+        Swal.fire({
+          title: 'Processing Debit...',
+          text: 'Please wait while we debit the wallet',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
+        // Submit the form
+        this.submit();
+      }
+    });
+  });
+
+  // Format amount input and validate balance
+  document.getElementById('amount').addEventListener('input', function() {
+    let value = parseFloat(this.value);
+    const availableBalance = {{ user.wallet.available_balance if user.wallet else 0 }};
+    
+    if (value && value > 0) {
+      if (value > availableBalance) {
+        this.style.borderColor = '#EF4444';
+      } else {
+        this.style.borderColor = '#10B981';
+      }
+    } else {
+      this.style.borderColor = '#D1D5DB';
+    }
+  });
+});
+</script>
+
+{% endblock %}
+

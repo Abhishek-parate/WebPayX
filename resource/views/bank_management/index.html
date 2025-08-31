@@ -1,0 +1,250 @@
+<!-- templates/bank_management/index.html -->
+{% extends 'layout/layout.html' %} 
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .stats-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<!-- Bank Management Dashboard -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('bank_management.add_account_page') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          Add New Account
+        </a>
+        <a href="{{ url_for('bank_management.bank_accounts_page') }}" 
+           class="btn bg-success-600 hover:bg-success-700 text-white px-6 py-2 rounded-lg">
+          View All Accounts
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Total Accounts</p>
+          <p class="text-2xl font-bold text-gray-800" id="total-accounts">0</p>
+        </div>
+        <div class="bg-blue-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Active Accounts</p>
+          <p class="text-2xl font-bold text-green-600" id="active-accounts">0</p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Total Balance</p>
+          <p class="text-2xl font-bold text-purple-600" id="total-balance">₹0</p>
+        </div>
+        <div class="bg-purple-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card bg-white rounded-lg shadow-md p-6 border">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">Today's Transactions</p>
+          <p class="text-2xl font-bold text-orange-600" id="today-transactions">0</p>
+        </div>
+        <div class="bg-orange-100 p-3 rounded-full">
+          <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Recent Accounts -->
+    <div class="bg-white rounded-lg shadow-md border">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Recent Bank Accounts</h3>
+      </div>
+      <div class="p-6">
+        <div id="recent-accounts" class="space-y-4">
+          <!-- Will be populated by JavaScript -->
+          <div class="text-center text-gray-500 py-8">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+            </svg>
+            <p>Loading bank accounts...</p>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <a href="{{ url_for('bank_management.bank_accounts_page') }}" 
+             class="text-primary-600 hover:text-primary-700 font-medium">
+            View All Accounts →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Types Distribution -->
+    <div class="bg-white rounded-lg shadow-md border">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Account Types</h3>
+      </div>
+      <div class="p-6">
+        <div id="account-types" class="space-y-4">
+          <!-- Will be populated by JavaScript -->
+          <div class="text-center text-gray-500 py-8">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <p>Loading account types...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadBankStats();
+  loadRecentAccounts();
+});
+
+function loadBankStats() {
+  fetch('/bank-management/api/stats')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('total-accounts').textContent = data.total_accounts || 0;
+      document.getElementById('active-accounts').textContent = data.active_accounts || 0;
+      document.getElementById('total-balance').textContent = '₹' + (data.total_balance || 0).toLocaleString();
+      document.getElementById('today-transactions').textContent = data.today_transactions || 0;
+      
+      // Update account types
+      updateAccountTypes(data.account_types || {});
+    })
+    .catch(error => {
+      console.error('Error loading stats:', error);
+      Toast.fire({
+        icon: 'error',
+        title: 'Failed to load dashboard statistics'
+      });
+    });
+}
+
+function loadRecentAccounts() {
+  fetch('/bank-management/api/accounts?per_page=5')
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('recent-accounts');
+      if (data.accounts && data.accounts.length > 0) {
+        container.innerHTML = data.accounts.map(account => `
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <h4 class="font-medium text-gray-800">${account.account_name}</h4>
+              <p class="text-sm text-gray-600">${account.account_number} - ${account.bank_name}</p>
+            </div>
+            <div class="text-right">
+              <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full ${account.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${account.status}
+              </span>
+              <p class="text-sm font-medium text-gray-800 mt-1">₹${account.current_balance.toLocaleString()}</p>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">No accounts found</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading recent accounts:', error);
+      document.getElementById('recent-accounts').innerHTML = '<p class="text-center text-red-500 py-8">Error loading accounts</p>';
+      Toast.fire({
+        icon: 'error',
+        title: 'Failed to load recent accounts'
+      });
+    });
+}
+
+function updateAccountTypes(accountTypes) {
+  const container = document.getElementById('account-types');
+  const typeEntries = Object.entries(accountTypes);
+  
+  if (typeEntries.length > 0) {
+    container.innerHTML = typeEntries.map(([type, count]) => `
+      <div class="flex items-center justify-between py-2">
+        <span class="text-gray-700">${type.replace('_', ' ')}</span>
+        <span class="font-medium text-gray-900">${count}</span>
+      </div>
+    `).join('');
+  } else {
+    container.innerHTML = '<p class="text-center text-gray-500 py-8">No account types found</p>';
+  }
+}
+</script>
+
+{% endblock %}
