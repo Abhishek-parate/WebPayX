@@ -1,0 +1,154 @@
+<!-- \resource\views\gateway_management\index.html-->
+{% extends 'layout/layout.html' %} 
+
+{% block title %}Payment Gateway Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Total Gateways</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ stats.total_gateways }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Active Gateways</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ stats.active_gateways }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Today's Transactions</h3>
+                    <p class="text-3xl font-bold text-purple-600">{{ stats.today_transactions }}</p>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Today's Volume</h3>
+                    <p class="text-3xl font-bold text-orange-600">₹{{ "{:,.2f}".format(stats.today_amount) }}</p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="{{ url_for('payment_gateway_management.gateways_page') }}" 
+                       class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <h4 class="font-medium text-gray-900">Manage Gateways</h4>
+                        </div>
+                    </a>
+                    
+                    <a href="{{ url_for('payment_gateway_management.add_gateway_page') }}" 
+                       class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            <h4 class="font-medium text-gray-900">Add Gateway</h4>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gateway Types Distribution -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Gateway Types</h3>
+            </div>
+            <div class="p-6">
+                {% if stats.gateway_types %}
+                    {% for gateway_type, count in stats.gateway_types.items() %}
+                    <div class="flex items-center justify-between py-2">
+                        <span class="text-gray-700">{{ gateway_type.replace('_', ' ').title() }}</span>
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No gateways configured</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Recent Webhook Activity</h3>
+        </div>
+        <div class="p-6">
+            {% if stats.recent_webhooks %}
+                <div class="space-y-4">
+                    {% for webhook in stats.recent_webhooks %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-2 h-2 {{ 'bg-green-400' if webhook.processed else 'bg-yellow-400' }} rounded-full"></div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ webhook.event_type }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Gateway: {{ webhook.payment_gateway.gateway_name if webhook.payment_gateway else 'Unknown' }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm {{ 'text-green-600' if webhook.processed else 'text-yellow-600' }} font-medium">
+                                {{ 'Processed' if webhook.processed else 'Pending' }}
+                            </span>
+                            <p class="text-xs text-gray-500">
+                                {{ webhook.created_at.strftime('%d %b, %H:%M') if webhook.created_at else '' }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No recent webhook activity</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

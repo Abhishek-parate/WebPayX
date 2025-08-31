@@ -29,11 +29,15 @@ from routes.table import table_bp
 from routes.user import user_bp
 from routes.transaction import transaction_management_bp
 from routes.tenant_management import tenant_management_bp
+from routes.wallet_management import wallet_management_bp
+
+from routes.payment_gateway_management import payment_gateway_management_bp
+
+
 
 
 # Import new enhanced routes
 from routes.user_management import user_management_bp
-from routes.enhanced_topup import enhanced_topup_bp
 from routes.bank_management import bank_management_bp
 from routes.role_permissions import role_permissions_bp
 
@@ -114,10 +118,15 @@ def create_app(config_name='development'):
     app.register_blueprint(transaction_management_bp)
     app.register_blueprint(tenant_management_bp)
 
+    app.register_blueprint(wallet_management_bp)
+    app.register_blueprint(payment_gateway_management_bp)
+    
+
+
+
 
     # New enhanced routes (SINGLE REGISTRATION)
     app.register_blueprint(user_management_bp)
-    app.register_blueprint(enhanced_topup_bp)  # This handles wallet functionality
     app.register_blueprint(bank_management_bp)
     app.register_blueprint(role_permissions_bp)
 
@@ -145,18 +154,7 @@ def create_app(config_name='development'):
             user_stats=user_stats
         )
 
-    # Wallet route aliases for clean URLs
-    @app.route('/wallet/')
-    @login_required
-    def wallet_index():
-        """Wallet main page - redirect to enhanced topup request"""
-        return redirect(url_for('enhanced_topup.topup_request_page'))
 
-    @app.route('/wallet-topup')
-    @login_required
-    def wallet_topup():
-        """Enhanced wallet top-up page"""
-        return redirect(url_for('enhanced_topup.topup_request_page'))
 
     @app.route('/user-management')
     @login_required

@@ -1,0 +1,406 @@
+<!-- templates/wallet/admin_request_details.html -->
+{% extends "base.html" %}
+
+{% block title %}Request Details - {{ request.request_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Request Details</h1>
+                        <p class="text-muted">{{ request.request_id }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('wallet_management.requests') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Request Information -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Request Information</h4>
+                    {% set status_class = 'warning' if request.status.value == 'PENDING' else 'success' if request.status.value == 'SUCCESS' else 'danger' %}
+                    <span class="badge badge-{{ status_class }} badge-lg">{{ request.status.value }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Request ID</label>
+                                <p class="font-weight-bold">{{ request.request_id }}</p>
+                            </div>
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Amount</label>
+                                <p class="font-weight-bold text-success h5">₹{{ "{:,.2f}".format(request.amount|float) }}</p>
+                            </div>
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Top-up Method</label>
+                                <p><span class="badge badge-info">{{ request.topup_method.value.replace('_', ' ').title() }}</span></p>
+                            </div>
+                            {% if request.transaction_mode %}
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Transaction Mode</label>
+                                <p><span class="badge badge-secondary">{{ request.transaction_mode.value }}</span></p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Created Date</label>
+                                <p>{{ request.created_at.strftime('%d %B %Y at %I:%M %p') }}</p>
+                            </div>
+                            {% if request.processed_at %}
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Processed Date</label>
+                                <p>{{ request.processed_at.strftime('%d %B %Y at %I:%M %p') }}</p>
+                            </div>
+                            {% endif %}
+                            {% if request.expires_at %}
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Expires At</label>
+                                <p class="{% if request.is_expired %}text-danger{% else %}text-warning{% endif %}">
+                                    {{ request.expires_at.strftime('%d %B %Y at %I:%M %p') }}
+                                    {% if request.is_expired %}<br><small><i class="fas fa-exclamation-triangle"></i> Expired</small>{% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Transaction Details -->
+                    {% if request.utr_number or request.bank_reference or request.upi_ref or request.external_transaction_id %}
+                    <hr>
+                    <h5 class="mb-3">Transaction Details</h5>
+                    <div class="row">
+                        {% if request.utr_number %}
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">UTR Number</label>
+                                <p class="font-monospace">{{ request.utr_number }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if request.bank_reference %}
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">Bank Reference</label>
+                                <p class="font-monospace">{{ request.bank_reference }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if request.upi_ref %}
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">UPI Reference</label>
+                                <p class="font-monospace">{{ request.upi_ref }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if request.external_transaction_id %}
+                        <div class="col-md-6">
+                            <div class="info-group mb-3">
+                                <label class="text-muted">External Transaction ID</label>
+                                <p class="font-monospace">{{ request.external_transaction_id }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Remarks -->
+                    {% if request.request_remarks %}
+                    <hr>
+                    <div class="info-group mb-3">
+                        <label class="text-muted">User Remarks</label>
+                        <div class="alert alert-light">
+                            <i class="fas fa-quote-left"></i> {{ request.request_remarks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.admin_remarks %}
+                    <div class="info-group mb-3">
+                        <label class="text-muted">Admin Remarks</label>
+                        <div class="alert alert-info">
+                            <i class="fas fa-user-shield"></i> {{ request.admin_remarks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.failure_reason %}
+                    <div class="info-group mb-3">
+                        <label class="text-muted">Failure Reason</label>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> {{ request.failure_reason }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Proof Document -->
+                    {% if request.proof_document %}
+                    <hr>
+                    <div class="info-group mb-3">
+                        <label class="text-muted">Payment Proof</label>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-image fa-2x text-primary mr-3"></i>
+                            <div>
+                                <p class="mb-1">{{ request.proof_document }}</p>
+                                <a href="{{ url_for('static', filename='uploads/receipts/' + request.proof_document) }}" 
+                                   target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i> View Document
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    {% if request.status.value == 'PENDING' and can_approve and not request.is_expired %}
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-success mr-2" onclick="approveRequest('{{ request.request_id }}')">
+                            <i class="fas fa-check"></i> Approve Request
+                        </button>
+                        <button class="btn btn-danger" onclick="rejectRequest('{{ request.request_id }}')">
+                            <i class="fas fa-times"></i> Reject Request
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- User Information & Bank Details -->
+        <div class="col-lg-4">
+            <!-- User Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">User Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar avatar-lg bg-gradient-primary rounded-circle text-white d-flex align-items-center justify-content-center mr-3">
+                            {{ request.user.full_name[:1].upper() }}
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ request.user.full_name }}</h5>
+                            <p class="text-muted mb-0">{{ request.user.user_code }}</p>
+                            <span class="badge badge-light">{{ request.user.role.value.replace('_', ' ').title() }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Phone</label>
+                        <p>{{ request.user.phone }}</p>
+                    </div>
+                    
+                    {% if request.user.email %}
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Email</label>
+                        <p>{{ request.user.email }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Current Wallet Balance -->
+                    {% if request.user.wallet %}
+                    <hr>
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Current Wallet Balance</label>
+                        <p class="font-weight-bold text-success">₹{{ "{:,.2f}".format(request.user.wallet.balance|float) }}</p>
+                    </div>
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Available Balance</label>
+                        <p class="font-weight-bold text-info">₹{{ "{:,.2f}".format(request.user.wallet.available_balance|float) }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Bank Account Details -->
+            {% if request.selected_bank_account %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Bank Account Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Bank Name</label>
+                        <p class="font-weight-bold">{{ request.selected_bank_account.bank_name }}</p>
+                    </div>
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Account Holder</label>
+                        <p>{{ request.selected_bank_account.account_holder_name }}</p>
+                    </div>
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Account Number</label>
+                        <p class="font-monospace">{{ request.selected_bank_account.account_number }}</p>
+                    </div>
+                    <div class="info-group mb-2">
+                        <label class="text-muted">IFSC Code</label>
+                        <p class="font-monospace">{{ request.selected_bank_account.ifsc_code }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Device Information -->
+            {% if request.device_info %}
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Request Information</h4>
+                </div>
+                <div class="card-body">
+                    {% if request.ip_address %}
+                    <div class="info-group mb-2">
+                        <label class="text-muted">IP Address</label>
+                        <p class="font-monospace">{{ request.ip_address }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if request.device_info.depositor_name %}
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Depositor Name</label>
+                        <p>{{ request.device_info.depositor_name }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if request.device_info.depositor_phone %}
+                    <div class="info-group mb-2">
+                        <label class="text-muted">Depositor Phone</label>
+                        <p>{{ request.device_info.depositor_phone }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Include approval/rejection modals -->
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="approvalForm" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Request</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> This will approve the request and credit <strong>₹{{ "{:,.2f}".format(request.amount|float) }}</strong> to <strong>{{ request.user.full_name }}</strong>'s wallet.
+                    </div>
+                    <div class="form-group">
+                        <label>Admin Remarks (Optional)</label>
+                        <textarea name="remarks" class="form-control" rows="3" 
+                                  placeholder="Add any remarks for this approval..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Approve & Credit Wallet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="rejectionForm" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Request</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> This action cannot be undone. Please provide a clear reason for rejection.
+                    </div>
+                    <div class="form-group">
+                        <label>Rejection Reason <span class="text-danger">*</span></label>
+                        <select name="reason" class="form-control mb-2" required>
+                            <option value="">Select a reason</option>
+                            <option value="Invalid payment proof">Invalid payment proof</option>
+                            <option value="Insufficient bank details">Insufficient bank details</option>
+                            <option value="Duplicate request">Duplicate request</option>
+                            <option value="Policy violation">Policy violation</option>
+                            <option value="Incorrect amount">Incorrect amount</option>
+                            <option value="Other">Other (specify in remarks)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Admin Remarks (Optional)</label>
+                        <textarea name="remarks" class="form-control" rows="2" 
+                                  placeholder="Additional remarks for the user..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Reject Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function approveRequest(requestId) {
+    $('#approvalForm').attr('action', '{{ url_for("wallet_management.approve_request", request_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', requestId));
+    $('#approvalModal').modal('show');
+}
+
+function rejectRequest(requestId) {
+    $('#rejectionForm').attr('action', '{{ url_for("wallet_management.reject_request", request_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', requestId));
+    $('#rejectionModal').modal('show');
+}
+</script>
+
+<style>
+.info-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.info-group p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.avatar-lg {
+    width: 50px;
+    height: 50px;
+}
+
+.badge-lg {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+</style>
+{% endblock %}

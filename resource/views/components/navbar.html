@@ -74,12 +74,7 @@
                                     Profile Settings
                                 </a>                         
                             </li>
-                            <li>                             
-                                <a href="{{ url_for('enhanced_topup.topup_request_page') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                    <iconify-icon icon="mdi:wallet-plus" class="text-base"></iconify-icon>
-                                    Wallet Top-up
-                                </a>                         
-                            </li>
+                        
                             {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
                             <li>                             
                                 <a href="{{ url_for('user_management.index') }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">

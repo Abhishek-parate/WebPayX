@@ -1,0 +1,313 @@
+{% extends 'layout/layout.html' %}
+{% block title %}Wallet Limits - WebPayX{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center">
+            <i class="fas fa-chart-pie text-purple-600 mr-4"></i>
+            Wallet Limits & Usage
+          </h1>
+          <p class="text-lg text-gray-600">Monitor your daily and monthly transaction limits</p>
+        </div>
+        <a href="{{ url_for('wallet_management.dashboard') }}" 
+           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Back to Wallet
+        </a>
+      </div>
+    </div>
+
+    <!-- Limits Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 animate-slide-up">
+      
+      <!-- Daily Limits Card -->
+      <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-all duration-300">
+        <div class="mb-8">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+            <i class="fas fa-calendar-day text-blue-600 mr-3"></i>
+            Daily Limits
+          </h3>
+          <p class="text-gray-600">Your daily transaction limits and current usage</p>
+        </div>
+        
+        <div class="space-y-8">
+          <!-- Daily Limit Overview -->
+          <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-sm font-bold text-blue-800 uppercase tracking-wide">Daily Limit</span>
+              <span class="text-2xl font-bold text-blue-600 flex items-center">
+                <i class="fas fa-rupee-sign mr-1 text-lg"></i>
+                {{ "{:,.0f}".format(wallet.daily_limit) }}
+              </span>
+            </div>
+            
+            <!-- Usage Progress -->
+            <div class="mb-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-blue-700 font-medium">Used Today</span>
+                <span class="text-sm font-bold text-blue-800 flex items-center">
+                  <i class="fas fa-rupee-sign mr-1 text-xs"></i>
+                  {{ "{:,.0f}".format(wallet.daily_used) }}
+                </span>
+              </div>
+              
+              {% set daily_percentage = (wallet.daily_used / wallet.daily_limit * 100) if wallet.daily_limit > 0 else 0 %}
+              <div class="w-full bg-blue-200 rounded-full h-4 shadow-inner">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden" 
+                     style="width: {{ daily_percentage }}%">
+                  <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center mt-3">
+                <span class="text-xs text-blue-600 font-medium">{{ "{:.1f}".format(daily_percentage) }}% used</span>
+                <span class="text-xs text-emerald-600 font-bold flex items-center">
+                  <i class="fas fa-check-circle mr-1"></i>
+                  ₹{{ "{:,.0f}".format(wallet.daily_remaining) }} remaining
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Status -->
+          <div class="flex items-center p-4 rounded-2xl 
+                      {% if daily_percentage < 50 %}bg-green-50 border-2 border-green-200
+                      {% elif daily_percentage < 80 %}bg-yellow-50 border-2 border-yellow-200
+                      {% else %}bg-red-50 border-2 border-red-200{% endif %}">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4
+                        {% if daily_percentage < 50 %}bg-green-500 text-white
+                        {% elif daily_percentage < 80 %}bg-yellow-500 text-white
+                        {% else %}bg-red-500 text-white{% endif %}">
+              {% if daily_percentage < 50 %}
+                <i class="fas fa-thumbs-up"></i>
+              {% elif daily_percentage < 80 %}
+                <i class="fas fa-exclamation-triangle"></i>
+              {% else %}
+                <i class="fas fa-ban"></i>
+              {% endif %}
+            </div>
+            <div>
+              <p class="font-bold 
+                        {% if daily_percentage < 50 %}text-green-800
+                        {% elif daily_percentage < 80 %}text-yellow-800
+                        {% else %}text-red-800{% endif %}">
+                {% if daily_percentage < 50 %}Good Usage
+                {% elif daily_percentage < 80 %}Moderate Usage
+                {% else %}High Usage{% endif %}
+              </p>
+              <p class="text-sm 
+                        {% if daily_percentage < 50 %}text-green-600
+                        {% elif daily_percentage < 80 %}text-yellow-600
+                        {% else %}text-red-600{% endif %}">
+                {% if daily_percentage < 50 %}You're within your daily limit
+                {% elif daily_percentage < 80 %}Approaching daily limit
+                {% else %}Consider monitoring usage{% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Limits Card -->
+      <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-all duration-300">
+        <div class="mb-8">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+            <i class="fas fa-calendar text-emerald-600 mr-3"></i>
+            Monthly Limits
+          </h3>
+          <p class="text-gray-600">Your monthly transaction limits and current usage</p>
+        </div>
+        
+        <div class="space-y-8">
+          <!-- Monthly Limit Overview -->
+          <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-sm font-bold text-emerald-800 uppercase tracking-wide">Monthly Limit</span>
+              <span class="text-2xl font-bold text-emerald-600 flex items-center">
+                <i class="fas fa-rupee-sign mr-1 text-lg"></i>
+                {{ "{:,.0f}".format(wallet.monthly_limit) }}
+              </span>
+            </div>
+            
+            <!-- Usage Progress -->
+            <div class="mb-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-emerald-700 font-medium">Used This Month</span>
+                <span class="text-sm font-bold text-emerald-800 flex items-center">
+                  <i class="fas fa-rupee-sign mr-1 text-xs"></i>
+                  {{ "{:,.0f}".format(wallet.monthly_used) }}
+                </span>
+              </div>
+              
+              {% set monthly_percentage = (wallet.monthly_used / wallet.monthly_limit * 100) if wallet.monthly_limit > 0 else 0 %}
+              <div class="w-full bg-emerald-200 rounded-full h-4 shadow-inner">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-4 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden" 
+                     style="width: {{ monthly_percentage }}%">
+                  <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center mt-3">
+                <span class="text-xs text-emerald-600 font-medium">{{ "{:.1f}".format(monthly_percentage) }}% used</span>
+                <span class="text-xs text-blue-600 font-bold flex items-center">
+                  <i class="fas fa-check-circle mr-1"></i>
+                  ₹{{ "{:,.0f}".format(wallet.monthly_remaining) }} remaining
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Status -->
+          <div class="flex items-center p-4 rounded-2xl 
+                      {% if monthly_percentage < 50 %}bg-green-50 border-2 border-green-200
+                      {% elif monthly_percentage < 80 %}bg-yellow-50 border-2 border-yellow-200
+                      {% else %}bg-red-50 border-2 border-red-200{% endif %}">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4
+                        {% if monthly_percentage < 50 %}bg-green-500 text-white
+                        {% elif monthly_percentage < 80 %}bg-yellow-500 text-white
+                        {% else %}bg-red-500 text-white{% endif %}">
+              {% if monthly_percentage < 50 %}
+                <i class="fas fa-thumbs-up"></i>
+              {% elif monthly_percentage < 80 %}
+                <i class="fas fa-exclamation-triangle"></i>
+              {% else %}
+                <i class="fas fa-ban"></i>
+              {% endif %}
+            </div>
+            <div>
+              <p class="font-bold 
+                        {% if monthly_percentage < 50 %}text-green-800
+                        {% elif monthly_percentage < 80 %}text-yellow-800
+                        {% else %}text-red-800{% endif %}">
+                {% if monthly_percentage < 50 %}Excellent Usage
+                {% elif monthly_percentage < 80 %}Moderate Usage
+                {% else %}High Usage{% endif %}
+              </p>
+              <p class="text-sm 
+                        {% if monthly_percentage < 50 %}text-green-600
+                        {% elif monthly_percentage < 80 %}text-yellow-600
+                        {% else %}text-red-600{% endif %}">
+                {% if monthly_percentage < 50 %}Well within monthly limit
+                {% elif monthly_percentage < 80 %}Approaching monthly limit
+                {% else %}Monitor monthly usage{% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wallet Information Card -->
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 animate-slide-up">
+      <div class="mb-8">
+        <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+          <i class="fas fa-info-circle text-indigo-600 mr-3"></i>
+          Wallet Information
+        </h3>
+        <p class="text-gray-600">Complete overview of your wallet details and activity</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Balance Information -->
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-wallet text-indigo-600 mr-2 text-lg"></i>
+              <p class="text-sm font-bold text-indigo-800 uppercase tracking-wide">Current Balance</p>
+            </div>
+            <p class="text-4xl font-bold text-indigo-600 flex items-center">
+              <i class="fas fa-rupee-sign mr-2 text-2xl"></i>
+              {{ "{:,.2f}".format(wallet.balance) }}
+            </p>
+          </div>
+          
+          <div class="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-lock text-amber-600 mr-2"></i>
+              <p class="text-sm font-bold text-amber-800 uppercase tracking-wide">Hold Balance</p>
+            </div>
+            <p class="text-3xl font-bold text-amber-600 flex items-center">
+              <i class="fas fa-rupee-sign mr-2 text-xl"></i>
+              {{ "{:,.2f}".format(wallet.hold_balance) }}
+            </p>
+          </div>
+          
+          <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-check-circle text-blue-600 mr-2"></i>
+              <p class="text-sm font-bold text-blue-800 uppercase tracking-wide">Available Balance</p>
+            </div>
+            <p class="text-3xl font-bold text-blue-600 flex items-center">
+              <i class="fas fa-rupee-sign mr-2 text-xl"></i>
+              {{ "{:,.2f}".format(wallet.available_balance) }}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Transaction Summary -->
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-arrow-up text-green-600 mr-2"></i>
+              <p class="text-sm font-bold text-green-800 uppercase tracking-wide">Total Credited</p>
+            </div>
+            <p class="text-3xl font-bold text-green-600 flex items-center">
+              <i class="fas fa-rupee-sign mr-2 text-xl"></i>
+              {{ "{:,.2f}".format(wallet.total_credited) }}
+            </p>
+          </div>
+          
+          <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-arrow-down text-red-600 mr-2"></i>
+              <p class="text-sm font-bold text-red-800 uppercase tracking-wide">Total Debited</p>
+            </div>
+            <p class="text-3xl font-bold text-red-600 flex items-center">
+              <i class="fas fa-rupee-sign mr-2 text-xl"></i>
+              {{ "{:,.2f}".format(wallet.total_debited) }}
+            </p>
+          </div>
+          
+          <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-6">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-history text-purple-600 mr-2"></i>
+              <p class="text-sm font-bold text-purple-800 uppercase tracking-wide">Last Transaction</p>
+            </div>
+            <p class="text-lg font-semibold text-purple-700">
+              {% if wallet.last_transaction_at %}
+                {{ wallet.last_transaction_at.strftime('%d %b %Y at %I:%M %p') }}
+              {% else %}
+                No transactions yet
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 text-center animate-slide-up">
+      <div class="inline-flex gap-4">
+        <a href="{{ url_for('wallet_management.topup') }}" 
+           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-2xl hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+          <i class="fas fa-plus mr-3"></i>
+          Add Money
+        </a>
+        
+        <a href="{{ url_for('wallet_management.transactions') }}" 
+           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+          <i class="fas fa-history mr-3"></i>
+          View History
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

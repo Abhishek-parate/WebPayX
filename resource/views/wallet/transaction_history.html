@@ -1,0 +1,213 @@
+<!-- templates/wallet/transaction_history.html -->
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="mb-4 lg:mb-0">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">Transaction History</h1>
+          <p class="text-lg text-gray-600">View all your wallet transactions</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <a href="{{ url_for('wallet.dashboard') }}" 
+             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Wallet
+          </a>
+          
+          <button onclick="exportTransactions()" 
+                  class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-3xl shadow-lg border border-gray-200 p-8 mb-8">
+      <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
+          <select name="type" class="block w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+            <option value="">All Types</option>
+            <option value="CREDIT" {{ 'selected' if request.args.get('type') == 'CREDIT' }}>Credit</option>
+            <option value="DEBIT" {{ 'selected' if request.args.get('type') == 'DEBIT' }}>Debit</option>
+            <option value="HOLD" {{ 'selected' if request.args.get('type') == 'HOLD' }}>Hold</option>
+            <option value="RELEASE" {{ 'selected' if request.args.get('type') == 'RELEASE' }}>Release</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+          <input type="date" name="from_date" value="{{ request.args.get('from_date', '') }}" 
+                 class="block w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+          <input type="date" name="to_date" value="{{ request.args.get('to_date', '') }}" 
+                 class="block w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+        </div>
+
+        <div class="flex items-end">
+          <button type="submit" 
+                  class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Filter
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+      <div class="px-8 py-6 border-b border-gray-200">
+        <h3 class="text-2xl font-bold text-gray-900">All Transactions</h3>
+      </div>
+      
+      {% if transactions %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance After</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for transaction in transactions.items %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ transaction.created_at.strftime('%d %b %Y') }}</div>
+                <div class="text-sm text-gray-500">{{ transaction.created_at.strftime('%I:%M %p') }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                             {% if transaction.transaction_type.value == 'CREDIT' %}bg-emerald-100 text-emerald-800
+                             {% elif transaction.transaction_type.value == 'DEBIT' %}bg-red-100 text-red-800
+                             {% elif transaction.transaction_type.value == 'HOLD' %}bg-amber-100 text-amber-800
+                             {% else %}bg-blue-100 text-blue-800{% endif %}">
+                  {{ transaction.transaction_type.value.title() }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">{{ transaction.description or 'No description' }}</div>
+                {% if transaction.reference_type %}
+                <div class="text-xs text-gray-500">{{ transaction.reference_type }}</div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-lg font-bold 
+                           {% if transaction.transaction_type.value == 'CREDIT' %}text-emerald-600
+                           {% else %}text-red-600{% endif %}">
+                  {{ '+' if transaction.transaction_type.value == 'CREDIT' else '-' }}₹{{ "{:,.2f}".format(transaction.amount) }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">₹{{ "{:,.2f}".format(transaction.balance_after) }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if transaction.reference_id %}
+                <div class="text-xs font-mono text-gray-500">{{ transaction.reference_id }}</div>
+                {% else %}
+                <div class="text-xs text-gray-400">-</div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if transactions.pages > 1 %}
+      <div class="bg-white px-8 py-6 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            Showing {{ transactions.per_page * (transactions.page - 1) + 1 }} to 
+            {{ transactions.per_page * (transactions.page - 1) + transactions.items|length }} of 
+            {{ transactions.total }} results
+          </div>
+          
+          <div class="flex space-x-2">
+            {% if transactions.has_prev %}
+            <a href="{{ url_for('wallet.transaction_history', page=transactions.prev_num, **request.args) }}" 
+               class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+              Previous
+            </a>
+            {% endif %}
+            
+            {% for page_num in transactions.iter_pages() %}
+              {% if page_num %}
+                {% if page_num != transactions.page %}
+                <a href="{{ url_for('wallet.transaction_history', page=page_num, **request.args) }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                  {{ page_num }}
+                </a>
+                {% else %}
+                <span class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg">{{ page_num }}</span>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            
+            {% if transactions.has_next %}
+            <a href="{{ url_for('wallet.transaction_history', page=transactions.next_num, **request.args) }}" 
+               class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+              Next
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      {% else %}
+      <div class="text-center py-20">
+        <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">No Transactions Found</h3>
+        <p class="text-gray-600 text-lg mb-8">Your transaction history will appear here once you start using your wallet.</p>
+        <a href="{{ url_for('wallet.topup_request') }}" 
+           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+          <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Request Your First Top-up
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+function exportTransactions() {
+  // Create URL with current filters
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set('export', 'csv');
+  
+  // Create temporary link and click it
+  const link = document.createElement('a');
+  link.href = `{{ url_for('wallet.transaction_history') }}?${urlParams.toString()}`;
+  link.click();
+}
+</script>
+
+{% endblock %}

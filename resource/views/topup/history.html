@@ -572,10 +572,10 @@
             showAlert('info', 'Bulk rejection feature will be implemented');
         }
 
-        function viewRequestDetails(requestId) {
-            // Open request details in a new window or modal
-            window.location.href = `{{ url_for('enhanced_topup.topup_history_page') }}?request_id=${requestId}`;
-        }
+        // function viewRequestDetails(requestId) {
+        //     // Open request details in a new window or modal
+        //     window.location.href = `{{ url_for('enhanced_topup.topup_history_page') }}?request_id=${requestId}`;
+        // }
 
         function downloadProof(requestId) {
             window.open(`/topup/api/requests/${requestId}/download-proof`, '_blank');

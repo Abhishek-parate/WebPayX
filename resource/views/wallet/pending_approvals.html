@@ -1,0 +1,775 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Pending Approvals - {{ current_user.tenant.tenant_name if current_user.tenant else 'WebPayX' }}{% endblock %}
+
+{% block content %}
+<style>
+/* Enhanced List View Styles */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.table-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-row:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+    box-shadow: inset 4px 0 0 #3b82f6;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.amount-display {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #10b981, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.action-button {
+    transition: all 0.2s ease;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-approve:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.btn-reject:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-view {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    padding: 6px 12px;
+}
+
+.btn-view:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.expandable-row {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 200px; }
+}
+
+.filter-bar {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.filter-chip {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-chip:hover,
+.filter-chip.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .stats-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-bar {
+        overflow-x: auto;
+    }
+    
+    .action-button {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+}
+</style>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div class="mb-8 fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Pending Top-up Approvals
+                    </h1>
+                    <p class="mt-2 text-gray-600">Review and approve wallet top-up requests from your team</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="location.reload()" class="action-button bg-gray-600 hover:bg-gray-700 text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        {% if pending_requests %}
+        <div class="stats-overview fade-in" style="animation-delay: 0.1s">
+            <div class="stat-card">
+                <div class="text-3xl font-bold mb-2">{{ pending_requests|length }}</div>
+                <div class="text-sm opacity-90">Pending Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-3xl font-bold mb-2">₹{{ "{:,.0f}".format(pending_requests|sum(attribute='amount')) }}</div>
+                <div class="text-sm opacity-90">Total Amount</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-3xl font-bold mb-2">{{ pending_requests|selectattr('topup_method.value', 'equalto', 'MANUAL_REQUEST')|list|length }}</div>
+                <div class="text-sm opacity-90">Manual Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-3xl font-bold mb-2">{{ pending_requests|selectattr('topup_method.value', 'equalto', 'PAYMENT_GATEWAY')|list|length }}</div>
+                <div class="text-sm opacity-90">Gateway Requests</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filter Bar -->
+        {% if pending_requests %}
+        <div class="filter-bar fade-in" style="animation-delay: 0.2s">
+            <div class="flex flex-wrap gap-3 items-center">
+                <span class="text-sm font-medium text-gray-700">Filter by:</span>
+                <button onclick="filterRequests('all')" class="filter-chip active" data-filter="all">All Requests</button>
+                <button onclick="filterRequests('MANUAL_REQUEST')" class="filter-chip" data-filter="MANUAL_REQUEST">Manual Payment</button>
+                <button onclick="filterRequests('PAYMENT_GATEWAY')" class="filter-chip" data-filter="PAYMENT_GATEWAY">Online Payment</button>
+                <button onclick="filterRequests('high')" class="filter-chip" data-filter="high">High Amount (>₹10K)</button>
+                <button onclick="filterRequests('recent')" class="filter-chip" data-filter="recent">Recent (Today)</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Requests Table -->
+        {% if pending_requests %}
+        <div class="table-container fade-in" style="animation-delay: 0.3s">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <!-- Table Header -->
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">User</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Method</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Bank/Gateway</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Requested</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Details</th>
+                            <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    
+                    <!-- Table Body -->
+                    <tbody id="requestsTableBody">
+                        {% for request in pending_requests %}
+                        <tr class="table-row" 
+                            data-method="{{ request.topup_method.value }}"
+                            data-amount="{{ request.amount }}"
+                            data-date="{{ request.created_at.strftime('%Y-%m-%d') }}">
+                            <!-- User Info -->
+                            <td class="px-6 py-4">
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        {{ request.requesting_user.full_name[0].upper() }}
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ request.requesting_user.full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ request.requesting_user.user_code }}</div>
+                                        <div class="status-badge bg-blue-100 text-blue-800 mt-1">
+                                            {{ request.requesting_user.role.value.replace('_', ' ').title() }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Amount -->
+                            <td class="px-6 py-4">
+                                <div class="amount-display">₹{{ "{:,.2f}".format(request.amount) }}</div>
+                                <div class="text-sm text-gray-500">Net: ₹{{ "{:,.2f}".format(request.net_amount) }}</div>
+                                {% if request.processing_fee > 0 %}
+                                <div class="text-xs text-gray-400">Fee: ₹{{ "{:,.2f}".format(request.processing_fee) }}</div>
+                                {% endif %}
+                            </td>
+
+                            <!-- Method -->
+                            <td class="px-6 py-4">
+                                <span class="status-badge 
+                                    {% if request.topup_method.value == 'MANUAL_REQUEST' %}bg-orange-100 text-orange-800
+                                    {% elif request.topup_method.value == 'PAYMENT_GATEWAY' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ request.topup_method.value.replace('_', ' ').title() }}
+                                </span>
+                                {% if request.transaction_mode %}
+                                <div class="text-xs text-gray-500 mt-1">{{ request.transaction_mode.value }}</div>
+                                {% endif %}
+                            </td>
+
+                            <!-- Bank/Gateway Info -->
+                            <td class="px-6 py-4">
+                                {% if request.selected_bank %}
+                                <div class="text-sm font-medium text-gray-900">{{ request.selected_bank.bank_name }}</div>
+                                <div class="text-xs text-gray-500">{{ request.selected_bank.account_holder_name }}</div>
+                                <div class="text-xs text-gray-400 font-mono">****{{ request.selected_bank.account_number[-4:] }}</div>
+                                {% elif request.payment_gateway %}
+                                <div class="text-sm font-medium text-gray-900">{{ request.payment_gateway.gateway_name }}</div>
+                                <div class="text-xs text-gray-500">{{ request.payment_gateway.gateway_type.value }}</div>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">Not specified</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Request Date -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ request.created_at.strftime('%d %b %Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ request.created_at.strftime('%H:%M') }}</div>
+                                {% if request.expires_at %}
+                                <div class="text-xs text-red-500 mt-1">
+                                    Expires: {{ request.expires_at.strftime('%H:%M') }}
+                                </div>
+                                {% endif %}
+                            </td>
+
+                            <!-- View Details -->
+                            <td class="px-6 py-4">
+                                <button onclick="toggleDetails('{{ request.id }}')" 
+                                        class="action-button btn-view" 
+                                        title="View Details">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <span id="toggle-text-{{ request.id }}">View</span>
+                                </button>
+                              <!-- In your pending_approvals.html template -->
+{% if request.proof_document %}
+<a href="/{{ request.proof_document }}" target="_blank" 
+   class="action-button bg-purple-600 hover:bg-purple-700 text-white ml-2" 
+   title="View Receipt">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+    </svg>
+</a>
+{% endif %}
+
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-6 py-4">
+                                <div class="flex justify-center space-x-2">
+                                    <button onclick="openApprovalModal('{{ request.id }}', 'approve', '{{ request.requesting_user.full_name }}', '{{ "{:,.2f}".format(request.amount) }}')"
+                                            class="action-button btn-approve"
+                                            title="Approve Request">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Approve
+                                    </button>
+                                    <button onclick="openApprovalModal('{{ request.id }}', 'reject', '{{ request.requesting_user.full_name }}', '{{ "{:,.2f}".format(request.amount) }}')"
+                                            class="action-button btn-reject"
+                                            title="Reject Request">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        Reject
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Expandable Details Row -->
+                        <tr id="details-{{ request.id }}" class="expandable-row hidden">
+                            <td colspan="7" class="px-6 py-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <!-- Request Details -->
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-3">Request Information</h4>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Request ID:</span>
+                                                <span class="font-mono bg-gray-100 px-2 py-1 rounded text-xs">{{ request.request_id }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Status:</span>
+                                                <span class="status-badge bg-yellow-100 text-yellow-800">{{ request.status.value }}</span>
+                                            </div>
+                                            {% if request.ip_address %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">IP Address:</span>
+                                                <span class="font-mono text-xs">{{ request.ip_address }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Details -->
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-3">Payment Information</h4>
+                                        <div class="space-y-2 text-sm">
+                                            {% if request.utr_number %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">UTR Number:</span>
+                                                <span class="font-mono bg-gray-100 px-2 py-1 rounded text-xs">{{ request.utr_number }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if request.bank_reference %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Bank Ref:</span>
+                                                <span class="font-mono text-xs">{{ request.bank_reference }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if request.external_transaction_id %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">External ID:</span>
+                                                <span class="font-mono text-xs">{{ request.external_transaction_id }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- User Remarks -->
+                                    {% if request.request_remarks %}
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-3">User Remarks</h4>
+                                        <div class="bg-blue-50 p-3 rounded-lg">
+                                            <p class="text-sm text-gray-700">{{ request.request_remarks }}</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state fade-in">
+            <div class="max-w-md mx-auto">
+                <svg class="mx-auto h-24 w-24 text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-2xl font-semibold text-gray-700 mb-4">All Caught Up! 🎉</h3>
+                <p class="text-gray-500 text-lg mb-6">No pending top-up requests to review at this time.</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="location.reload()" class="action-button btn-view">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                    <a href="{{ url_for('wallet_management.dashboard') }}" class="action-button bg-gray-600 hover:bg-gray-700 text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2m-6 4h6"></path>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Enhanced Approval Modal -->
+<div id="approvalModal" class="fixed inset-0 modal-backdrop overflow-y-auto h-full w-full hidden z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="modal-content max-w-md w-full mx-auto p-6 fade-in">
+            <div class="text-center">
+                <!-- Dynamic Icon -->
+                <div class="flex items-center justify-center mx-auto w-16 h-16 rounded-full mb-4" id="modalIcon">
+                    <!-- Icon will be set by JavaScript -->
+                </div>
+                
+                <!-- Modal Title & Message -->
+                <h3 class="text-xl font-bold text-gray-900 mb-2" id="modalTitle"></h3>
+                <p class="text-gray-600 mb-6" id="modalMessage"></p>
+                
+                <!-- Approval Form -->
+                <form id="approvalForm" method="POST" class="space-y-4">
+                    <div class="text-left">
+                        <label for="admin_remarks" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Add Remarks (Optional)
+                        </label>
+                        <textarea id="admin_remarks" name="admin_remarks" rows="4" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Enter your remarks or reason for this decision..."></textarea>
+                    </div>
+                    
+                    <input type="hidden" id="modalAction" name="action">
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="modalConfirmBtn" 
+                                class="action-button flex-1 justify-center">
+                            <span class="btn-text">Confirm</span>
+                            <span class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <button type="button" onclick="closeApprovalModal()" 
+                                class="action-button flex-1 justify-center bg-gray-300 hover:bg-gray-400 text-gray-700">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+<script>
+// Enhanced JavaScript functionality
+let isSubmitting = false;
+
+function openApprovalModal(requestId, action, userName, amount) {
+    const modal = document.getElementById('approvalModal');
+    const form = document.getElementById('approvalForm');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const actionInput = document.getElementById('modalAction');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    const icon = document.getElementById('modalIcon');
+    
+    form.action = `/wallet/topup/approve/${requestId}`;
+    actionInput.value = action;
+    
+    if (action === 'approve') {
+        title.textContent = 'Approve Top-up Request';
+        message.textContent = `Approve ₹${amount} top-up request from ${userName}?`;
+        confirmBtn.className = 'action-button btn-approve flex-1 justify-center';
+        confirmBtn.querySelector('.btn-text').textContent = 'Approve Request';
+        icon.className = 'flex items-center justify-center mx-auto w-16 h-16 rounded-full bg-green-100';
+        icon.innerHTML = '<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    } else {
+        title.textContent = 'Reject Top-up Request';
+        message.textContent = `Reject ₹${amount} top-up request from ${userName}?`;
+        confirmBtn.className = 'action-button btn-reject flex-1 justify-center';
+        confirmBtn.querySelector('.btn-text').textContent = 'Reject Request';
+        icon.className = 'flex items-center justify-center mx-auto w-16 h-16 rounded-full bg-red-100';
+        icon.innerHTML = '<svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Focus on textarea
+    setTimeout(() => {
+        document.getElementById('admin_remarks').focus();
+    }, 100);
+}
+
+function closeApprovalModal() {
+    if (isSubmitting) return;
+    
+    document.getElementById('approvalModal').classList.add('hidden');
+    document.getElementById('admin_remarks').value = '';
+    document.body.style.overflow = 'auto';
+    isSubmitting = false;
+    
+    // Reset button state
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    confirmBtn.disabled = false;
+    confirmBtn.querySelector('.btn-text').style.display = 'inline';
+    confirmBtn.querySelector('.loading-spinner').classList.add('hidden');
+}
+
+function toggleDetails(requestId) {
+    const detailsRow = document.getElementById(`details-${requestId}`);
+    const toggleText = document.getElementById(`toggle-text-${requestId}`);
+    
+    if (detailsRow.classList.contains('hidden')) {
+        detailsRow.classList.remove('hidden');
+        toggleText.textContent = 'Hide';
+    } else {
+        detailsRow.classList.add('hidden');
+        toggleText.textContent = 'View';
+    }
+}
+
+function filterRequests(filter) {
+    const rows = document.querySelectorAll('#requestsTableBody tr:not(.expandable-row)');
+    const chips = document.querySelectorAll('.filter-chip');
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Update active chip
+    chips.forEach(chip => chip.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    rows.forEach(row => {
+        let shouldShow = false;
+        const method = row.dataset.method;
+        const amount = parseFloat(row.dataset.amount);
+        const date = row.dataset.date;
+        
+        switch (filter) {
+            case 'all':
+                shouldShow = true;
+                break;
+            case 'MANUAL_REQUEST':
+            case 'PAYMENT_GATEWAY':
+                shouldShow = method === filter;
+                break;
+            case 'high':
+                shouldShow = amount > 10000;
+                break;
+            case 'recent':
+                shouldShow = date === today;
+                break;
+        }
+        
+        if (shouldShow) {
+            row.style.display = 'table-row';
+            // Hide any expanded details when filtering
+            const detailsRow = document.getElementById(`details-${row.dataset.id}`);
+            if (detailsRow) detailsRow.classList.add('hidden');
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    showToast(`Filtered by: ${filter === 'all' ? 'All Requests' : filter.replace('_', ' ')}`);
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    
+    toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    toast.textContent = message;
+    
+    container.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (container.contains(toast)) {
+                container.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Enhanced form submission with loading state
+document.getElementById('approvalForm').addEventListener('submit', function(e) {
+    if (isSubmitting) {
+        e.preventDefault();
+        return;
+    }
+    
+    isSubmitting = true;
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    confirmBtn.querySelector('.btn-text').style.display = 'none';
+    confirmBtn.querySelector('.loading-spinner').classList.remove('hidden');
+});
+
+// Close modal on outside click
+document.getElementById('approvalModal').addEventListener('click', function(e) {
+    if (e.target === this && !isSubmitting) {
+        closeApprovalModal();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('approvalModal').classList.contains('hidden')) {
+        closeApprovalModal();
+    }
+});
+
+// Auto-refresh functionality
+let autoRefreshInterval;
+function startAutoRefresh() {
+    autoRefreshInterval = setInterval(() => {
+        if (document.getElementById('approvalModal').classList.contains('hidden')) {
+            showToast('Checking for new requests...', 'info');
+            setTimeout(() => location.reload(), 1000);
+        }
+    }, 60000); // Refresh every minute
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    startAutoRefresh();
+    showToast('Page loaded successfully', 'success');
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+});
+</script>
+{% endblock %}

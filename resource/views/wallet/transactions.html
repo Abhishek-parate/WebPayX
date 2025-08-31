@@ -1,0 +1,365 @@
+{% extends 'layout/layout.html' %}
+{% block title %}Transaction History - WebPayX{% endblock %}
+
+{% block content %}
+<style>
+  .card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+  }
+  .card-header {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+  }
+  .card-body {
+    padding: 1.5rem;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em;
+    padding-right: 2.5rem;
+  }
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary {
+    background-color: #3b82f6;
+    color: white;
+  }
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+  .btn-success {
+    background-color: #10b981;
+    color: white;
+  }
+  .btn-success:hover {
+    background-color: #059669;
+  }
+  .transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .transaction-table th {
+    background: #f9fafb;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .transaction-table td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .transaction-table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .status-credit {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  .status-debit {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  .status-hold {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  .pagination-links {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .pagination-link {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: #374151;
+    font-size: 0.875rem;
+    transition: all 0.15s ease-in-out;
+  }
+  .pagination-link:hover {
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+  }
+  .pagination-link.active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+  }
+  .empty-state svg {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1rem;
+    opacity: 0.5;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    .transaction-table {
+      font-size: 0.875rem;
+    }
+  }
+</style>
+
+<!-- Transaction History Container -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Transaction History</h1>
+        <p class="text-gray-600 mt-1">Complete overview of all your wallet transactions</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="exportTransactions()" class="btn btn-success">
+          <i class="fas fa-download mr-2"></i>
+          Export CSV
+        </button>
+        <a href="{{ url_for('wallet_management.dashboard') }}" class="btn btn-primary">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Back to Wallet
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="card mb-6">
+    <div class="card-header">
+      <h3 class="text-lg font-semibold text-gray-800">Filter Transactions</h3>
+      <p class="text-gray-600 text-sm">Narrow down your search with advanced filters</p>
+    </div>
+    <div class="card-body">
+      <form method="GET" class="form-row">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
+          <select name="type" class="form-control form-select">
+            <option value="">All Types</option>
+            <option value="CREDIT" {{ 'selected' if request.args.get('type') == 'CREDIT' }}>Credit</option>
+            <option value="DEBIT" {{ 'selected' if request.args.get('type') == 'DEBIT' }}>Debit</option>
+            <option value="HOLD" {{ 'selected' if request.args.get('type') == 'HOLD' }}>Hold</option>
+            <option value="RELEASE" {{ 'selected' if request.args.get('type') == 'RELEASE' }}>Release</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+          <input type="date" name="from_date" value="{{ request.args.get('from_date', '') }}" class="form-control">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+          <input type="date" name="to_date" value="{{ request.args.get('to_date', '') }}" class="form-control">
+        </div>
+
+        <div class="flex items-end">
+          <button type="submit" class="btn btn-primary w-full">
+            <i class="fas fa-search mr-2"></i>
+            Apply Filters
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="text-lg font-semibold text-gray-800">All Transactions</h3>
+    </div>
+    <div class="card-body">
+      {% if transactions.items %}
+      <div class="overflow-x-auto">
+        <table class="transaction-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Balance After</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in transactions.items %}
+            <tr>
+              <td>
+                <div class="text-sm font-medium text-gray-900">{{ transaction.created_at.strftime('%d %b %Y') }}</div>
+                <div class="text-xs text-gray-500">{{ transaction.created_at.strftime('%I:%M %p') }}</div>
+              </td>
+              <td>
+                <span class="status-badge {{ 'status-credit' if transaction.transaction_type.value == 'CREDIT' else 'status-debit' if transaction.transaction_type.value == 'DEBIT' else 'status-hold' }}">
+                  {% if transaction.transaction_type.value == 'CREDIT' %}
+                    <i class="fas fa-plus mr-1"></i>
+                  {% elif transaction.transaction_type.value == 'DEBIT' %}
+                    <i class="fas fa-minus mr-1"></i>
+                  {% else %}
+                    <i class="fas fa-lock mr-1"></i>
+                  {% endif %}
+                  {{ transaction.transaction_type.value.title() }}
+                </span>
+              </td>
+              <td>
+                <div class="text-sm font-medium text-gray-900">{{ transaction.description or 'No description' }}</div>
+                {% if transaction.reference_type %}
+                <div class="text-xs text-gray-500">{{ transaction.reference_type }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="text-lg font-bold {{ 'text-green-600' if transaction.transaction_type.value == 'CREDIT' else 'text-red-600' }}">
+                  {{ '+' if transaction.transaction_type.value == 'CREDIT' else '-' }}₹{{ "{:,.2f}".format(transaction.amount) }}
+                </div>
+              </td>
+              <td>
+                <div class="text-sm font-medium text-gray-900">₹{{ "{:,.2f}".format(transaction.balance_after) }}</div>
+              </td>
+              <td>
+                {% if transaction.reference_id %}
+                <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{ transaction.reference_id }}</code>
+                {% else %}
+                <span class="text-gray-400">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if transactions.pages > 1 %}
+      <div class="pagination">
+        <div class="text-sm text-gray-700">
+          Showing {{ transactions.per_page * (transactions.page - 1) + 1 }} to 
+          {{ transactions.per_page * (transactions.page - 1) + transactions.items|length }} of 
+          {{ transactions.total }} results
+        </div>
+        
+        <div class="pagination-links">
+          {% if transactions.has_prev %}
+          <a href="{{ url_for('wallet_management.transactions', page=transactions.prev_num, **request.args) }}" 
+             class="pagination-link">Previous</a>
+          {% endif %}
+          
+          {% for page_num in transactions.iter_pages() %}
+            {% if page_num %}
+              {% if page_num != transactions.page %}
+              <a href="{{ url_for('wallet_management.transactions', page=page_num, **request.args) }}" 
+                 class="pagination-link">{{ page_num }}</a>
+              {% else %}
+              <span class="pagination-link active">{{ page_num }}</span>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if transactions.has_next %}
+          <a href="{{ url_for('wallet_management.transactions', page=transactions.next_num, **request.args) }}" 
+             class="pagination-link">Next</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      
+      {% else %}
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">No Transactions Found</h3>
+        <p class="text-gray-600 mb-4">Your transaction history will appear here once you start using your wallet.</p>
+        <a href="{{ url_for('wallet_management.topup') }}" class="btn btn-success">
+          Request Your First Top-up
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function exportTransactions() {
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set('export', 'csv');
+  
+  const link = document.createElement('a');
+  link.href = `{{ url_for('wallet_management.transactions') }}?${urlParams.toString()}`;
+  link.click();
+  
+  showNotification('Export started! Your CSV file will download shortly.', 'success');
+}
+
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+    type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+    'bg-blue-100 text-blue-800 border border-blue-200'
+  }`;
+  notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle mr-2"></i>${message}`;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+}
+</script>
+
+{% endblock %}

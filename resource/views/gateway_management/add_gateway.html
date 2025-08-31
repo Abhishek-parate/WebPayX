@@ -1,0 +1,265 @@
+<!-- templates/payment_gateway_management/add_gateway.html -->
+{% extends 'layout/layout.html' %} 
+
+{% block title %}Add Payment Gateway{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Add Payment Gateway</h1>
+            <p class="text-gray-600">Configure a new payment gateway for your platform</p>
+        </div>
+        
+        <form method="POST" class="space-y-6">
+            <!-- Basic Information -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gateway Type *</label>
+                            <select name="gateway_type" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onchange="loadGatewayTemplate(this.value)">
+                                <option value="">Select Gateway Type</option>
+                                {% for gateway_type in gateway_types %}
+                                <option value="{{ gateway_type.value }}">{{ gateway_type.value.replace('_', ' ').title() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gateway Name *</label>
+                            <input type="text" name="gateway_name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter gateway display name">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Merchant ID *</label>
+                            <input type="text" name="merchant_id" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter merchant identifier">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <input type="number" name="priority" value="1" min="1"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Configuration -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">API Configuration</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">API Key *</label>
+                            <input type="text" name="api_key" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter API key">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">API Secret *</label>
+                            <input type="password" name="api_secret" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter API secret">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Secret</label>
+                            <input type="text" name="webhook_secret"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Auto-generated if empty">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="sandbox_mode" checked class="rounded border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Enable Sandbox Mode</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- URLs Configuration -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">URLs Configuration</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Callback URL</label>
+                            <input type="url" name="callback_url"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="https://your-domain.com/callback">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+                            <input type="url" name="webhook_url"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="https://your-domain.com/webhook">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Limits -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Payment Limits & Fees</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Amount (₹)</label>
+                            <input type="number" name="min_amount" value="1.00" step="0.01" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Amount (₹)</label>
+                            <input type="number" name="max_amount" value="100000.00" step="0.01" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Processing Fee (%)</label>
+                            <input type="number" name="processing_fee_percentage" value="0" step="0.01" min="0" max="100"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fixed Fee (₹)</label>
+                            <input type="number" name="processing_fee_fixed" value="0" step="0.01" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Settings -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Advanced Settings</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Settlement Time (Hours)</label>
+                            <input type="number" name="settlement_time_hours" value="24" min="1"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Rate Limit (per minute)</label>
+                            <input type="number" name="rate_limit_per_minute" value="100" min="1"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-center space-y-2 flex-col">
+                            <label class="flex items-center w-full">
+                                <input type="checkbox" name="auto_settlement" checked class="rounded border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Enable Auto Settlement</span>
+                            </label>
+                            <label class="flex items-center w-full">
+                                <input type="checkbox" name="is_default" class="rounded border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Set as Default Gateway</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Supported Payment Methods -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Supported Payment Methods</h3>
+                </div>
+                <div class="p-6" id="paymentMethodsSection">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="supported_methods" value="card" class="rounded border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Credit/Debit Card</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="supported_methods" value="netbanking" class="rounded border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Net Banking</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="supported_methods" value="upi" class="rounded border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">UPI</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="supported_methods" value="wallet" class="rounded border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Digital Wallet</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('payment_gateway_management.gateways_page') }}" 
+                   class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium">
+                    Create Gateway
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const gatewayTemplates = {{ gateway_templates|tojson  }};
+
+function loadGatewayTemplate(gatewayType) {
+    if (!gatewayType || !gatewayTemplates[gatewayType]) return;
+    
+    const template = gatewayTemplates[gatewayType];
+    const config = template.default_config;
+    
+    // Update form fields with default values
+    if (config.min_amount) {
+        document.querySelector('input[name="min_amount"]').value = config.min_amount;
+    }
+    if (config.max_amount) {
+        document.querySelector('input[name="max_amount"]').value = config.max_amount;
+    }
+    if (config.settlement_time_hours) {
+        document.querySelector('input[name="settlement_time_hours"]').value = config.settlement_time_hours;
+    }
+    
+    // Check supported payment methods
+    const checkboxes = document.querySelectorAll('input[name="supported_methods"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = template.supported_methods.includes(checkbox.value);
+    });
+    
+    // Update gateway name placeholder
+    const nameField = document.querySelector('input[name="gateway_name"]');
+    nameField.placeholder = `${template.name} Gateway`;
+}
+</script>
+{% endblock %}
