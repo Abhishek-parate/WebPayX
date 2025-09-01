@@ -1,0 +1,278 @@
+<!-- templates/audit_logging/error_log_detail.html -->
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<!-- Error Log Detail -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Error Log Details</h1>
+        <p class="text-gray-600 mt-1">Detailed view of error log entry</p>
+      </div>
+      <div class="flex gap-3">
+        {% if not error_log.resolved %}
+        <button onclick="resolveError()" 
+                class="btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Mark as Resolved
+        </button>
+        {% else %}
+        <button onclick="unresolveError()" 
+                class="btn bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Mark as Unresolved
+        </button>
+        {% endif %}
+        <a href="{{ url_for('audit_logging.error_logs') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Error Logs
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Log Details -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Basic Information -->
+    <div class="bg-white rounded-lg shadow-md border">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Error Information</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Error ID</label>
+            <p class="mt-1 text-sm text-gray-900 font-mono">{{ error_log.id }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Timestamp</label>
+            <p class="mt-1 text-sm text-gray-900">{{ error_log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-500">Error Code</label>
+            <p class="mt-1 text-sm text-gray-900 font-mono">{{ error_log.error_code or 'SYSTEM_ERROR' }}</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Severity</label>
+            <p class="mt-1">
+              <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full
+                {% if error_log.severity == 'CRITICAL' %}bg-red-100 text-red-800
+                {% elif error_log.severity == 'ERROR' %}bg-orange-100 text-orange-800
+                {% elif error_log.severity == 'WARNING' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ error_log.severity }}
+              </span>
+            </p>
+          </div>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Status</label>
+          <p class="mt-1">
+            {% if error_log.resolved %}
+            <span class="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+              Resolved
+            </span>
+            {% else %}
+            <span class="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+              Open
+            </span>
+            {% endif %}
+          </p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Error Message</label>
+          <div class="mt-1 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-800">{{ error_log.error_message }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resolution Information -->
+    <div class="bg-white rounded-lg shadow-md border">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Resolution Status</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        {% if error_log.resolved %}
+        <div>
+          <label class="text-sm font-medium text-gray-500">Resolved By</label>
+          <p class="mt-1 text-sm text-gray-900">
+            {% if error_log.resolved_by_user %}
+            {{ error_log.resolved_by_user.full_name }}
+            <span class="text-gray-500">({{ error_log.resolved_by_user.username }})</span>
+            {% else %}
+            System
+            {% endif %}
+          </p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Resolved At</label>
+          <p class="mt-1 text-sm text-gray-900">{{ error_log.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if error_log.resolved_at else 'N/A' }}</p>
+        </div>
+        {% else %}
+        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div class="flex">
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-yellow-800">Unresolved Error</h3>
+              <p class="mt-1 text-sm text-yellow-700">This error requires attention and should be resolved.</p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if error_log.user %}
+        <div>
+          <label class="text-sm font-medium text-gray-500">Related User</label>
+          <p class="mt-1 text-sm text-gray-900">
+            {{ error_log.user.full_name }}
+            <span class="text-gray-500">({{ error_log.user.username }})</span>
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Stack Trace -->
+    {% if error_log.stack_trace %}
+    <div class="bg-white rounded-lg shadow-md border lg:col-span-2">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Stack Trace</h3>
+      </div>
+      <div class="p-6">
+        <div class="bg-gray-900 text-green-400 rounded-lg p-4 overflow-x-auto">
+          <pre class="text-sm font-mono whitespace-pre">{{ error_log.stack_trace }}</pre>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Request Data -->
+    {% if error_log.request_data %}
+    <div class="bg-white rounded-lg shadow-md border {% if not error_log.response_data %}lg:col-span-2{% endif %}">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Request Data</h3>
+      </div>
+      <div class="p-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <pre class="text-sm text-gray-800 whitespace-pre-wrap">{{ error_log.request_data | tojson(indent=2) }}</pre>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Response Data -->
+    {% if error_log.response_data %}
+    <div class="bg-white rounded-lg shadow-md border {% if not error_log.request_data %}lg:col-span-2{% endif %}">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-gray-800">Response Data</h3>
+      </div>
+      <div class="p-6">
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <pre class="text-sm text-gray-800 whitespace-pre-wrap">{{ error_log.response_data | tojson(indent=2) }}</pre>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+function resolveError() {
+  Swal.fire({
+    title: 'Resolve Error?',
+    text: 'Mark this error as resolved?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, resolve it',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/audit-logging/error-logs/{{ error_log.id }}/resolve`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+
+function unresolveError() {
+  Swal.fire({
+    title: 'Unresolve Error?',
+    text: 'Mark this error as unresolved?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#f59e0b',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, unresolve it',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/audit-logging/error-logs/{{ error_log.id }}/unresolve`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+</script>
+
+{% endblock %}

@@ -63,3 +63,58 @@ Database name [saas_platform]:
 
 
  py .\fix_and_setup.py
+py fix_and_setup.py --force --dummy-data
+
+
+   - Created wallet for admin_mainadmin: ₹1000000.0000
+   - Created WHITE_LABEL: white_label_demowl
+   - Created wallet for white_label_demowl: ₹500000.0000
+   - Created MASTER_DISTRIBUTOR: master_distributor_northmd
+   - Created wallet for master_distributor_northmd: ₹250000.0000
+   - Created RETAILER: retailer_ret11
+   - Created wallet for retailer_ret11: ₹25000.0000
+   - Created RETAILER: retailer_ret12
+   - Created wallet for retailer_ret12: ₹25000.0000
+   - Created RETAILER: retailer_ret13
+   - Created wallet for retailer_ret13: ₹25000.0000
+   - Created RETAILER: retailer_ret21
+   - Created wallet for retailer_ret21: ₹25000.0000
+   - Created RETAILER: retailer_ret22
+   - Created wallet for retailer_ret22: ₹25000.0000
+   - Created RETAILER: retailer_ret23
+   - Created wallet for retailer_ret23: ₹25000.0000
+
+Bank Accounts & Payment Gateways...
+   ✓ Created bank account: HDFC_PRIMARY_001
+   ✓ Created bank account: ICICI_SETTLEMENT_002
+   ✓ Created bank account: SBI_REFUND_003
+   ✓ Created payment gateway: Razorpay Primary
+   ✓ Created payment gateway: PayU Secondary
+
+Commission Plans...
+   ✓ Created commission plan: Mobile Recharge - Premium
+   ✓ Created commission plan: DTH Recharge - Premium
+   ✓ Created commission plan: Money Transfer - Standard
+
+Transaction History...
+   ✓ Created transactions for 6 retailers
+
+Wallet Topup Requests...
+   ✓ Created topup requests for 8 users
+
+✓ Basic hierarchy created successfully!
+   Users: 12
+   Bank Accounts: 3
+   Payment Gateways: 2
+   Commission Plans: 3
+
+==================================================
+SETUP COMPLETED SUCCESSFULLY!
+==================================================
+Super Admin Credentials:
+  Username: superadmin
+  Password: Admin@123
+
+Sample User Credentials:
+  All users password: password123
+  Examples: admin_mainadmin, white_label_demowl, ret11

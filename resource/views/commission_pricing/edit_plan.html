@@ -1,0 +1,520 @@
+<!-- templates/commission_pricing/edit_plan.html -->
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .slab-item {
+    transition: all 0.3s ease;
+    border: 2px dashed #e5e7eb;
+  }
+  .slab-item:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+  .form-control {
+    transition: all 0.3s ease;
+  }
+  .form-control:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+  }
+</style>
+
+<!-- Edit Commission Plan -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Edit Commission Plan</h1>
+        <p class="text-gray-600 mt-1">Update commission plan settings and configuration</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('commission_pricing.plan_detail', plan_id=plan.id) }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+          View Details
+        </a>
+        <a href="{{ url_for('commission_pricing.commission_plans') }}" 
+           class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Plans
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <form method="POST" onsubmit="updateSlabsJson(); return true;">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Basic Information -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Basic Information</h3>
+        </div>
+        <div class="p-6 space-y-4">
+          
+          <!-- Plan Name -->
+          <div>
+            <label for="plan_name" class="block text-sm font-medium text-gray-700 mb-2">
+              Plan Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="plan_name" name="plan_name" required
+                   value="{{ plan.plan_name }}"
+                   class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                   placeholder="e.g., Mobile Recharge Premium">
+          </div>
+
+          <!-- Service Type -->
+          <div>
+            <label for="service_type" class="block text-sm font-medium text-gray-700 mb-2">
+              Service Type <span class="text-red-500">*</span>
+            </label>
+            <select id="service_type" name="service_type" required
+                    class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select Service Type</option>
+              {% for service in service_types %}
+              <option value="{{ service.value }}" {% if service == plan.service_type %}selected{% endif %}>
+                {{ service.value.replace('_', ' ').title() }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Commission Mode -->
+          <div>
+            <label for="commission_mode" class="block text-sm font-medium text-gray-700 mb-2">
+              Commission Mode <span class="text-red-500">*</span>
+            </label>
+            <select id="commission_mode" name="commission_mode" required onchange="toggleCommissionFields()"
+                    class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select Commission Mode</option>
+              {% for mode in commission_modes %}
+              <option value="{{ mode.value }}" {% if mode == plan.commission_mode %}selected{% endif %}>
+                {{ mode.value.replace('_', ' ').title() }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div class="flex items-center">
+            <input type="checkbox" id="is_active" name="is_active" {% if plan.is_active %}checked{% endif %}
+                   class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+            <label for="is_active" class="ml-2 text-sm text-gray-700">Active Plan</label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Commission Configuration -->
+      <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Commission Configuration</h3>
+        </div>
+        <div class="p-6 space-y-4">
+          
+          <!-- Base Rate -->
+          <div id="base_rate_field">
+            <label for="base_rate" class="block text-sm font-medium text-gray-700 mb-2">
+              Base Rate <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="number" id="base_rate" name="base_rate" step="0.01" min="0"
+                     value="{{ plan.base_rate }}"
+                     class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                     placeholder="0.00">
+              <div id="base_rate_suffix" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-500">
+                {% if plan.commission_mode.value == 'PERCENTAGE' %}%{% else %}₹{% endif %}
+              </div>
+            </div>
+            <p id="base_rate_help" class="mt-1 text-sm text-gray-500">
+              {% if plan.commission_mode.value == 'PERCENTAGE' %}Commission percentage (0-100){% else %}Fixed commission amount{% endif %}
+            </p>
+          </div>
+
+          <!-- Min Commission -->
+          <div>
+            <label for="min_commission" class="block text-sm font-medium text-gray-700 mb-2">
+              Minimum Commission
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+              <input type="number" id="min_commission" name="min_commission" step="0.01" min="0"
+                     value="{{ plan.min_commission if plan.min_commission else '' }}"
+                     class="form-control w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                     placeholder="0.00">
+            </div>
+          </div>
+
+          <!-- Max Commission -->
+          <div>
+            <label for="max_commission" class="block text-sm font-medium text-gray-700 mb-2">
+              Maximum Commission
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+              <input type="number" id="max_commission" name="max_commission" step="0.01" min="0"
+                     value="{{ plan.max_commission if plan.max_commission else '' }}"
+                     class="form-control w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                     placeholder="0.00">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Slab Configuration -->
+      <div id="slab_configuration" class="bg-white rounded-lg shadow-md border lg:col-span-2" 
+           style="display: {% if plan.commission_mode.value == 'SLAB_BASED' %}block{% else %}none{% endif %};">
+        <div class="p-6 border-b">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-800">Slab Configuration</h3>
+            <button type="button" onclick="addSlab()" 
+                    class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm">
+              <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Add Slab
+            </button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div id="slabs_container" class="space-y-4">
+            <!-- Existing slabs will be loaded here -->
+          </div>
+          <input type="hidden" id="slabs_json" name="slabs_json" value="{{ plan.slabs | tojson | safe }}">
+        </div>
+      </div>
+
+      <!-- Validity Period -->
+      <div class="bg-white rounded-lg shadow-md border lg:col-span-2">
+        <div class="p-6 border-b">
+          <h3 class="text-lg font-semibold text-gray-800">Validity Period</h3>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Valid From -->
+            <div>
+              <label for="valid_from" class="block text-sm font-medium text-gray-700 mb-2">
+                Valid From <span class="text-red-500">*</span>
+              </label>
+              <input type="date" id="valid_from" name="valid_from" required
+                     value="{{ plan.valid_from.strftime('%Y-%m-%d') }}"
+                     class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <!-- Valid Until -->
+            <div>
+              <label for="valid_until" class="block text-sm font-medium text-gray-700 mb-2">
+                Valid Until
+              </label>
+              <input type="date" id="valid_until" name="valid_until" 
+                     value="{{ plan.valid_until.strftime('%Y-%m-%d') if plan.valid_until else '' }}"
+                     class="form-control w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <p class="mt-1 text-sm text-gray-500">Leave empty for no expiry</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-8 flex justify-end space-x-4">
+      <a href="{{ url_for('commission_pricing.plan_detail', plan_id=plan.id) }}" 
+         class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        Cancel
+      </a>
+      <button type="button" onclick="previewChanges()"
+              class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        </svg>
+        Preview Changes
+      </button>
+      <button type="submit" 
+              class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Save Changes
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+let slabCounter = 0;
+
+// Load existing slabs on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const existingSlabs = {{ plan.slabs | tojson | safe }};
+  if (existingSlabs && existingSlabs.length > 0) {
+    existingSlabs.forEach(slab => {
+      addExistingSlab(slab);
+    });
+  }
+  toggleCommissionFields();
+});
+
+function toggleCommissionFields() {
+  const mode = document.getElementById('commission_mode').value;
+  const baseRateField = document.getElementById('base_rate_field');
+  const baseRateSuffix = document.getElementById('base_rate_suffix');
+  const baseRateHelp = document.getElementById('base_rate_help');
+  const slabConfig = document.getElementById('slab_configuration');
+  
+  if (mode === 'PERCENTAGE') {
+    baseRateField.style.display = 'block';
+    baseRateSuffix.textContent = '%';
+    baseRateHelp.textContent = 'Commission percentage (0-100)';
+    slabConfig.style.display = 'none';
+  } else if (mode === 'FLAT') {
+    baseRateField.style.display = 'block';
+    baseRateSuffix.textContent = '₹';
+    baseRateHelp.textContent = 'Fixed commission amount';
+    slabConfig.style.display = 'none';
+  } else if (mode === 'SLAB_BASED') {
+    baseRateField.style.display = 'none';
+    slabConfig.style.display = 'block';
+  } else if (mode === 'VOLUME_BASED') {
+    baseRateField.style.display = 'block';
+    baseRateSuffix.textContent = '%';
+    baseRateHelp.textContent = 'Commission percentage based on volume';
+    slabConfig.style.display = 'none';
+  }
+}
+
+function addSlab() {
+  const container = document.getElementById('slabs_container');
+  const slabDiv = document.createElement('div');
+  slabDiv.className = 'slab-item border border-gray-300 rounded-lg p-4 bg-gray-50';
+  slabDiv.id = `slab_${slabCounter}`;
+  
+  slabDiv.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="font-medium text-gray-800">Slab ${slabCounter + 1}</h4>
+      <button type="button" onclick="removeSlab(${slabCounter})" 
+              class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Min Amount <span class="text-red-500">*</span></label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+          <input type="number" class="slab-min-amount w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                 step="0.01" min="0" required onchange="updateSlabsJson()">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Max Amount</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+          <input type="number" class="slab-max-amount w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                 step="0.01" min="0" onchange="updateSlabsJson()">
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Leave empty for unlimited</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Rate <span class="text-red-500">*</span></label>
+        <input type="number" class="slab-rate w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+               step="0.01" min="0" required onchange="updateSlabsJson()">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+        <select class="slab-type w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                onchange="updateSlabsJson()">
+          <option value="percentage">Percentage</option>
+          <option value="flat">Flat Amount</option>
+        </select>
+      </div>
+    </div>
+  `;
+  
+  container.appendChild(slabDiv);
+  slabCounter++;
+}
+
+function addExistingSlab(slabData) {
+  const container = document.getElementById('slabs_container');
+  const slabDiv = document.createElement('div');
+  slabDiv.className = 'slab-item border border-gray-300 rounded-lg p-4 bg-gray-50';
+  slabDiv.id = `slab_${slabCounter}`;
+  
+  slabDiv.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="font-medium text-gray-800">Slab ${slabCounter + 1}</h4>
+      <button type="button" onclick="removeSlab(${slabCounter})" 
+              class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Min Amount <span class="text-red-500">*</span></label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+          <input type="number" class="slab-min-amount w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                 step="0.01" min="0" required value="${slabData.min_amount}" onchange="updateSlabsJson()">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Max Amount</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+          <input type="number" class="slab-max-amount w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                 step="0.01" min="0" value="${slabData.max_amount || ''}" onchange="updateSlabsJson()">
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Leave empty for unlimited</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Rate <span class="text-red-500">*</span></label>
+        <input type="number" class="slab-rate w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+               step="0.01" min="0" required value="${slabData.rate}" onchange="updateSlabsJson()">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+        <select class="slab-type w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" 
+                onchange="updateSlabsJson()">
+          <option value="percentage" ${slabData.type === 'percentage' ? 'selected' : ''}>Percentage</option>
+          <option value="flat" ${slabData.type === 'flat' ? 'selected' : ''}>Flat Amount</option>
+        </select>
+      </div>
+    </div>
+  `;
+  
+  container.appendChild(slabDiv);
+  slabCounter++;
+}
+
+function removeSlab(id) {
+  const slabDiv = document.getElementById(`slab_${id}`);
+  if (slabDiv) {
+    slabDiv.remove();
+    updateSlabsJson();
+  }
+}
+
+function updateSlabsJson() {
+  const slabs = [];
+  const slabDivs = document.querySelectorAll('[id^="slab_"]');
+  
+  slabDivs.forEach(div => {
+    const minAmount = div.querySelector('.slab-min-amount').value;
+    const maxAmount = div.querySelector('.slab-max-amount').value;
+    const rate = div.querySelector('.slab-rate').value;
+    const type = div.querySelector('.slab-type').value;
+    
+    if (minAmount && rate) {
+      slabs.push({
+        min_amount: parseFloat(minAmount),
+        max_amount: maxAmount ? parseFloat(maxAmount) : null,
+        rate: parseFloat(rate),
+        type: type
+      });
+    }
+  });
+  
+  document.getElementById('slabs_json').value = JSON.stringify(slabs);
+}
+
+function previewChanges() {
+  const formData = new FormData(document.querySelector('form'));
+  
+  let previewHtml = `
+    <div class="text-left">
+      <h4 class="font-semibold mb-3">Plan Details Preview</h4>
+      <div class="space-y-2 text-sm">
+        <p><strong>Plan Name:</strong> ${formData.get('plan_name')}</p>
+        <p><strong>Service Type:</strong> ${formData.get('service_type')}</p>
+        <p><strong>Commission Mode:</strong> ${formData.get('commission_mode')}</p>
+        <p><strong>Base Rate:</strong> ${formData.get('base_rate')}</p>
+        <p><strong>Status:</strong> ${formData.get('is_active') ? 'Active' : 'Inactive'}</p>
+      </div>
+    </div>
+  `;
+  
+  Swal.fire({
+    title: 'Preview Changes',
+    html: previewHtml,
+    icon: 'info',
+    confirmButtonText: 'Looks Good!',
+    confirmButtonColor: '#16a34a'
+  });
+}
+
+// Form submission confirmation
+document.querySelector('form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  Swal.fire({
+    title: 'Update Commission Plan?',
+    text: 'Are you sure you want to save these changes?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, update it!',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      updateSlabsJson();
+      this.submit();
+    }
+  });
+});
+</script>
+
+{% endblock %}

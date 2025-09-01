@@ -161,9 +161,41 @@
   .payment-method-details.show {
     display: block;
   }
+  .gateway-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: white;
+  }
+  .gateway-razorpay { background: linear-gradient(135deg, #3395ff, #0b65c6); }
+  .gateway-payu { background: linear-gradient(135deg, #17cf97, #0f9968); }
+  .gateway-paytm { background: linear-gradient(135deg, #00baf2, #0082c7); }
+  .gateway-phonepe { background: linear-gradient(135deg, #5f259f, #411c6b); }
+  .gateway-cashfree { background: linear-gradient(135deg, #0066ff, #004cbf); }
+  .gateway-instamojo { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+  .gateway-ccavenue { background: linear-gradient(135deg, #ff9500, #e6851b); }
+  .gateway-stripe { background: linear-gradient(135deg, #635bff, #4c46d6); }
+  .gateway-paypal { background: linear-gradient(135deg, #0070ba, #005ea6); }
+  .processing-fees {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
   @keyframes slideDown {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .loading {
+    animation: pulse 1.5s infinite;
   }
   @media (max-width: 768px) {
     .form-row, .radio-group {
@@ -299,38 +331,14 @@
       <div class="card-body">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Select Payment Gateway</h3>
         
-        {% if payment_gateways %}
-        <div class="space-y-3">
-          {% for gateway in payment_gateways %}
-          <div class="radio-option">
-            <input type="radio" id="gateway_{{ gateway.id }}" name="payment_gateway_id" value="{{ gateway.id }}" 
-                   {% if loop.first %}checked{% endif %}>
-            <label for="gateway_{{ gateway.id }}" class="flex items-center justify-between p-4">
-              <div class="flex items-center">
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <i class="fas fa-credit-card text-purple-600"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold">{{ gateway.gateway_name }}</h4>
-                  <p class="text-sm text-gray-600">{{ gateway.gateway_type.value.replace('_', ' ').title() }}</p>
-                  {% if gateway.processing_fee_percentage > 0 %}
-                  <p class="text-xs text-gray-500">Processing Fee: {{ gateway.processing_fee_percentage }}%</p>
-                  {% endif %}
-                </div>
-              </div>
-              <div class="text-right">
-                <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">{{ 'Live' if not gateway.sandbox_mode else 'Test' }}</span>
-              </div>
-            </label>
-          </div>
-          {% endfor %}
+        <div id="gatewayOptionsContainer" class="space-y-3">
+          <!-- Gateway options will be loaded dynamically -->
         </div>
-        {% else %}
-        <div class="text-center py-8 text-gray-500">
-          <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
-          <p>No payment gateways available</p>
+        
+        <div id="gatewayLoadingMessage" class="text-center py-8 text-gray-500">
+          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+          <p>Loading available payment gateways...</p>
         </div>
-        {% endif %}
       </div>
     </div>
 
@@ -551,48 +559,406 @@
       </div>
     </div>
   </form>
-
 </div>
 
+<!-- Include required gateway scripts -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
 <script>
+// Global variables
+let availableGateways = [];
+let selectedGateway = null;
+
 // Payment method toggle
 document.addEventListener('DOMContentLoaded', function() {
   const manualRadio = document.getElementById('manual');
   const gatewayRadio = document.getElementById('gateway');
-  const manualDetails = document.getElementById('manualDetails');
-  const gatewayDetails = document.getElementById('gatewayDetails');
-  const manualPaymentDetails = document.getElementById('manualPaymentDetails');
-
-  function togglePaymentMethod() {
-    if (manualRadio.checked) {
-      manualDetails.classList.add('show');
-      manualPaymentDetails.classList.add('show');
-      gatewayDetails.classList.remove('show');
-      
-      // Make receipt upload required for manual payment
-      document.getElementById('payment_receipt').required = true;
-      document.getElementById('transaction_mode').required = true;
-    } else {
-      manualDetails.classList.remove('show');
-      manualPaymentDetails.classList.remove('show');
-      gatewayDetails.classList.add('show');
-      
-      // Remove required for manual payment fields
-      document.getElementById('payment_receipt').required = false;
-      document.getElementById('transaction_mode').required = false;
-    }
-  }
-
+  
   manualRadio.addEventListener('change', togglePaymentMethod);
   gatewayRadio.addEventListener('change', togglePaymentMethod);
+  
+  // Load available gateways
+  loadAvailableGateways();
   
   // Initialize
   togglePaymentMethod();
 });
 
+function togglePaymentMethod() {
+  const manualRadio = document.getElementById('manual');
+  const manualDetails = document.getElementById('manualDetails');
+  const gatewayDetails = document.getElementById('gatewayDetails');
+  const manualPaymentDetails = document.getElementById('manualPaymentDetails');
+
+  if (manualRadio.checked) {
+    manualDetails.classList.add('show');
+    manualPaymentDetails.classList.add('show');
+    gatewayDetails.classList.remove('show');
+    
+    // Make receipt upload required for manual payment
+    document.getElementById('payment_receipt').required = true;
+    document.getElementById('transaction_mode').required = true;
+  } else {
+    manualDetails.classList.remove('show');
+    manualPaymentDetails.classList.remove('show');
+    gatewayDetails.classList.add('show');
+    
+    // Remove required for manual payment fields
+    document.getElementById('payment_receipt').required = false;
+    document.getElementById('transaction_mode').required = false;
+  }
+}
+
+function loadAvailableGateways() {
+  fetch('/wallet/available-gateways')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      availableGateways = data.gateways;
+      renderGatewayOptions();
+    } else {
+      console.error('Failed to load gateways:', data.error);
+      showGatewayError();
+    }
+  })
+  .catch(error => {
+    console.error('Error loading gateways:', error);
+    showGatewayError();
+  });
+}
+
+function renderGatewayOptions() {
+  const container = document.getElementById('gatewayOptionsContainer');
+  const loadingMessage = document.getElementById('gatewayLoadingMessage');
+  
+  if (availableGateways.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+        <p>No payment gateways available</p>
+      </div>
+    `;
+    loadingMessage.style.display = 'none';
+    return;
+  }
+  
+  container.innerHTML = '';
+  loadingMessage.style.display = 'none';
+  
+  availableGateways.forEach((gateway, index) => {
+    const gatewayOption = document.createElement('div');
+    gatewayOption.className = 'radio-option';
+    
+    const gatewayTypeClass = `gateway-${gateway.type.toLowerCase().replace('_', '')}`;
+    const gatewayIcon = getGatewayIcon(gateway.type);
+    
+    gatewayOption.innerHTML = `
+      <input type="radio" id="gateway_${gateway.id}" name="payment_gateway_id" 
+             value="${gateway.id}" ${index === 0 ? 'checked' : ''}>
+      <label for="gateway_${gateway.id}" class="flex items-center justify-between p-4">
+        <div class="flex items-center">
+          <div class="gateway-logo ${gatewayTypeClass} mr-4">
+            ${gatewayIcon}
+          </div>
+          <div>
+            <h4 class="font-semibold">${gateway.name}</h4>
+            <p class="text-sm text-gray-600">${gateway.type.replace('_', ' ')}</p>
+            <div class="processing-fees">
+              ${gateway.processing_fee_percentage > 0 ? 
+                `Processing Fee: ${gateway.processing_fee_percentage}%` : 
+                'No additional fees'}
+              ${gateway.processing_fee_fixed > 0 ? 
+                ` + ₹${gateway.processing_fee_fixed}` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs px-2 py-1 rounded ${gateway.sandbox_mode ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+            ${gateway.sandbox_mode ? 'Test Mode' : 'Live'}
+          </span>
+          ${gateway.is_default ? 
+            '<span class="block text-xs text-blue-600 mt-1">Default</span>' : ''}
+          <div class="text-xs text-gray-500 mt-1">
+            ₹${gateway.min_amount} - ₹${gateway.max_amount.toLocaleString()}
+          </div>
+        </div>
+      </label>
+    `;
+    
+    container.appendChild(gatewayOption);
+  });
+}
+
+function getGatewayIcon(gatewayType) {
+  const icons = {
+    'RAZORPAY': 'R',
+    'PAYU': 'PU',
+    'PAYTM': 'PT',
+    'PHONEPE': 'PP',
+    'CASHFREE': 'CF',
+    'INSTAMOJO': 'IM',
+    'CCAVENUE': 'CC',
+    'STRIPE': 'S',
+    'PAYPAL': 'PP'
+  };
+  return icons[gatewayType] || '₹';
+}
+
+function showGatewayError() {
+  const container = document.getElementById('gatewayOptionsContainer');
+  const loadingMessage = document.getElementById('gatewayLoadingMessage');
+  
+  container.innerHTML = `
+    <div class="text-center py-8 text-red-500">
+      <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+      <p>Failed to load payment gateways</p>
+      <button onclick="loadAvailableGateways()" class="btn btn-primary mt-4">
+        <i class="fas fa-retry mr-2"></i>Retry
+      </button>
+    </div>
+  `;
+  loadingMessage.style.display = 'none';
+}
+
+function initiatePayment() {
+  const amount = document.getElementById('amount').value;
+  const gatewayId = document.querySelector('input[name="payment_gateway_id"]:checked')?.value;
+  
+  if (!amount || amount < 100 || amount > 100000) {
+    alert('Please enter a valid amount between ₹100 and ₹1,00,000');
+    return;
+  }
+  
+  if (!gatewayId) {
+    alert('Please select a payment gateway');
+    return;
+  }
+  
+  // Show loading
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+  
+  fetch('/wallet/topup/process-payment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: amount,
+      gateway_id: gatewayId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      handlePaymentGateway(data);
+    } else {
+      alert('Error: ' + data.error);
+      resetSubmitButton();
+    }
+  })
+  .catch(error => {
+    alert('Network error: ' + error);
+    resetSubmitButton();
+  });
+}
+
+function handlePaymentGateway(data) {
+  const gatewayType = data.gateway_type;
+  const orderData = data.order_data;
+  
+  console.log(`Processing payment via ${data.gateway_name} (${gatewayType})`);
+  
+  switch(gatewayType) {
+    case 'RAZORPAY':
+      handleRazorpay(orderData);
+      break;
+    case 'PAYU':
+      handlePayU(orderData);
+      break;
+    case 'PAYTM':
+      handlePaytm(orderData);
+      break;
+    case 'PHONEPE':
+      handlePhonePe(orderData);
+      break;
+    case 'CASHFREE':
+      handleCashfree(orderData);
+      break;
+    case 'INSTAMOJO':
+      handleInstamojo(orderData);
+      break;
+    case 'CCAVENUE':
+      handleCCAvenue(orderData);
+      break;
+    case 'STRIPE':
+      handleStripe(orderData);
+      break;
+    case 'PAYPAL':
+      handlePayPal(orderData);
+      break;
+    default:
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        alert('Gateway type not supported in frontend');
+        resetSubmitButton();
+      }
+  }
+}
+
+// Gateway-specific handlers
+function handleRazorpay(orderData) {
+  const options = {
+    key: orderData.checkout_data.key,
+    amount: orderData.checkout_data.amount,
+    currency: orderData.checkout_data.currency,
+    order_id: orderData.checkout_data.order_id,
+    name: orderData.checkout_data.name,
+    description: orderData.checkout_data.description,
+    prefill: orderData.checkout_data.prefill,
+    handler: function(response) {
+      redirectToCallback(response);
+    },
+    modal: {
+      ondismiss: function() {
+        window.location.reload();
+      }
+    }
+  };
+  
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+function handlePayU(orderData) {
+  const form = createPostForm('https://test.payu.in/_payment', orderData.checkout_data);
+  addHiddenInput(form, 'surl', window.location.origin + '/wallet/payment/callback');
+  addHiddenInput(form, 'furl', window.location.origin + '/wallet/payment/callback');
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function handlePaytm(orderData) {
+  const form = createPostForm('https://securegw-stage.paytm.in/theia/processTransaction', orderData.checkout_data);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function handlePhonePe(orderData) {
+  if (orderData.checkout_data.payment_url) {
+    window.location.href = orderData.checkout_data.payment_url;
+  } else {
+    alert('PhonePe payment URL not available');
+    resetSubmitButton();
+  }
+}
+
+function handleCashfree(orderData) {
+  const cashfree = Cashfree({
+    mode: "sandbox"
+  });
+  
+  cashfree.checkout({
+    paymentSessionId: orderData.checkout_data.payment_session_id,
+    redirectTarget: "_self"
+  });
+}
+
+function handleInstamojo(orderData) {
+  if (orderData.checkout_data.payment_url) {
+    window.location.href = orderData.checkout_data.payment_url;
+  } else {
+    alert('Instamojo payment URL not available');
+    resetSubmitButton();
+  }
+}
+
+function handleCCAvenue(orderData) {
+  const form = createPostForm('https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction', {
+    access_code: orderData.checkout_data.access_code,
+    merchant_id: orderData.checkout_data.merchant_id,
+    order_id: orderData.checkout_data.order_id,
+    amount: orderData.checkout_data.amount,
+    currency: orderData.checkout_data.currency,
+    redirect_url: window.location.origin + '/wallet/payment/callback',
+    cancel_url: window.location.origin + '/wallet/payment/callback',
+    enc_val: orderData.checkout_data.encrypted_data
+  });
+  
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function handleStripe(orderData) {
+  const stripe = Stripe(orderData.checkout_data.publishable_key);
+  
+  stripe.confirmCardPayment(orderData.checkout_data.client_secret)
+  .then(function(result) {
+    if (result.error) {
+      alert('Payment failed: ' + result.error.message);
+      window.location.reload();
+    } else {
+      window.location.href = '/wallet/payment/callback?payment_intent=' + result.paymentIntent.id;
+    }
+  });
+}
+
+function handlePayPal(orderData) {
+  if (orderData.checkout_data.approval_url) {
+    window.location.href = orderData.checkout_data.approval_url;
+  } else {
+    alert('PayPal approval URL not available');
+    resetSubmitButton();
+  }
+}
+
+// Helper functions
+function createPostForm(action, data) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = action;
+  
+  Object.keys(data).forEach(key => {
+    addHiddenInput(form, key, data[key]);
+  });
+  
+  return form;
+}
+
+function addHiddenInput(form, name, value) {
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = name;
+  input.value = value;
+  form.appendChild(input);
+}
+
+function redirectToCallback(response) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/wallet/payment/callback';
+  
+  Object.keys(response).forEach(key => {
+    addHiddenInput(form, key, response[key]);
+  });
+  
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function resetSubmitButton() {
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = false;
+  submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Top-up Request';
+}
+
+// Existing functions (setAmount, showBankDetails, etc.)
 function setAmount(amount) {
   document.getElementById('amount').value = amount;
-  // Visual feedback
   const input = document.getElementById('amount');
   input.style.borderColor = '#10b981';
   input.style.backgroundColor = '#ecfdf5';
@@ -603,25 +969,20 @@ function setAmount(amount) {
 }
 
 function showBankDetails(bankId) {
-  // Hide all bank details
   const allDetails = document.querySelectorAll('[id^="bank_details_"]');
   allDetails.forEach(detail => detail.style.display = 'none');
-  
-  // Show selected bank details
   document.getElementById('bank_details_' + bankId).style.display = 'block';
 }
 
 function handleFileSelect(input) {
   const file = input.files[0];
   if (file) {
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be less than 5MB');
       input.value = '';
       return;
     }
     
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
       alert('Please upload only JPG, PNG, or PDF files');
@@ -629,12 +990,10 @@ function handleFileSelect(input) {
       return;
     }
     
-    // Show file preview
     document.getElementById('upload-content').style.display = 'none';
     document.getElementById('file-preview').style.display = 'flex';
     document.getElementById('file-name').textContent = file.name;
     
-    // Change upload area appearance
     const uploadArea = document.querySelector('.file-upload-area');
     uploadArea.style.borderColor = '#10b981';
     uploadArea.style.backgroundColor = '#ecfdf5';
@@ -645,7 +1004,6 @@ function removeFile() {
   const input = document.getElementById('payment_receipt');
   input.value = '';
   
-  // Reset upload area
   document.getElementById('upload-content').style.display = 'block';
   document.getElementById('file-preview').style.display = 'none';
   
@@ -659,19 +1017,21 @@ function resetForm() {
     document.getElementById('topupForm').reset();
     removeFile();
     document.getElementById('manual').checked = true;
-    document.querySelector('[id^="bank_details_"]').style.display = 'block';
     
-    // Reset payment method display
-    document.getElementById('manualDetails').classList.add('show');
-    document.getElementById('manualPaymentDetails').classList.add('show');
-    document.getElementById('gatewayDetails').classList.remove('show');
+    const firstBankDetails = document.querySelector('[id^="bank_details_"]');
+    if (firstBankDetails) {
+      firstBankDetails.style.display = 'block';
+    }
+    
+    togglePaymentMethod();
   }
 }
 
-// Form validation before submit
+// Enhanced form validation
 document.getElementById('topupForm').addEventListener('submit', function(e) {
   const amount = parseFloat(document.getElementById('amount').value);
   const isManual = document.getElementById('manual').checked;
+  const isGateway = document.getElementById('gateway').checked;
   
   if (amount < 100 || amount > 100000) {
     e.preventDefault();
@@ -696,7 +1056,13 @@ document.getElementById('topupForm').addEventListener('submit', function(e) {
     }
   }
   
-  // Show loading state
+  if (isGateway) {
+    e.preventDefault();
+    initiatePayment();
+    return;
+  }
+  
+  // Show loading state for manual submission
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting Request...';

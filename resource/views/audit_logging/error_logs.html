@@ -1,0 +1,325 @@
+<!-- templates/audit_logging/error_logs.html -->
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .severity-critical { @apply bg-red-100 text-red-800; }
+  .severity-error { @apply bg-orange-100 text-orange-800; }
+  .severity-warning { @apply bg-yellow-100 text-yellow-800; }
+  .severity-info { @apply bg-blue-100 text-blue-800; }
+</style>
+
+<!-- Error Logs -->
+<div class="container-fluid px-4 py-6">
+  
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Error Logs</h1>
+        <p class="text-gray-600 mt-1">System errors and exception tracking</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('audit_logging.export_error_logs', **filters) }}" 
+           class="btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Export CSV
+        </a>
+        <a href="{{ url_for('audit_logging.audit_dashboard') }}" 
+           class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="bg-white rounded-lg shadow-md border p-6 mb-6">
+    <form method="GET" class="space-y-4">
+      
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+          <input type="text" name="search" value="{{ filters.search }}" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                 placeholder="Search error code, message...">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+          <select name="severity" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Severities</option>
+            {% for severity in severities %}
+            <option value="{{ severity }}" {% if filters.severity == severity %}selected{% endif %}>{{ severity }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select name="resolved" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Status</option>
+            <option value="false" {% if filters.resolved == 'false' %}selected{% endif %}>Open</option>
+            <option value="true" {% if filters.resolved == 'true' %}selected{% endif %}>Resolved</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+          <input type="date" name="date_from" value="{{ filters.date_from }}" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+          <input type="date" name="date_to" value="{{ filters.date_to }}" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+      </div>
+      
+      <div class="flex gap-2">
+        <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          Filter
+        </button>
+        <a href="{{ url_for('audit_logging.error_logs') }}" 
+           class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+          Clear
+        </a>
+      </div>
+      
+    </form>
+  </div>
+
+  <!-- Error Logs Table -->
+  <div class="bg-white rounded-lg shadow-md border">
+    <div class="p-6 border-b">
+      <h3 class="text-lg font-semibold text-gray-800">Error Logs ({{ error_logs.total }})</h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error Code</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for log in error_logs.items %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {{ log.created_at.strftime('%Y-%m-%d') }}<br>
+              <span class="text-xs text-gray-500">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm font-medium text-gray-900">
+                {{ log.error_code or 'SYSTEM_ERROR' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-900">
+              <div class="max-w-md truncate" title="{{ log.error_message }}">
+                {{ log.error_message }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full severity-{{ log.severity.lower() }}">
+                {{ log.severity }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if log.resolved %}
+              <span class="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                Resolved
+              </span>
+              {% else %}
+              <span class="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                Open
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex gap-2">
+                <a href="{{ url_for('audit_logging.error_log_detail', log_id=log.id) }}" 
+                   class="text-primary-600 hover:text-primary-900" title="View Details">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                </a>
+                {% if not log.resolved %}
+                <button onclick="resolveError('{{ log.id }}')" 
+                        class="text-green-600 hover:text-green-900" title="Mark as Resolved">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </button>
+                {% else %}
+                <button onclick="unresolveError('{{ log.id }}')" 
+                        class="text-orange-600 hover:text-orange-900" title="Mark as Unresolved">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination (same as audit logs) -->
+    {% if error_logs.pages > 1 %}
+    <div class="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
+      <div class="flex-1 flex justify-between sm:hidden">
+        {% if error_logs.has_prev %}
+        <a href="{{ url_for('audit_logging.error_logs', page=error_logs.prev_num, **filters) }}" 
+           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          Previous
+        </a>
+        {% endif %}
+        {% if error_logs.has_next %}
+        <a href="{{ url_for('audit_logging.error_logs', page=error_logs.next_num, **filters) }}" 
+           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          Next
+        </a>
+        {% endif %}
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing <span class="font-medium">{{ error_logs.per_page * (error_logs.page - 1) + 1 }}</span>
+            to <span class="font-medium">{{ error_logs.per_page * (error_logs.page - 1) + error_logs.items|length }}</span>
+            of <span class="font-medium">{{ error_logs.total }}</span> results
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% for page_num in error_logs.iter_pages() %}
+              {% if page_num %}
+                {% if page_num != error_logs.page %}
+                <a href="{{ url_for('audit_logging.error_logs', page=page_num, **filters) }}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  {{ page_num }}
+                </a>
+                {% else %}
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-primary-50 text-sm font-medium text-primary-600">
+                  {{ page_num }}
+                </span>
+                {% endif %}
+              {% else %}
+              <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                ...
+              </span>
+              {% endif %}
+            {% endfor %}
+          </nav>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    {% if not error_logs.items %}
+    <div class="p-12 text-center">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      <h3 class="text-lg font-semibold text-gray-600 mb-2">No Error Logs Found</h3>
+      <p class="text-gray-500">Try adjusting your search criteria or date range.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+function resolveError(errorId) {
+  Swal.fire({
+    title: 'Resolve Error?',
+    text: 'Mark this error as resolved?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, resolve it',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/audit-logging/error-logs/${errorId}/resolve`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+
+function unresolveError(errorId) {
+  Swal.fire({
+    title: 'Unresolve Error?',
+    text: 'Mark this error as unresolved?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#f59e0b',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, unresolve it',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/audit-logging/error-logs/${errorId}/unresolve`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+</script>
+
+{% endblock %}

@@ -46,6 +46,71 @@ fake = Faker('en_IN')  # Indian locale for realistic Indian data
 Faker.seed(42)  # For reproducible data
 random.seed(42)
 
+
+class UniqueDataGenerator:
+    """Generates unique data to avoid database constraint violations"""
+    
+    def __init__(self, faker):
+        self.faker = faker
+        self.used_emails = set()
+        self.used_phones = set()
+        self.used_usernames = set()
+        self.email_counter = 1
+        self.phone_counter = 7000000000
+    
+    def unique_email(self, base_email=None):
+        """Generate a unique email"""
+        if base_email:
+            if base_email not in self.used_emails:
+                self.used_emails.add(base_email)
+                return base_email
+        
+        # Try generating new emails up to 50 times
+        for attempt in range(50):
+            email = self.faker.email()
+            if email not in self.used_emails:
+                self.used_emails.add(email)
+                return email
+        
+        # If still no unique email, create one with counter
+        while True:
+            email = f"user{self.email_counter}@example.com"
+            self.email_counter += 1
+            if email not in self.used_emails:
+                self.used_emails.add(email)
+                return email
+    
+    def unique_phone(self):
+        """Generate a unique Indian phone number"""
+        for attempt in range(100):
+            phone = f"+91{random.randint(7000000000, 9999999999)}"
+            if phone not in self.used_phones:
+                self.used_phones.add(phone)
+                return phone
+        
+        # Fallback to sequential phone numbers
+        while True:
+            phone = f"+91{self.phone_counter}"
+            self.phone_counter += 1
+            if phone not in self.used_phones:
+                self.used_phones.add(phone)
+                return phone
+    
+    def unique_username(self, base_username):
+        """Ensure username uniqueness"""
+        if base_username not in self.used_usernames:
+            self.used_usernames.add(base_username)
+            return base_username
+        
+        counter = 1
+        while True:
+            username = f"{base_username}_{counter}"
+            if username not in self.used_usernames:
+                self.used_usernames.add(username)
+                return username
+            counter += 1
+
+
 class DatabaseSeeder:
     """Database seeder class for inserting sample data"""
     
@@ -54,13 +119,16 @@ class DatabaseSeeder:
         self.database_url = database_url or 'postgresql://postgres:1234@localhost:5432/saas_platform'
         self.setup_database()
         
-        # Data containers
-        self.tenants = []
+        # Data containers - Store tenant info as dicts instead of objects
+        self.tenants = []  # Will store tenant metadata dicts
         self.users = {}  # {role: [users]}
         self.payment_gateways = []
         self.bank_accounts = []
         self.commission_plans = []
         self.permissions = []
+        
+        # Initialize unique data generator
+        self.data_generator = UniqueDataGenerator(fake)
         
     def setup_database(self):
         """Setup database connection"""
@@ -124,6 +192,9 @@ class DatabaseSeeder:
                     connection.commit()
                 
                 print("✅ All existing data cleared")
+                
+                # Reset unique data generators after clearing
+                self.data_generator = UniqueDataGenerator(fake)
                 
             except Exception as e:
                 print(f"❌ Error clearing data: {e}")
@@ -203,6 +274,7 @@ class DatabaseSeeder:
                 # Check if permission already exists
                 existing_permission = Permission.query.filter_by(name=name).first()
                 if existing_permission:
+                    self.permissions.append(existing_permission)
                     skipped_count += 1
                     continue
                 
@@ -225,7 +297,7 @@ class DatabaseSeeder:
                 raise
     
     def create_tenants(self):
-        """Create sample tenants"""
+        """Create sample tenants - FIXED VERSION"""
         print("🏢 Creating tenants...")
         
         tenants_data = [
@@ -259,11 +331,22 @@ class DatabaseSeeder:
             created_count = 0
             skipped_count = 0
             
+            # Clear existing tenant data
+            self.tenants = []
+            
             for tenant_data in tenants_data:
                 # Check if tenant already exists
                 existing_tenant = Tenant.query.filter_by(tenant_code=tenant_data['tenant_code']).first()
                 if existing_tenant:
-                    self.tenants.append(existing_tenant)
+                    # Store tenant metadata instead of the object
+                    tenant_info = {
+                        'id': existing_tenant.id,
+                        'tenant_code': existing_tenant.tenant_code,
+                        'tenant_name': existing_tenant.tenant_name,
+                        'domain': existing_tenant.domain,
+                        'subdomain': existing_tenant.subdomain
+                    }
+                    self.tenants.append(tenant_info)
                     skipped_count += 1
                     continue
                 
@@ -289,7 +372,17 @@ class DatabaseSeeder:
                     is_active=True
                 )
                 db.session.add(tenant)
-                self.tenants.append(tenant)
+                db.session.flush()  # Get the ID immediately
+                
+                # Store tenant metadata
+                tenant_info = {
+                    'id': tenant.id,
+                    'tenant_code': tenant.tenant_code,
+                    'tenant_name': tenant.tenant_name,
+                    'domain': tenant.domain,
+                    'subdomain': tenant.subdomain
+                }
+                self.tenants.append(tenant_info)
                 created_count += 1
             
             try:
@@ -301,100 +394,106 @@ class DatabaseSeeder:
                 raise
     
     def create_users(self):
-        """Create hierarchical user structure"""
+        """Create hierarchical user structure - FIXED VERSION with unique constraints"""
         print("👥 Creating users...")
         
         with self.app.app_context():
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 # Initialize user collections for this tenant
                 tenant_users = {role: [] for role in UserRoleType}
                 
-                # 1. Create Super Admin (1 per tenant)
-                super_admin = self.create_user(
-                    tenant_id=tenant.id,
-                    role=UserRoleType.SUPER_ADMIN,
-                    parent_id=None,
-                    index=1,
-                    full_name="Super Administrator",
-                    email=f"superadmin@{tenant.domain}",
-                    business_name=f"{tenant.tenant_name} - Super Admin"
-                )
-                tenant_users[UserRoleType.SUPER_ADMIN].append(super_admin)
-                
-                # 2. Create Admins (2-3 per tenant)
-                for i in range(1, 4):
-                    admin = self.create_user(
-                        tenant_id=tenant.id,
-                        role=UserRoleType.ADMIN,
-                        parent_id=super_admin.id,
-                        index=i,
-                        full_name=fake.name(),
-                        email=f"admin{i}@{tenant.domain}",
-                        business_name=f"{tenant.tenant_name} - Admin {i}"
+                try:
+                    # 1. Create Super Admin (1 per tenant)
+                    super_admin = self.create_user(
+                        tenant_id=tenant_info['id'],
+                        role=UserRoleType.SUPER_ADMIN,
+                        parent_id=None,
+                        index=1,
+                        full_name="Super Administrator",
+                        email=f"superadmin@{tenant_info['domain']}",
+                        business_name=f"{tenant_info['tenant_name']} - Super Admin"
                     )
-                    tenant_users[UserRoleType.ADMIN].append(admin)
-                
-                # 3. Create White Label users (2-4 per admin)
-                for admin in tenant_users[UserRoleType.ADMIN]:
-                    for i in range(1, random.randint(2, 5)):
-                        white_label = self.create_user(
-                            tenant_id=tenant.id,
-                            role=UserRoleType.WHITE_LABEL,
-                            parent_id=admin.id,
-                            index=len(tenant_users[UserRoleType.WHITE_LABEL]) + 1,
+                    tenant_users[UserRoleType.SUPER_ADMIN].append(super_admin)
+                    
+                    # 2. Create Admins (2-3 per tenant)
+                    for i in range(1, 4):
+                        admin = self.create_user(
+                            tenant_id=tenant_info['id'],
+                            role=UserRoleType.ADMIN,
+                            parent_id=super_admin.id,
+                            index=i,
                             full_name=fake.name(),
-                            email=fake.email(),
-                            business_name=fake.company()
+                            email=f"admin{i}@{tenant_info['domain']}",
+                            business_name=f"{tenant_info['tenant_name']} - Admin {i}"
                         )
-                        tenant_users[UserRoleType.WHITE_LABEL].append(white_label)
-                
-                # 4. Create Master Distributors (3-5 per white label)
-                for white_label in tenant_users[UserRoleType.WHITE_LABEL]:
-                    for i in range(1, random.randint(3, 6)):
-                        master_dist = self.create_user(
-                            tenant_id=tenant.id,
-                            role=UserRoleType.MASTER_DISTRIBUTOR,
-                            parent_id=white_label.id,
-                            index=len(tenant_users[UserRoleType.MASTER_DISTRIBUTOR]) + 1,
-                            full_name=fake.name(),
-                            email=fake.email(),
-                            business_name=fake.company()
-                        )
-                        tenant_users[UserRoleType.MASTER_DISTRIBUTOR].append(master_dist)
-                
-                # 5. Create Distributors (5-8 per master distributor)
-                for master_dist in tenant_users[UserRoleType.MASTER_DISTRIBUTOR]:
-                    for i in range(1, random.randint(5, 9)):
-                        distributor = self.create_user(
-                            tenant_id=tenant.id,
-                            role=UserRoleType.DISTRIBUTOR,
-                            parent_id=master_dist.id,
-                            index=len(tenant_users[UserRoleType.DISTRIBUTOR]) + 1,
-                            full_name=fake.name(),
-                            email=fake.email(),
-                            business_name=fake.company()
-                        )
-                        tenant_users[UserRoleType.DISTRIBUTOR].append(distributor)
-                
-                # 6. Create Retailers (10-15 per distributor)
-                for distributor in tenant_users[UserRoleType.DISTRIBUTOR]:
-                    for i in range(1, random.randint(10, 16)):
-                        retailer = self.create_user(
-                            tenant_id=tenant.id,
-                            role=UserRoleType.RETAILER,
-                            parent_id=distributor.id,
-                            index=len(tenant_users[UserRoleType.RETAILER]) + 1,
-                            full_name=fake.name(),
-                            email=fake.email(),
-                            business_name=fake.company()
-                        )
-                        tenant_users[UserRoleType.RETAILER].append(retailer)
-                
-                # Store users for this tenant
-                for role, users in tenant_users.items():
-                    if role not in self.users:
-                        self.users[role] = []
-                    self.users[role].extend(users)
+                        tenant_users[UserRoleType.ADMIN].append(admin)
+                    
+                    # 3. Create White Label users (2-4 per admin)
+                    for admin in tenant_users[UserRoleType.ADMIN]:
+                        for i in range(1, random.randint(2, 5)):
+                            white_label = self.create_user(
+                                tenant_id=tenant_info['id'],
+                                role=UserRoleType.WHITE_LABEL,
+                                parent_id=admin.id,
+                                index=len(tenant_users[UserRoleType.WHITE_LABEL]) + 1,
+                                full_name=fake.name(),
+                                email=None,  # Let it generate unique email
+                                business_name=fake.company()
+                            )
+                            tenant_users[UserRoleType.WHITE_LABEL].append(white_label)
+                    
+                    # 4. Create Master Distributors (3-5 per white label)
+                    for white_label in tenant_users[UserRoleType.WHITE_LABEL]:
+                        for i in range(1, random.randint(3, 6)):
+                            master_dist = self.create_user(
+                                tenant_id=tenant_info['id'],
+                                role=UserRoleType.MASTER_DISTRIBUTOR,
+                                parent_id=white_label.id,
+                                index=len(tenant_users[UserRoleType.MASTER_DISTRIBUTOR]) + 1,
+                                full_name=fake.name(),
+                                email=None,  # Let it generate unique email
+                                business_name=fake.company()
+                            )
+                            tenant_users[UserRoleType.MASTER_DISTRIBUTOR].append(master_dist)
+                    
+                    # 5. Create Distributors (5-8 per master distributor)
+                    for master_dist in tenant_users[UserRoleType.MASTER_DISTRIBUTOR]:
+                        for i in range(1, random.randint(5, 9)):
+                            distributor = self.create_user(
+                                tenant_id=tenant_info['id'],
+                                role=UserRoleType.DISTRIBUTOR,
+                                parent_id=master_dist.id,
+                                index=len(tenant_users[UserRoleType.DISTRIBUTOR]) + 1,
+                                full_name=fake.name(),
+                                email=None,  # Let it generate unique email
+                                business_name=fake.company()
+                            )
+                            tenant_users[UserRoleType.DISTRIBUTOR].append(distributor)
+                    
+                    # 6. Create Retailers (10-15 per distributor)
+                    for distributor in tenant_users[UserRoleType.DISTRIBUTOR]:
+                        for i in range(1, random.randint(10, 16)):
+                            retailer = self.create_user(
+                                tenant_id=tenant_info['id'],
+                                role=UserRoleType.RETAILER,
+                                parent_id=distributor.id,
+                                index=len(tenant_users[UserRoleType.RETAILER]) + 1,
+                                full_name=fake.name(),
+                                email=None,  # Let it generate unique email
+                                business_name=fake.company()
+                            )
+                            tenant_users[UserRoleType.RETAILER].append(retailer)
+                    
+                    # Store users for this tenant
+                    for role, users in tenant_users.items():
+                        if role not in self.users:
+                            self.users[role] = []
+                        self.users[role].extend(users)
+                    
+                except Exception as e:
+                    print(f"❌ Error creating users for tenant {tenant_info['tenant_name']}: {e}")
+                    db.session.rollback()
+                    raise
             
             # Update tree paths and levels
             self.update_user_hierarchy()
@@ -408,17 +507,26 @@ class DatabaseSeeder:
                 print(f"   • {role.value}: {len(users)}")
     
     def create_user(self, tenant_id, role, parent_id, index, full_name, email, business_name):
-        """Create a single user"""
+        """Create a single user - FIXED VERSION with unique constraints"""
         user_code = self.generate_user_code(role, index)
         
-        # Generate Indian phone number
-        phone = f"+91{random.randint(7000000000, 9999999999)}"
+        # Generate unique phone number
+        phone = self.data_generator.unique_phone()
+        
+        # Generate unique email
+        if email:
+            email = self.data_generator.unique_email(email)
+        else:
+            email = self.data_generator.unique_email()
+        
+        # Generate unique username
+        username = self.data_generator.unique_username(user_code.lower())
         
         user = User(
             tenant_id=tenant_id,
             parent_id=parent_id,
             user_code=user_code,
-            username=user_code.lower(),
+            username=username,
             email=email,
             phone=phone,
             role=role,
@@ -528,18 +636,18 @@ class DatabaseSeeder:
         ]
         
         with self.app.app_context():
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 for gw_data in gateways_data:
                     gateway = PaymentGateway(
-                        tenant_id=tenant.id,
+                        tenant_id=tenant_info['id'],
                         gateway_type=gw_data['gateway_type'],
                         gateway_name=gw_data['gateway_name'],
                         merchant_id=f"merchant_{fake.uuid4()[:8]}",
                         api_key=secrets.token_urlsafe(32),
                         api_secret=secrets.token_urlsafe(64),
                         webhook_secret=secrets.token_urlsafe(32),
-                        callback_url=f"https://{tenant.domain}/payment/callback",
-                        webhook_url=f"https://{tenant.domain}/payment/webhook",
+                        callback_url=f"https://{tenant_info['domain']}/payment/callback",
+                        webhook_url=f"https://{tenant_info['domain']}/payment/webhook",
                         sandbox_mode=gw_data['sandbox_mode'],
                         status='ACTIVE',
                         priority=gw_data['priority'],
@@ -578,23 +686,23 @@ class DatabaseSeeder:
         ]
         
         with self.app.app_context():
-            for i, tenant in enumerate(self.tenants):
+            for i, tenant_info in enumerate(self.tenants):
                 # Create 3-4 bank accounts per tenant
                 for j in range(3, 5):
                     bank_name, ifsc_base = random.choice(indian_banks)
                     ifsc_code = f"{ifsc_base[:4]}{random.randint(100000, 999999)}"
                     
                     bank_account = OrganizationBankAccount(
-                        tenant_id=tenant.id,
+                        tenant_id=tenant_info['id'],
                         account_code=f"ACC{i+1}{j:02d}",
-                        account_name=f"{tenant.tenant_name} - Account {j}",
+                        account_name=f"{tenant_info['tenant_name']} - Account {j}",
                         account_number=str(random.randint(10000000000, 99999999999)),
                         ifsc_code=ifsc_code,
                         bank_name=bank_name,
                         branch_name=f"{fake.city()} Branch",
                         branch_address=fake.address(),
                         account_type=random.choice([BankAccountType.CURRENT, BankAccountType.SAVINGS]),
-                        account_holder_name=tenant.tenant_name,
+                        account_holder_name=tenant_info['tenant_name'],
                         pan_number=f"ABCDE{random.randint(1000, 9999)}F",
                         gstin=f"27ABCDE{random.randint(1000, 9999)}F1Z5",
                         status=BankAccountStatus.ACTIVE,
@@ -606,7 +714,7 @@ class DatabaseSeeder:
                         monthly_limit=Decimal('10000000.00'),
                         minimum_balance=Decimal('10000.00'),
                         current_balance=Decimal(str(random.uniform(50000, 500000))),
-                        upi_id=f"{tenant.subdomain}@{bank_name.lower().replace(' ', '')}",
+                        upi_id=f"{tenant_info['subdomain']}@{bank_name.lower().replace(' ', '')}",
                         verification_status='VERIFIED',
                         verification_date=datetime.utcnow() - timedelta(days=random.randint(1, 30)),
                         is_visible_to_users=True,
@@ -661,11 +769,11 @@ class DatabaseSeeder:
         ]
         
         with self.app.app_context():
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 for service_data in plans_data:
                     for plan_data in service_data['plans']:
                         commission_plan = CommissionPlan(
-                            tenant_id=tenant.id,
+                            tenant_id=tenant_info['id'],
                             plan_name=plan_data['name'],
                             service_type=service_data['service_type'],
                             commission_mode=CommissionMode.FLAT if plan_data.get('mode') == 'FLAT' else CommissionMode.PERCENTAGE,
@@ -904,10 +1012,10 @@ Best regards,
         ]
         
         with self.app.app_context():
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 for template_data in templates_data:
                     template = NotificationTemplate(
-                        tenant_id=tenant.id,
+                        tenant_id=tenant_info['id'],
                         template_code=template_data['template_code'],
                         template_name=template_data['template_name'],
                         template_type=template_data['template_type'],
@@ -964,10 +1072,10 @@ Best regards,
         ]
         
         with self.app.app_context():
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 for config_data in api_configs:
                     api_config = APIConfiguration(
-                        tenant_id=tenant.id,
+                        tenant_id=tenant_info['id'],
                         service_type=config_data['service_type'],
                         provider=config_data['provider'],
                         api_url=config_data['api_url'],
@@ -976,7 +1084,7 @@ Best regards,
                         headers={
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'User-Agent': f"{tenant.tenant_name}/1.0"
+                            'User-Agent': f"{tenant_info['tenant_name']}/1.0"
                         },
                         parameters={
                             'timeout': 30,
@@ -1047,14 +1155,14 @@ Best regards,
             # Get all permissions
             permissions = {p.name: p for p in Permission.query.all()}
             
-            for tenant in self.tenants:
+            for tenant_info in self.tenants:
                 for role, permission_names in role_permissions_map.items():
                     for perm_name in permission_names:
                         if perm_name in permissions:
                             role_permission = RolePermission(
                                 role=role,
                                 permission_id=permissions[perm_name].id,
-                                tenant_id=tenant.id,
+                                tenant_id=tenant_info['id'],
                                 is_granted=True
                             )
                             db.session.add(role_permission)
@@ -1076,30 +1184,31 @@ Best regards,
         
         with self.app.app_context():
             audit_count = 0
-            for tenant in self.tenants:
-                tenant_users = [u for users in self.users.values() for u in users if u.tenant_id == tenant.id]
+            for tenant_info in self.tenants:
+                tenant_users = [u for users in self.users.values() for u in users if u.tenant_id == tenant_info['id']]
                 
                 # Create 50-100 audit logs per tenant
                 for _ in range(random.randint(50, 101)):
-                    user = random.choice(tenant_users)
-                    
-                    audit_log = AuditLog(
-                        tenant_id=tenant.id,
-                        user_id=user.id,
-                        action=random.choice(actions),
-                        resource_type=random.choice(resource_types),
-                        resource_id=uuid.uuid4(),
-                        old_values={'previous_value': fake.word()},
-                        new_values={'new_value': fake.word()},
-                        ip_address=fake.ipv4(),
-                        user_agent=fake.user_agent(),
-                        session_id=uuid.uuid4(),
-                        severity=random.choice(['INFO', 'WARNING', 'ERROR']),
-                        description=fake.sentence(),
-                        created_at=datetime.utcnow() - timedelta(days=random.randint(0, 30))
-                    )
-                    db.session.add(audit_log)
-                    audit_count += 1
+                    if tenant_users:  # Make sure we have users
+                        user = random.choice(tenant_users)
+                        
+                        audit_log = AuditLog(
+                            tenant_id=tenant_info['id'],
+                            user_id=user.id,
+                            action=random.choice(actions),
+                            resource_type=random.choice(resource_types),
+                            resource_id=uuid.uuid4(),
+                            old_values={'previous_value': fake.word()},
+                            new_values={'new_value': fake.word()},
+                            ip_address=fake.ipv4(),
+                            user_agent=fake.user_agent(),
+                            session_id=uuid.uuid4(),
+                            severity=random.choice(['INFO', 'WARNING', 'ERROR']),
+                            description=fake.sentence(),
+                            created_at=datetime.utcnow() - timedelta(days=random.randint(0, 30))
+                        )
+                        db.session.add(audit_log)
+                        audit_count += 1
             
             db.session.commit()
             print(f"✅ Created {audit_count} audit logs")

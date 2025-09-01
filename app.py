@@ -30,9 +30,11 @@ from routes.user import user_bp
 from routes.transaction import transaction_management_bp
 from routes.tenant_management import tenant_management_bp
 from routes.wallet_management import wallet_management_bp
+from routes.audit_logging import audit_logging_bp
+from routes.commission_pricing import commission_pricing_bp
 
 from routes.payment_gateway_management import payment_gateway_management_bp
-
+from routes.permissions_management import permissions_management_bp
 
 
 
@@ -120,7 +122,10 @@ def create_app(config_name='development'):
 
     app.register_blueprint(wallet_management_bp)
     app.register_blueprint(payment_gateway_management_bp)
-    
+
+    app.register_blueprint(permissions_management_bp)
+    app.register_blueprint(commission_pricing_bp)
+
 
 
 
@@ -129,6 +134,7 @@ def create_app(config_name='development'):
     app.register_blueprint(user_management_bp)
     app.register_blueprint(bank_management_bp)
     app.register_blueprint(role_permissions_bp)
+    app.register_blueprint(audit_logging_bp)
 
     # =============================================================================
     # MAIN ROUTES
