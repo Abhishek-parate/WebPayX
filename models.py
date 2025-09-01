@@ -173,6 +173,10 @@ class ServiceType(PyEnum):
     AEPS = "AEPS"
     PAYMENT_GATEWAY = "PAYMENT_GATEWAY"
     WALLET_TOPUP = "WALLET_TOPUP"
+    SMS_SERVICE = "SMS_SERVICE"  # Add this line
+    OTP_SERVICE = "OTP_SERVICE"  # Add this line too for OTP-specific APIs
+    SMS_API = "SMS_API"  # Add this for SMS services
+
 
 class TransactionMode(PyEnum):
     """Transaction mode types"""
@@ -258,6 +262,23 @@ class BankAccountStatus(PyEnum):
     SUSPENDED = "SUSPENDED"
     CLOSED = "CLOSED"
     UNDER_VERIFICATION = "UNDER_VERIFICATION"
+
+# Add these new enums to your existing enums section in models.py
+class OTPType(PyEnum):
+    """OTP types"""
+    LOGIN = "LOGIN"
+    REGISTRATION = "REGISTRATION"
+    PASSWORD_RESET = "PASSWORD_RESET"
+    PHONE_VERIFICATION = "PHONE_VERIFICATION"
+    TRANSACTION = "TRANSACTION"
+
+class OTPStatus(PyEnum):
+    """OTP status"""
+    PENDING = "PENDING"
+    VERIFIED = "VERIFIED"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+
 
 # =============================================================================
 # BASE MODEL CLASS WITH COMMON FIELDS - UPDATED TO USE db.Model
@@ -1369,6 +1390,49 @@ if __name__ == "__main__":
 # EXPORT ALL MODELS AND UTILITIES - INCLUDE db
 # =============================================================================
 
+
+
+#----------------------------------------------------------------------------
+# SMS OTP
+# ----------------------------------------------------------------------------
+# Add this new model after your existing models
+# Add this model after your existing models in models.py
+class OTPVerification(BaseModel):
+    """OTP verification management"""
+    __tablename__ = 'otp_verifications'
+    
+    user_id = Column(GUID(), db.ForeignKey('users.id'), index=True)
+    phone_number = Column(String(20), nullable=False, index=True)
+    otp_code = Column(String(10), nullable=False)
+    otp_type = Column(db.Enum(OTPType), nullable=False, index=True)
+    status = Column(db.Enum(OTPStatus), default=OTPStatus.PENDING, index=True)
+    attempts = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=3)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    verified_at = Column(DateTime)
+    ip_address = Column(IPAddressType)
+    user_agent = Column(Text)
+    session_id = Column(String(255))
+    meta_data = Column(JSONType, default={})
+    
+    @property
+    def is_expired(self):
+        """Check if OTP is expired"""
+        return datetime.utcnow() > self.expires_at
+    
+    @property
+    def is_max_attempts_reached(self):
+        """Check if max attempts reached"""
+        return self.attempts >= self.max_attempts
+    
+    def increment_attempts(self):
+        """Increment verification attempts"""
+        self.attempts += 1
+        if self.attempts >= self.max_attempts:
+            self.status = OTPStatus.FAILED
+
+
+
 __all__ = [
     # CRITICAL: Export db instance
     'db',
@@ -1383,6 +1447,10 @@ __all__ = [
     
     # Core Models
     'Tenant', 'User', 'UserSession',
+
+    # SMS OTP Model
+    'OTPType', 'OTPStatus', 'OTPVerification',
+
     
     # Permission Models
     'Permission', 'RolePermission', 'UserPermission',

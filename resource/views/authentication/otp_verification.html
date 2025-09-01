@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% block head %}
+{% include 'components/head.html' %}
+{% endblock %}
+
+<body class="dark:bg-neutral-800 bg-neutral-100 dark:text-white">
+
+    <section class="bg-white dark:bg-dark-2 flex flex-wrap min-h-[100vh]">
+        <div class="lg:w-1/2 lg:block hidden">
+            <div class="flex items-center flex-col h-full justify-center">
+                <img src="{{ url_for('static', filename='assets/images/auth/otp-verification.png') }}" alt="OTP Verification">
+            </div>
+        </div>
+        <div class="lg:w-1/2 py-8 px-6 flex flex-col justify-center">
+            <div class="lg:max-w-[464px] mx-auto w-full">
+                <div>
+                    <a href="{{ url_for('dashboard.index') }}" class="mb-2.5 max-w-[290px]">
+                        <img src="{{ url_for('static', filename='assets/images/logo.png') }}" alt="Logo">
+                    </a>
+                    <h4 class="mb-3">OTP Verification</h4>
+                    <p class="mb-8 text-secondary-light text-lg">
+                        Please enter the verification code sent to 
+                        <span class="font-semibold text-primary-600">{{ phone_masked }}</span>
+                    </p>
+                </div>
+
+                <!-- Display Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-4 p-4 rounded-xl border-l-4 
+                                        {% if category == 'error' %}bg-red-50 border-red-500 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-300{% elif category == 'success' %}bg-green-50 border-green-500 text-green-700 dark:bg-green-900 dark:border-green-600 dark:text-green-300{% else %}bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900 dark:border-blue-600 dark:text-blue-300{% endif %}">
+                                <div class="flex items-center">
+                                    <iconify-icon icon="{% if category == 'error' %}material-symbols:error{% elif category == 'success' %}material-symbols:check-circle{% else %}material-symbols:info{% endif %}" class="text-lg mr-2"></iconify-icon>
+                                    {{ message }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- OTP Form -->
+                <form method="POST" id="otpForm">
+                    {% if step == 'login_otp' %}
+                        <input type="hidden" name="step" value="otp">
+                    {% elif step == 'password_reset_otp' %}
+                        <input type="hidden" name="step" value="verify_otp">
+                    {% endif %}
+
+                    <!-- OTP Input Fields -->
+                    <div class="mb-6">
+                        <label class="form-label mb-2 text-sm font-medium">Enter OTP Code</label>
+                        <div class="flex gap-3 justify-center">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="0">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="1">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="2">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="3">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="4">
+                            <input type="text" class="otp-input form-control w-12 h-12 text-center text-lg font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-dark-2 rounded-lg focus:border-primary-500" maxlength="1" data-index="5">
+                        </div>
+                        <input type="hidden" name="otp_code" id="otp_code">
+                    </div>
+
+                    <!-- Timer Display -->
+                    <div class="text-center mb-6">
+                        <div id="otpTimer" class="text-sm text-gray-600 dark:text-gray-400">
+                            <iconify-icon icon="material-symbols:timer" class="mr-1"></iconify-icon>
+                            OTP expires in: <span id="countdown" class="font-semibold text-primary-600">05:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            id="verifyBtn"
+                            class="btn btn-primary justify-center text-sm btn-sm px-3 py-4 w-full rounded-xl flex items-center">
+                        <span class="loading-spinner hidden mr-2">
+                            <iconify-icon icon="eos-icons:loading" class="animate-spin"></iconify-icon>
+                        </span>
+                        <span class="btn-text">
+                            {% if step == 'login_otp' %}
+                                Complete Login
+                            {% else %}
+                                Verify OTP
+                            {% endif %}
+                        </span>
+                    </button>
+
+                    <!-- Resend OTP -->
+                    <div class="text-center mt-6">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Didn't receive the code?</p>
+                        <button type="button" 
+                                id="resendBtn"
+                                class="btn btn-outline-primary btn-sm px-4 py-2"
+                                onclick="resendOTP()"
+                                disabled>
+                            <iconify-icon icon="material-symbols:refresh" class="mr-1"></iconify-icon>
+                            <span id="resendText">Resend OTP</span>
+                        </button>
+                    </div>
+
+                    <!-- Back to Login -->
+                    <div class="text-center mt-6">
+                        <a href="{{ url_for('authentication.login_page') }}" 
+                           class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 flex items-center justify-center">
+                            <iconify-icon icon="material-symbols:arrow-back" class="mr-1"></iconify-icon>
+                            Back to Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    {% block script %}
+    {% include 'components/script.html' %}
+    {% endblock %}
+
+    {% block custom_script %}
+    <script>
+        // ================== OTP Input Handling ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const otpCodeInput = document.getElementById('otp_code');
+            
+            // Focus on first input
+            otpInputs[0].focus();
+            
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    
+                    // Only allow numbers
+                    if (!/^\d*$/.test(value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Move to next input
+                    if (value && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                    
+                    // Update hidden input
+                    updateOTPCode();
+                    
+                    // Auto-submit if all fields filled
+                    if (getAllOTPDigits().length === 6) {
+                        setTimeout(() => {
+                            document.getElementById('otpForm').submit();
+                        }, 100);
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    // Handle backspace
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                        otpInputs[index - 1].value = '';
+                        updateOTPCode();
+                    }
+                    
+                    // Handle paste
+                    if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        navigator.clipboard.readText().then(text => {
+                            const digits = text.replace(/\D/g, '').slice(0, 6);
+                            fillOTPInputs(digits);
+                        });
+                    }
+                });
+            });
+            
+            function updateOTPCode() {
+                const otpValue = getAllOTPDigits();
+                otpCodeInput.value = otpValue;
+            }
+            
+            function getAllOTPDigits() {
+                return Array.from(otpInputs).map(input => input.value).join('');
+            }
+            
+            function fillOTPInputs(digits) {
+                otpInputs.forEach((input, index) => {
+                    input.value = digits[index] || '';
+                });
+                updateOTPCode();
+                
+                // Focus on next empty input or last input
+                const emptyIndex = digits.length < 6 ? digits.length : 5;
+                otpInputs[emptyIndex].focus();
+            }
+        });
+
+        // ================== Countdown Timer ==========
+        let countdownTime = {% if step == 'login_otp' %}300{% else %}600{% endif %}; // 5 minutes for login, 10 for password reset
+        let timerInterval;
+        
+        function startCountdown() {
+            timerInterval = setInterval(function() {
+                const minutes = Math.floor(countdownTime / 60);
+                const seconds = countdownTime % 60;
+                
+                document.getElementById('countdown').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (countdownTime <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('countdown').textContent = 'Expired';
+                    document.getElementById('countdown').classList.add('text-red-500');
+                    document.getElementById('resendBtn').disabled = false;
+                    
+                    // Show expiry message
+                    showAlert('OTP has expired. Please request a new one.', 'error');
+                }
+                
+                // Enable resend button when 30 seconds left
+                if (countdownTime === 30) {
+                    document.getElementById('resendBtn').disabled = false;
+                }
+                
+                countdownTime--;
+            }, 1000);
+        }
+        
+        // Start countdown on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            startCountdown();
+        });
+
+        // ================== Resend OTP Function ==========
+        function resendOTP() {
+            const resendBtn = document.getElementById('resendBtn');
+            const resendText = document.getElementById('resendText');
+            
+            // Show loading state
+            resendBtn.disabled = true;
+            resendText.textContent = 'Sending...';
+            
+            {% if step == 'login_otp' %}
+                const url = '{{ url_for("authentication.resend_login_otp") }}';
+            {% else %}
+                const url = '{{ url_for("authentication.resend_password_reset_otp") }}';
+            {% endif %}
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showAlert('OTP sent successfully!', 'success');
+                    
+                    // Reset timer
+                    clearInterval(timerInterval);
+                    countdownTime = {% if step == 'login_otp' %}300{% else %}600{% endif %};
+                    startCountdown();
+                    
+                    // Clear OTP inputs
+                    document.querySelectorAll('.otp-input').forEach(input => {
+                        input.value = '';
+                    });
+                    document.getElementById('otp_code').value = '';
+                    document.querySelectorAll('.otp-input')[0].focus();
+                } else {
+                    showAlert('Failed to resend OTP. Please try again.', 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Error resending OTP. Please try again.', 'error');
+            })
+            .finally(() => {
+                resendText.textContent = 'Resend OTP';
+                // Keep disabled for 60 seconds after resend
+                setTimeout(() => {
+                    resendBtn.disabled = false;
+                }, 60000);
+            });
+        }
+
+        // ================== Form Submission ==========
+        document.getElementById('otpForm').addEventListener('submit', function(e) {
+            const verifyBtn = document.getElementById('verifyBtn');
+            const spinner = verifyBtn.querySelector('.loading-spinner');
+            const btnText = verifyBtn.querySelector('.btn-text');
+            
+            // Check if OTP is complete
+            const otpValue = document.getElementById('otp_code').value;
+            if (otpValue.length !== 6) {
+                e.preventDefault();
+                showAlert('Please enter complete 6-digit OTP', 'error');
+                return;
+            }
+            
+            // Show loading state
+            spinner.classList.remove('hidden');
+            btnText.textContent = 'Verifying...';
+            verifyBtn.disabled = true;
+        });
+
+        // ================== Alert Function ==========
+        function showAlert(message, type = 'info') {
+            const alertHtml = `
+                <div class="alert alert-${type} mb-4 p-4 rounded-xl border-l-4 
+                            ${type === 'error' ? 'bg-red-50 border-red-500 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-300' : 
+                              type === 'success' ? 'bg-green-50 border-green-500 text-green-700 dark:bg-green-900 dark:border-green-600 dark:text-green-300' : 
+                              'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900 dark:border-blue-600 dark:text-blue-300'}">
+                    <div class="flex items-center">
+                        <iconify-icon icon="${type === 'error' ? 'material-symbols:error' : 
+                                            type === 'success' ? 'material-symbols:check-circle' : 
+                                            'material-symbols:info'}" class="text-lg mr-2"></iconify-icon>
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            const form = document.getElementById('otpForm');
+            form.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                const alert = form.querySelector('.alert');
+                if (alert) {
+                    alert.style.transition = 'opacity 0.5s ease-in-out';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 5000);
+        }
+    </script>
+    {% endblock %}
+
+</body>
+</html>

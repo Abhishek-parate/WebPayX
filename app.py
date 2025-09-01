@@ -32,9 +32,11 @@ from routes.tenant_management import tenant_management_bp
 from routes.wallet_management import wallet_management_bp
 from routes.audit_logging import audit_logging_bp
 from routes.commission_pricing import commission_pricing_bp
+from services.otp_service import OTPService
 
 from routes.payment_gateway_management import payment_gateway_management_bp
 from routes.permissions_management import permissions_management_bp
+from routes.api_management import api_management_bp
 
 
 
@@ -46,6 +48,8 @@ from routes.role_permissions import role_permissions_bp
 # Database and models
 from models import db, User, UserSession, Tenant, create_tables, create_default_permissions
 
+
+otp_service = OTPService()
 
 # =============================================================================
 # APP CONFIGURATION
@@ -119,6 +123,7 @@ def create_app(config_name='development'):
     app.register_blueprint(table_bp)
     app.register_blueprint(transaction_management_bp)
     app.register_blueprint(tenant_management_bp)
+    app.register_blueprint(api_management_bp)
 
     app.register_blueprint(wallet_management_bp)
     app.register_blueprint(payment_gateway_management_bp)

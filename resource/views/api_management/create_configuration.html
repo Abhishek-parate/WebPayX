@@ -1,0 +1,278 @@
+<!-- templates/api_management/create_configuration.html -->
+{% extends 'layout/layout.html' %}
+{% block title %}Create API Configuration{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Create API Configuration</h1>
+        <p class="mt-2 text-gray-600">Configure external service API endpoints</p>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow rounded-lg">
+            <form method="POST" id="createConfigForm" class="p-6 space-y-6">
+                <!-- Basic Information -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="service_type" class="block text-sm font-medium text-gray-700 required">Service Type</label>
+                            <select id="service_type" name="service_type" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Service Type</option>
+                                {% for service in service_types %}
+                                <option value="{{ service.value }}" 
+                                        {% if not clear_form and request.form.service_type == service.value %}selected{% endif %}>
+                                    {{ service.value.replace('_', ' ').title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="provider" class="block text-sm font-medium text-gray-700 required">Provider Name</label>
+                            <input type="text" id="provider" name="provider" required
+                                   value="{{ request.form.provider if not clear_form else '' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="e.g., Airtel, BSNL, PayU">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Configuration -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">API Configuration</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="api_url" class="block text-sm font-medium text-gray-700 required">API URL</label>
+                            <input type="url" id="api_url" name="api_url" required
+                                   value="{{ request.form.api_url if not clear_form else '' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="https://api.provider.com/endpoint">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="api_key" class="block text-sm font-medium text-gray-700">API Key</label>
+                                <input type="text" id="api_key" name="api_key"
+                                       value="{{ request.form.api_key if not clear_form else '' }}"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label for="api_secret" class="block text-sm font-medium text-gray-700">API Secret</label>
+                                <input type="password" id="api_secret" name="api_secret"
+                                       value="{{ request.form.api_secret if not clear_form else '' }}"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Advanced Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                            <input type="number" id="priority" name="priority" min="1" max="10"
+                                   value="{{ request.form.priority if not clear_form else '1' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="rate_limit" class="block text-sm font-medium text-gray-700">Rate Limit/min</label>
+                            <input type="number" id="rate_limit" name="rate_limit" min="1"
+                                   value="{{ request.form.rate_limit if not clear_form else '1000' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="timeout_seconds" class="block text-sm font-medium text-gray-700">Timeout (s)</label>
+                            <input type="number" id="timeout_seconds" name="timeout_seconds" min="1" max="300"
+                                   value="{{ request.form.timeout_seconds if not clear_form else '30' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="retry_count" class="block text-sm font-medium text-gray-700">Retry Count</label>
+                            <input type="number" id="retry_count" name="retry_count" min="0" max="10"
+                                   value="{{ request.form.retry_count if not clear_form else '3' }}"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Configuration -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">JSON Configuration</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label for="headers_json" class="block text-sm font-medium text-gray-700">Headers (JSON)</label>
+                            <textarea id="headers_json" name="headers_json" rows="4"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                      placeholder='{"Content-Type": "application/json"}'>{{ request.form.headers_json if not clear_form else '{}' }}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="parameters_json" class="block text-sm font-medium text-gray-700">Parameters (JSON)</label>
+                            <textarea id="parameters_json" name="parameters_json" rows="4"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                      placeholder='{"format": "json"}'>{{ request.form.parameters_json if not clear_form else '{}' }}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="success_codes_json" class="block text-sm font-medium text-gray-700">Success Codes (JSON)</label>
+                            <textarea id="success_codes_json" name="success_codes_json" rows="4"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                      placeholder="[200, 201, 202]">{{ request.form.success_codes_json if not clear_form else '[200, 201]' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-6">
+                        <div class="flex items-center">
+                            <input id="is_active" name="is_active" type="checkbox" 
+                                   {% if not request.form or request.form.is_active or not clear_form %}checked{% endif %}
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                                <i class="fas fa-check-circle text-green-500 mr-1"></i>Active
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input id="stay_on_page" name="stay_on_page" type="checkbox"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="stay_on_page" class="ml-2 block text-sm text-gray-900">
+                                <i class="fas fa-plus text-blue-500 mr-1"></i>Stay on page to create another
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                    <div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-save mr-2"></i>Create Configuration
+                        </button>
+                        <a href="{{ url_for('api_management.api_configurations') }}" 
+                           class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Configurations
+                        </a>
+                    </div>
+                    
+                    {% if clear_form %}
+                    <button type="button" onclick="clearForm()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-plus-circle mr-2"></i>Create Another
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Clear form function
+function clearForm() {
+    document.getElementById('createConfigForm').reset();
+    document.getElementById('is_active').checked = true;
+    document.getElementById('headers_json').value = '{}';
+    document.getElementById('parameters_json').value = '{}';
+    document.getElementById('success_codes_json').value = '[200, 201]';
+    document.getElementById('priority').value = '1';
+    document.getElementById('rate_limit').value = '1000';
+    document.getElementById('timeout_seconds').value = '30';
+    document.getElementById('retry_count').value = '3';
+}
+
+// Show success message with SweetAlert if configuration was created
+{% if success_message %}
+Swal.fire({
+    title: "Success!",
+    text: "{{ success_message }}",
+    icon: "success",
+    showCancelButton: true,
+    confirmButtonColor: "#10b981",
+    cancelButtonColor: "#3b82f6",
+    confirmButtonText: '<i class="fas fa-plus mr-1"></i>Create Another',
+    cancelButtonText: '<i class="fas fa-list mr-1"></i>View All Configurations'
+}).then((result) => {
+    if (result.isConfirmed) {
+        clearForm();
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+        window.location.href = "{{ url_for('api_management.api_configurations') }}";
+    }
+});
+{% endif %}
+
+// JSON validation
+function validateJSON(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    try {
+        JSON.parse(textarea.value);
+        textarea.classList.remove('border-red-300');
+        textarea.classList.add('border-green-300');
+    } catch (e) {
+        textarea.classList.remove('border-green-300');
+        textarea.classList.add('border-red-300');
+    }
+}
+
+// Add JSON validation listeners
+['headers_json', 'parameters_json', 'success_codes_json'].forEach(id => {
+    document.getElementById(id).addEventListener('blur', () => validateJSON(id));
+});
+
+// Form submission with validation
+document.getElementById('createConfigForm').addEventListener('submit', function(e) {
+    // Validate JSON fields
+    const jsonFields = ['headers_json', 'parameters_json', 'success_codes_json'];
+    let hasErrors = false;
+    
+    jsonFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        try {
+            JSON.parse(field.value);
+        } catch (error) {
+            hasErrors = true;
+            field.classList.add('border-red-300');
+            Toast.fire({
+                icon: 'error',
+                title: `Invalid JSON in ${fieldId.replace('_', ' ').replace('json', '').trim()}`
+            });
+        }
+    });
+    
+    if (hasErrors) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Real-time form validation feedback
+document.querySelectorAll('input[required], select[required]').forEach(field => {
+    field.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            this.classList.add('border-red-300');
+        } else {
+            this.classList.remove('border-red-300');
+            this.classList.add('border-green-300');
+        }
+    });
+    
+    field.addEventListener('input', function() {
+        if (this.classList.contains('border-red-300') && this.value.trim() !== '') {
+            this.classList.remove('border-red-300');
+            this.classList.add('border-green-300');
+        }
+    });
+});
+</script>
+{% endblock %}
