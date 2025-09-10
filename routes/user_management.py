@@ -13,15 +13,19 @@ import uuid
 import secrets
 import string
 
+
 user_management_bp = Blueprint('user_management', __name__, url_prefix='/user-management')
+
 
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def get_current_user():
     """Get current logged in user"""
     return current_user
+
 
 def get_allowed_roles_for_creation(current_role):
     """Get roles that current user can create based on hierarchy"""
@@ -35,10 +39,12 @@ def get_allowed_roles_for_creation(current_role):
     }
     return role_hierarchy.get(current_role, [])
 
+
 def can_create_role(creator_role, target_role):
     """Check if creator can create user with target role"""
     allowed_roles = get_allowed_roles_for_creation(creator_role)
     return target_role in allowed_roles
+
 
 def generate_user_code(role):
     """Generate unique user code based on role"""
@@ -54,6 +60,7 @@ def generate_user_code(role):
     count = User.query.filter(User.user_code.like(f'{prefix}%')).count()
     return f"{prefix}{count + 1:06d}"
 
+
 def get_user_query_by_hierarchy():
     """Get users query filtered by current user's hierarchy"""
     if current_user.role == UserRoleType.SUPER_ADMIN:
@@ -67,6 +74,7 @@ def get_user_query_by_hierarchy():
                 User.parent_id == current_user.id
             )
         )
+
 
 def get_user_downlines_only(user_id):
     """Get only downline users (excluding uplines) of the current user"""
@@ -138,6 +146,7 @@ def get_user_downlines_only(user_id):
     # Build hierarchy tree starting from current user as root
     return build_hierarchy_tree(all_users, user.id)
 
+
 def build_hierarchy_tree(users, focus_user_id):
     """Build hierarchical tree structure"""
     
@@ -174,9 +183,11 @@ def build_hierarchy_tree(users, focus_user_id):
     root_users.sort(key=lambda x: (x.level, x.full_name))
     return [build_node(root) for root in root_users]
 
+
 # =============================================================================
 # USER MANAGEMENT PAGES
 # =============================================================================
+
 
 @user_management_bp.route('/')
 @login_required
@@ -214,6 +225,7 @@ def index():
         monthly_registrations=monthly_registrations,
         allowed_roles=get_allowed_roles_for_creation(current_user.role)
     )
+
 
 @user_management_bp.route('/create-user', methods=['GET', 'POST'])
 @login_required
@@ -319,6 +331,7 @@ def create_user():
         allowed_roles=allowed_roles
     )
 
+
 @user_management_bp.route('/users')
 @login_required
 def user_list():
@@ -382,6 +395,7 @@ def user_list():
         all_kyc_status=KYCStatus
     )
 
+
 @user_management_bp.route('/user/<user_id>')
 @login_required
 def user_profile(user_id):
@@ -417,72 +431,88 @@ def user_profile(user_id):
         recent_topups=recent_topups
     )
 
-@user_management_bp.route('/user/<user_id>/edit', methods=['GET', 'POST'])
+
+@user_management_bp.route('/users/<user_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
-    """Edit user information"""
+    """Edit user - FIXED VERSION"""
+    
+    # 1. FETCH THE USER FIRST (This was missing!)
     user = User.query.get_or_404(user_id)
     
-    # Check access permissions
+    # 2. Check access permissions
     if not current_user.can_access_user(user):
         flash('Access denied', 'error')
         return redirect(url_for('user_management.user_list'))
     
+    # 3. Handle POST request (form submission)
     if request.method == 'POST':
         try:
-            # Update user information
-            user.full_name = request.form.get('full_name', user.full_name)
-            user.business_name = request.form.get('business_name', user.business_name)
-            user.email = request.form.get('email', user.email)
-            user.phone = request.form.get('phone', user.phone)
-            user.is_active = request.form.get('is_active') == 'on'
+            # Get form data
+            full_name = request.form.get('full_name', '').strip()
+            business_name = request.form.get('business_name', '').strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()  # Make sure this is captured
+            password = request.form.get('password', '').strip()
+            is_active = request.form.get('is_active') == 'on'
             
-            # Handle role change
-            new_role_str = request.form.get('role')
-            if new_role_str:
+            # Wallet limits
+            daily_limit = request.form.get('daily_limit')
+            monthly_limit = request.form.get('monthly_limit')
+            
+            # Validation
+            if not all([full_name, email, phone]):
+                flash('Full name, email, and phone are required', 'error')
+                return render_template('user_management/edit_user.html', 
+                                     user=user,
+                                     title='Edit User',
+                                     subtitle=f'Modify {user.full_name}\'s information')
+            
+            # Update user fields (skip role as it's readonly)
+            user.full_name = full_name
+            user.business_name = business_name if business_name else None
+            user.email = email
+            user.phone = phone  # Make sure this line exists
+            user.is_active = is_active
+            user.updated_at = datetime.utcnow()  # Add this line
+            
+            # Update password if provided
+            if password:
+                user.set_password(password)
+            
+            # Update wallet limits if wallet exists
+            if user.wallet and daily_limit and monthly_limit:
                 try:
-                    new_role = UserRoleType(new_role_str)
-                    if can_create_role(current_user.role, new_role):
-                        user.role = new_role
-                    else:
-                        flash('Cannot change user to this role', 'error')
-                        return redirect(url_for('user_management.edit_user', user_id=user_id))
-                except ValueError:
-                    flash('Invalid role specified', 'error')
-                    return redirect(url_for('user_management.edit_user', user_id=user_id))
-            
-            # Handle password change
-            new_password = request.form.get('password')
-            if new_password:
-                user.set_password(new_password)
-            
-            # Update wallet limits
-            if user.wallet:
-                daily_limit = request.form.get('daily_limit', type=float)
-                monthly_limit = request.form.get('monthly_limit', type=float)
-                
-                if daily_limit:
                     user.wallet.daily_limit = Decimal(str(daily_limit))
-                if monthly_limit:
                     user.wallet.monthly_limit = Decimal(str(monthly_limit))
+                except (ValueError, TypeError):
+                    flash('Invalid wallet limit values', 'error')
+                    return render_template('user_management/edit_user.html', 
+                                         user=user,
+                                         title='Edit User',
+                                         subtitle=f'Modify {user.full_name}\'s information')
             
-            user.updated_at = datetime.utcnow()
+            # DON'T update role - it stays the same (role is sent via hidden input but ignored)
+            
             db.session.commit()
-            
             flash('User updated successfully', 'success')
-            return redirect(url_for('user_management.user_profile', user_id=user.id))
+            return redirect(url_for('user_management.user_profile', user_id=user_id))
             
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating user: {str(e)}', 'error')
+            # Return to form with user object
+            return render_template('user_management/edit_user.html', 
+                                 user=user,
+                                 title='Edit User',
+                                 subtitle=f'Modify {user.full_name}\'s information')
     
-    allowed_roles = get_allowed_roles_for_creation(current_user.role)
-    return render_template('user_management/edit_user.html',
-        title=f'Edit User - {user.full_name}',
-        subtitle=f'Code: {user.user_code}',
-        user=user,
-        allowed_roles=allowed_roles
-    )
+    # 4. Handle GET request (show form) - IMPORTANT: Pass user to template
+    return render_template('user_management/edit_user.html', 
+                         user=user,
+                         title='Edit User',
+                         subtitle=f'Modify {user.full_name}\'s information')
+
 
 @user_management_bp.route('/user/<user_id>/toggle-status', methods=['POST'])
 @login_required
@@ -521,9 +551,11 @@ def toggle_user_status(user_id):
     
     return redirect(url_for('user_management.user_profile', user_id=user.id))
 
+
 # =============================================================================
 # HIERARCHY AND TREE VIEW - UPDATED FOR DOWNLINES ONLY
 # =============================================================================
+
 
 @user_management_bp.route('/hierarchy')
 @login_required
@@ -581,9 +613,11 @@ def user_hierarchy():
                          show_uplines=False  # Flag to indicate uplines are hidden
                          )
 
+
 # =============================================================================
 # WALLET MANAGEMENT
 # =============================================================================
+
 
 @user_management_bp.route('/user/<user_id>/wallet/credit', methods=['GET', 'POST'])
 @login_required
@@ -641,6 +675,7 @@ def credit_user_wallet(user_id):
         subtitle=f'Current Balance: ₹{user.wallet.balance if user.wallet else 0}',
         user=user
     )
+
 
 @user_management_bp.route('/user/<user_id>/wallet/debit', methods=['GET', 'POST'])
 @login_required
@@ -703,9 +738,11 @@ def debit_user_wallet(user_id):
         user=user
     )
 
+
 # =============================================================================
 # BULK OPERATIONS
 # =============================================================================
+
 
 @user_management_bp.route('/bulk-operations', methods=['GET', 'POST'])
 @login_required

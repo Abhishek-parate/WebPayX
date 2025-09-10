@@ -22,9 +22,9 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.role not in [UserRoleType.SUPER_ADMIN, UserRoleType.ADMIN]:
-            flash('Access denied. Admin privileges required.', 'error')
-            # FIX: Changed from 'main.dashboard' to correct endpoint
-            return redirect(url_for('commission_pricing.dashboard'))
+            flash('You do not have permission to access this page.', 'error')
+            # FIX: Redirect to main dashboard instead of commission dashboard
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -33,13 +33,27 @@ def super_admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.role != UserRoleType.SUPER_ADMIN:
-            flash('Access denied. Super Admin privileges required.', 'error')
-            # FIX: Changed from 'main.dashboard' to correct endpoint
-            return redirect(url_for('commission_pricing.dashboard'))
+            flash('You do not have permission to access this page.', 'error')
+            # FIX: Redirect to main dashboard instead of commission dashboard
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+def role_required(allowed_roles):
+    """
+    More flexible role-based access control decorator
+    Usage: @role_required(['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'])
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if current_user.role.name not in allowed_roles:
+                flash('You do not have permission to access this page.', 'error')
+                return redirect(url_for('dashboard.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 # ============================================================================
 # DASHBOARD AND OVERVIEW - FIXED EXCEPTION HANDLING
 # ============================================================================
