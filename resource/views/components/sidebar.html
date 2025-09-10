@@ -165,6 +165,77 @@
             </li>
             {% endif %}
 
+            <!-- Commission & Pricing - Only for ADMIN and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:payments" class="menu-icon"></iconify-icon>
+                    <span>Commission & Pricing</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('commission_pricing.dashboard') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.commission_plans') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Commission Plans
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.user_commissions') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> User Commissions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.service_pricing') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Service Pricing
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.commission_summary_report') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Commission Reports
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+            <!-- Payment Gateway Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:account-balance" class="menu-icon"></iconify-icon>
+                    <span>Payment Gateways</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.gateways_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Manage Gateways
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.add_gateway_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Gateway
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.webhooks_page') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Webhooks
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
             <!-- System Configuration - Only for SUPER_ADMIN -->
             {% if current_user.role.name == 'SUPER_ADMIN' %}
             <li class="dropdown">
@@ -188,7 +259,6 @@
                             <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> API Request Logs
                         </a>
                     </li>
-                    <!-- Only add other system config items if routes exist -->
                 </ul>
             </li>
             {% endif %}
