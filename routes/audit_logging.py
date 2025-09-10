@@ -11,47 +11,39 @@ import csv
 import io
 from sqlalchemy import and_, or_, desc, func
 
+
 audit_logging_bp = Blueprint('audit_logging', __name__, url_prefix='/audit-logging')
 
-# Role-based access decorator
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if current_user.role not in [UserRoleType.SUPER_ADMIN, UserRoleType.ADMIN]:
-            flash('Access denied. Admin privileges required.', 'error')
-            return redirect(url_for('main.dashboard'))
-        return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__
-    return decorated_function
 
-def super_admin_required(f):
+# UPDATED: Only SUPER_ADMIN can access audit logs
+def super_admin_only_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.role != UserRoleType.SUPER_ADMIN:
             flash('Access denied. Super Admin privileges required.', 'error')
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+
 # ============================================================================
-# AUDIT LOG MANAGEMENT ROUTES
+# AUDIT LOG MANAGEMENT ROUTES - SUPER ADMIN ONLY
 # ============================================================================
+
 
 @audit_logging_bp.route('/')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def audit_dashboard():
-    """Audit and Logging Dashboard"""
+    """Audit and Logging Dashboard - Super Admin Only"""
     # Get summary statistics
     today = datetime.utcnow().date()
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
     
-    # Base query for tenant filtering
+    # No tenant filtering for super admin - show all data
     base_query = AuditLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        base_query = base_query.filter_by(tenant_id=current_user.tenant_id)
     
     stats = {
         'total_logs': base_query.count(),
@@ -60,10 +52,8 @@ def audit_dashboard():
         'month_logs': base_query.filter(func.date(AuditLog.created_at) >= month_ago).count(),
     }
     
-    # Error log stats
+    # Error log stats - no tenant filtering for super admin
     error_base_query = ErrorLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        error_base_query = error_base_query.filter_by(tenant_id=current_user.tenant_id)
     
     error_stats = {
         'total_errors': error_base_query.count(),
@@ -89,11 +79,12 @@ def audit_dashboard():
                          recent_errors=recent_errors,
                          action_stats=action_stats)
 
+
 @audit_logging_bp.route('/audit-logs')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def audit_logs():
-    """View audit logs with filtering"""
+    """View audit logs with filtering - Super Admin Only"""
     # Get filter parameters
     search = request.args.get('search', '')
     action = request.args.get('action', '')
@@ -105,10 +96,8 @@ def audit_logs():
     page = request.args.get('page', 1, type=int)
     per_page = 25
     
-    # Base query
+    # Base query - no tenant filtering for super admin
     query = AuditLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
     
     # Apply filters
     if search:
@@ -151,16 +140,13 @@ def audit_logs():
         page=page, per_page=per_page, error_out=False
     )
     
-    # Get filter options
+    # Get filter options - no tenant filtering for super admin
     actions = db.session.query(AuditLog.action).distinct().all()
     resource_types = db.session.query(AuditLog.resource_type).distinct().all()
     severities = ['INFO', 'WARNING', 'ERROR', 'CRITICAL']
     
-    # Get users for filter (limited to tenant)
-    users_query = User.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        users_query = users_query.filter_by(tenant_id=current_user.tenant_id)
-    users = users_query.order_by(User.full_name).all()
+    # Get all users for filter - super admin can see all users
+    users = User.query.order_by(User.full_name).all()
     
     return render_template('audit_logging/audit_logs.html',
                          audit_logs=audit_logs,
@@ -178,28 +164,26 @@ def audit_logs():
                              'date_to': date_to
                          })
 
+
 @audit_logging_bp.route('/audit-logs/<log_id>')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def audit_log_detail(log_id):
-    """View detailed audit log"""
-    query = AuditLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
-    
-    audit_log = query.filter_by(id=log_id).first_or_404()
-    
+    """View detailed audit log - Super Admin Only"""
+    audit_log = AuditLog.query.filter_by(id=log_id).first_or_404()
     return render_template('audit_logging/audit_log_detail.html', audit_log=audit_log)
 
+
 # ============================================================================
-# ERROR LOG MANAGEMENT ROUTES
+# ERROR LOG MANAGEMENT ROUTES - SUPER ADMIN ONLY
 # ============================================================================
+
 
 @audit_logging_bp.route('/error-logs')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def error_logs():
-    """View error logs with filtering"""
+    """View error logs with filtering - Super Admin Only"""
     # Get filter parameters
     search = request.args.get('search', '')
     severity = request.args.get('severity', '')
@@ -209,10 +193,8 @@ def error_logs():
     page = request.args.get('page', 1, type=int)
     per_page = 25
     
-    # Base query
+    # Base query - no tenant filtering for super admin
     query = ErrorLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
     
     # Apply filters
     if search:
@@ -262,30 +244,23 @@ def error_logs():
                              'date_to': date_to
                          })
 
+
 @audit_logging_bp.route('/error-logs/<log_id>')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def error_log_detail(log_id):
-    """View detailed error log"""
-    query = ErrorLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
-    
-    error_log = query.filter_by(id=log_id).first_or_404()
-    
+    """View detailed error log - Super Admin Only"""
+    error_log = ErrorLog.query.filter_by(id=log_id).first_or_404()
     return render_template('audit_logging/error_log_detail.html', error_log=error_log)
+
 
 @audit_logging_bp.route('/error-logs/<log_id>/resolve', methods=['POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def resolve_error(log_id):
-    """Mark error as resolved"""
+    """Mark error as resolved - Super Admin Only"""
     try:
-        query = ErrorLog.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        error_log = query.filter_by(id=log_id).first_or_404()
+        error_log = ErrorLog.query.filter_by(id=log_id).first_or_404()
         
         error_log.resolved = True
         error_log.resolved_by = current_user.id
@@ -300,17 +275,14 @@ def resolve_error(log_id):
     
     return redirect(url_for('audit_logging.error_logs'))
 
+
 @audit_logging_bp.route('/error-logs/<log_id>/unresolve', methods=['POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def unresolve_error(log_id):
-    """Mark error as unresolved"""
+    """Mark error as unresolved - Super Admin Only"""
     try:
-        query = ErrorLog.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        error_log = query.filter_by(id=log_id).first_or_404()
+        error_log = ErrorLog.query.filter_by(id=log_id).first_or_404()
         
         error_log.resolved = False
         error_log.resolved_by = None
@@ -325,15 +297,17 @@ def unresolve_error(log_id):
     
     return redirect(url_for('audit_logging.error_logs'))
 
+
 # ============================================================================
-# EXPORT AND REPORTING ROUTES
+# EXPORT AND REPORTING ROUTES - SUPER ADMIN ONLY
 # ============================================================================
+
 
 @audit_logging_bp.route('/export/audit-logs')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def export_audit_logs():
-    """Export audit logs to CSV"""
+    """Export audit logs to CSV - Super Admin Only"""
     # Get filter parameters (same as audit_logs route)
     search = request.args.get('search', '')
     action = request.args.get('action', '')
@@ -343,10 +317,8 @@ def export_audit_logs():
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     
-    # Build query (same logic as audit_logs route)
+    # Build query - no tenant filtering for super admin
     query = AuditLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
     
     # Apply same filters...
     if search:
@@ -419,11 +391,12 @@ def export_audit_logs():
         download_name=filename
     )
 
+
 @audit_logging_bp.route('/export/error-logs')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def export_error_logs():
-    """Export error logs to CSV"""
+    """Export error logs to CSV - Super Admin Only"""
     # Similar logic to export_audit_logs but for ErrorLog
     search = request.args.get('search', '')
     severity = request.args.get('severity', '')
@@ -431,9 +404,8 @@ def export_error_logs():
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     
+    # No tenant filtering for super admin
     query = ErrorLog.query
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        query = query.filter_by(tenant_id=current_user.tenant_id)
     
     # Apply filters
     if search:
@@ -497,48 +469,42 @@ def export_error_logs():
         download_name=filename
     )
 
+
 # ============================================================================
-# API ENDPOINTS
+# API ENDPOINTS - SUPER ADMIN ONLY
 # ============================================================================
+
 
 @audit_logging_bp.route('/api/stats')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def get_stats():
-    """Get audit and error statistics for charts"""
+    """Get audit and error statistics for charts - Super Admin Only"""
     days = request.args.get('days', 7, type=int)
     start_date = datetime.utcnow() - timedelta(days=days)
     
-    # Audit logs by day
+    # Audit logs by day - no tenant filtering for super admin
     audit_stats = db.session.query(
         func.date(AuditLog.created_at).label('date'),
         func.count(AuditLog.id).label('count')
-    ).filter(AuditLog.created_at >= start_date)
+    ).filter(AuditLog.created_at >= start_date).group_by(func.date(AuditLog.created_at)).all()
     
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        audit_stats = audit_stats.filter_by(tenant_id=current_user.tenant_id)
-    
-    audit_stats = audit_stats.group_by(func.date(AuditLog.created_at)).all()
-    
-    # Error logs by day
+    # Error logs by day - no tenant filtering for super admin
     error_stats = db.session.query(
         func.date(ErrorLog.created_at).label('date'),
         func.count(ErrorLog.id).label('count')
-    ).filter(ErrorLog.created_at >= start_date)
-    
-    if current_user.role != UserRoleType.SUPER_ADMIN:
-        error_stats = error_stats.filter_by(tenant_id=current_user.tenant_id)
-    
-    error_stats = error_stats.group_by(func.date(ErrorLog.created_at)).all()
+    ).filter(ErrorLog.created_at >= start_date).group_by(func.date(ErrorLog.created_at)).all()
     
     return jsonify({
         'audit_stats': [{'date': str(stat.date), 'count': stat.count} for stat in audit_stats],
         'error_stats': [{'date': str(stat.date), 'count': stat.count} for stat in error_stats]
     })
 
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+
 
 def log_audit_event(action, resource_type=None, resource_id=None, 
                    description=None, severity='INFO', old_values=None, 
@@ -581,6 +547,7 @@ def log_audit_event(action, resource_type=None, resource_id=None,
     except Exception as e:
         print(f"Failed to create audit log: {e}")
         db.session.rollback()
+
 
 def log_error_event(error_message, error_code=None, severity='ERROR', 
                    stack_trace=None, request_data=None, response_data=None,
