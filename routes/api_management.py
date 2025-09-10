@@ -15,39 +15,35 @@ import requests
 from sqlalchemy import and_, or_, desc, func
 from decimal import Decimal
 
+
 api_management_bp = Blueprint('api_management', __name__, url_prefix='/api-management')
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if current_user.role not in [UserRoleType.SUPER_ADMIN, UserRoleType.ADMIN]:
-            flash('Access denied. Admin privileges required.', 'error')
-            return redirect(url_for('api_management.dashboard'))
-        return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__
-    return decorated_function
 
-def super_admin_required(f):
+# UPDATED: Only SUPER_ADMIN can access API management
+def super_admin_only_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.role != UserRoleType.SUPER_ADMIN:
             flash('Access denied. Super Admin privileges required.', 'error')
-            return redirect(url_for('api_management.dashboard'))
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
 
 
+# ============================================================================
+# API MANAGEMENT ROUTES - SUPER ADMIN ONLY
+# ============================================================================
+
+
 @api_management_bp.route('/')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def dashboard():
-    """API Management Dashboard"""
+    """API Management Dashboard - Super Admin Only"""
     try:
-        # Get summary statistics
+        # No tenant filtering for super admin - show all data
         base_query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            base_query = base_query.filter_by(tenant_id=current_user.tenant_id)
         
         stats = {
             'total_configs': base_query.count(),
@@ -56,37 +52,24 @@ def dashboard():
             'service_types': base_query.distinct(APIConfiguration.service_type).count(),
         }
         
-        # Service type distribution
+        # Service type distribution - no tenant filtering
         service_stats = db.session.query(
             APIConfiguration.service_type, 
             func.count(APIConfiguration.id).label('count')
-        )
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            service_stats = service_stats.filter_by(tenant_id=current_user.tenant_id)
+        ).group_by(APIConfiguration.service_type).all()
         
-        service_stats = service_stats.group_by(APIConfiguration.service_type).all()
-        
-        # Provider distribution
+        # Provider distribution - no tenant filtering
         provider_stats = db.session.query(
             APIConfiguration.provider, 
             func.count(APIConfiguration.id).label('count')
-        )
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            provider_stats = provider_stats.filter_by(tenant_id=current_user.tenant_id)
-        
-        provider_stats = provider_stats.group_by(APIConfiguration.provider).limit(10).all()
+        ).group_by(APIConfiguration.provider).limit(10).all()
         
         # Recent configurations
         recent_configs = base_query.order_by(desc(APIConfiguration.created_at)).limit(5).all()
         
-        # Request logs count (last 24 hours)
+        # Request logs count (last 24 hours) - no tenant filtering
         yesterday = datetime.utcnow() - timedelta(hours=24)
-        logs_query = db.session.query(APIRequestLog)
-        
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            logs_query = logs_query.filter_by(tenant_id=current_user.tenant_id)
-        
-        recent_requests = logs_query.filter(
+        recent_requests = db.session.query(APIRequestLog).filter(
             APIRequestLog.created_at >= yesterday
         ).count()
         
@@ -109,22 +92,21 @@ def dashboard():
 
 @api_management_bp.route('/configurations')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def api_configurations():
-    """List all API configurations"""
+    """List all API configurations - Super Admin Only"""
     try:
         # Get filter parameters
         search = request.args.get('search', '').strip()
         service_type = request.args.get('service_type', '').strip()
         provider = request.args.get('provider', '').strip()
         status = request.args.get('status', '').strip()
+        tenant_id = request.args.get('tenant_id', '').strip()
         page = request.args.get('page', 1, type=int)
         per_page = 20
         
-        # Base query
+        # Base query - no tenant filtering for super admin
         query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
         
         # Apply filters
         if search:
@@ -147,33 +129,47 @@ def api_configurations():
         if status:
             query = query.filter_by(is_active=(status == 'active'))
         
+        if tenant_id:
+            try:
+                uuid.UUID(tenant_id)
+                query = query.filter_by(tenant_id=tenant_id)
+            except ValueError:
+                pass
+        
         # Execute query with pagination
         configs = query.order_by(desc(APIConfiguration.created_at)).paginate(
             page=page, per_page=per_page, error_out=False
         )
         
+        # Get all tenants for filter dropdown
+        tenants = Tenant.query.order_by(Tenant.tenant_name).all()
+        
         return render_template('api_management/configurations.html',
                              configs=configs,
                              service_types=ServiceType,
+                             tenants=tenants,
                              filters={
                                  'search': search,
                                  'service_type': service_type,
                                  'provider': provider,
-                                 'status': status
+                                 'status': status,
+                                 'tenant_id': tenant_id
                              })
     
     except Exception as e:
         flash(f'Error loading API configurations: {str(e)}', 'error')
         return redirect(url_for('api_management.dashboard'))
 
+
 @api_management_bp.route('/configurations/create', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def create_configuration():
-    """Create new API configuration"""
+    """Create new API configuration - Super Admin Only"""
     if request.method == 'POST':
         try:
             # Get form data
+            tenant_id = request.form.get('tenant_id', '').strip()
             service_type = request.form.get('service_type', '').strip()
             provider = request.form.get('provider', '').strip()
             api_url = request.form.get('api_url', '').strip()
@@ -194,19 +190,24 @@ def create_configuration():
             stay_on_page = request.form.get('stay_on_page') == 'on'
             
             # Validation
-            if not all([service_type, provider, api_url]):
-                flash('Service type, provider, and API URL are required', 'error')
+            if not all([tenant_id, service_type, provider, api_url]):
+                flash('Tenant, service type, provider, and API URL are required', 'error')
+                tenants = Tenant.query.order_by(Tenant.tenant_name).all()
                 return render_template('api_management/create_configuration.html',
                                      service_types=ServiceType,
+                                     tenants=tenants,
                                      now=datetime.now())
             
-            # Validate service type enum
+            # Validate tenant ID and service type enum
             try:
+                uuid.UUID(tenant_id)
                 service_type_enum = ServiceType(service_type)
             except ValueError as e:
-                flash(f'Invalid service type: {str(e)}', 'error')
+                flash(f'Invalid tenant ID or service type: {str(e)}', 'error')
+                tenants = Tenant.query.order_by(Tenant.tenant_name).all()
                 return render_template('api_management/create_configuration.html',
                                      service_types=ServiceType,
+                                     tenants=tenants,
                                      now=datetime.now())
             
             # Parse JSON fields
@@ -216,26 +217,30 @@ def create_configuration():
                 success_codes = json.loads(success_codes_json) if success_codes_json else [200, 201]
             except json.JSONDecodeError as e:
                 flash(f'Invalid JSON format: {str(e)}', 'error')
+                tenants = Tenant.query.order_by(Tenant.tenant_name).all()
                 return render_template('api_management/create_configuration.html',
                                      service_types=ServiceType,
+                                     tenants=tenants,
                                      now=datetime.now())
             
             # Check for duplicate configuration
             existing_config = APIConfiguration.query.filter_by(
-                tenant_id=current_user.tenant_id,
+                tenant_id=tenant_id,
                 service_type=service_type_enum,
                 provider=provider
             ).first()
             
             if existing_config:
-                flash('API configuration for this service type and provider already exists', 'error')
+                flash('API configuration for this tenant, service type and provider already exists', 'error')
+                tenants = Tenant.query.order_by(Tenant.tenant_name).all()
                 return render_template('api_management/create_configuration.html',
                                      service_types=ServiceType,
+                                     tenants=tenants,
                                      now=datetime.now())
             
             # Create API configuration
             config = APIConfiguration(
-                tenant_id=current_user.tenant_id,
+                tenant_id=tenant_id,
                 service_type=service_type_enum,
                 provider=provider,
                 api_url=api_url,
@@ -258,8 +263,10 @@ def create_configuration():
             
             if stay_on_page:
                 flash(success_message, 'success')
+                tenants = Tenant.query.order_by(Tenant.tenant_name).all()
                 return render_template('api_management/create_configuration.html',
                                      service_types=ServiceType,
+                                     tenants=tenants,
                                      now=datetime.now(),
                                      success_message=success_message,
                                      clear_form=True)
@@ -274,15 +281,19 @@ def create_configuration():
             db.session.rollback()
             flash(f'Error creating API configuration: {str(e)}', 'error')
     
+    # Get all tenants for dropdown
+    tenants = Tenant.query.order_by(Tenant.tenant_name).all()
     return render_template('api_management/create_configuration.html',
                          service_types=ServiceType,
+                         tenants=tenants,
                          now=datetime.now())
+
 
 @api_management_bp.route('/configurations/<config_id>')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def configuration_detail(config_id):
-    """View API configuration details"""
+    """View API configuration details - Super Admin Only"""
     try:
         # Validate UUID format
         try:
@@ -291,11 +302,8 @@ def configuration_detail(config_id):
             flash('Invalid configuration ID', 'error')
             return redirect(url_for('api_management.api_configurations'))
         
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        config = query.filter_by(id=config_id).first_or_404()
+        # No tenant filtering for super admin
+        config = APIConfiguration.query.filter_by(id=config_id).first_or_404()
         
         # Get recent request logs
         recent_logs = db.session.query(APIRequestLog).filter_by(
@@ -310,11 +318,12 @@ def configuration_detail(config_id):
         flash(f'Error loading configuration details: {str(e)}', 'error')
         return redirect(url_for('api_management.api_configurations'))
 
+
 @api_management_bp.route('/configurations/<config_id>/edit', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def edit_configuration(config_id):
-    """Edit API configuration"""
+    """Edit API configuration - Super Admin Only"""
     try:
         # Validate UUID format
         try:
@@ -323,11 +332,8 @@ def edit_configuration(config_id):
             flash('Invalid configuration ID', 'error')
             return redirect(url_for('api_management.api_configurations'))
         
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        config = query.filter_by(id=config_id).first_or_404()
+        # No tenant filtering for super admin
+        config = APIConfiguration.query.filter_by(id=config_id).first_or_404()
         
         if request.method == 'POST':
             try:
@@ -402,11 +408,12 @@ def edit_configuration(config_id):
         flash(f'Error loading configuration for editing: {str(e)}', 'error')
         return redirect(url_for('api_management.api_configurations'))
 
+
 @api_management_bp.route('/configurations/<config_id>/delete', methods=['POST'])
 @login_required
-@super_admin_required
+@super_admin_only_required  # Already correct
 def delete_configuration(config_id):
-    """Delete API configuration"""
+    """Delete API configuration - Super Admin Only"""
     try:
         # Validate UUID format
         try:
@@ -415,11 +422,8 @@ def delete_configuration(config_id):
             flash('Invalid configuration ID', 'error')
             return redirect(url_for('api_management.api_configurations'))
         
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        config = query.filter_by(id=config_id).first_or_404()
+        # No tenant filtering for super admin
+        config = APIConfiguration.query.filter_by(id=config_id).first_or_404()
         
         provider_name = config.provider
         db.session.delete(config)
@@ -433,11 +437,12 @@ def delete_configuration(config_id):
     
     return redirect(url_for('api_management.api_configurations'))
 
+
 @api_management_bp.route('/configurations/<config_id>/toggle-status', methods=['POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def toggle_configuration_status(config_id):
-    """Toggle API configuration active status"""
+    """Toggle API configuration active status - Super Admin Only"""
     try:
         # Validate UUID format
         try:
@@ -446,11 +451,8 @@ def toggle_configuration_status(config_id):
             flash('Invalid configuration ID', 'error')
             return redirect(url_for('api_management.api_configurations'))
         
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        config = query.filter_by(id=config_id).first_or_404()
+        # No tenant filtering for super admin
+        config = APIConfiguration.query.filter_by(id=config_id).first_or_404()
         config.is_active = not config.is_active
         config.updated_at = datetime.utcnow()
         
@@ -465,11 +467,12 @@ def toggle_configuration_status(config_id):
     
     return redirect(url_for('api_management.configuration_detail', config_id=config_id))
 
+
 @api_management_bp.route('/configurations/<config_id>/test', methods=['POST'])
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def test_configuration(config_id):
-    """Test API configuration"""
+    """Test API configuration - Super Admin Only"""
     try:
         # Validate UUID format
         try:
@@ -477,11 +480,8 @@ def test_configuration(config_id):
         except ValueError:
             return jsonify({'error': 'Invalid configuration ID'}), 400
         
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        config = query.filter_by(id=config_id).first_or_404()
+        # No tenant filtering for super admin
+        config = APIConfiguration.query.filter_by(id=config_id).first_or_404()
         
         # Prepare test request
         headers = config.headers.copy() if config.headers else {}
@@ -505,7 +505,7 @@ def test_configuration(config_id):
             
             # Log the test request
             log_entry = APIRequestLog(
-                tenant_id=current_user.tenant_id,
+                tenant_id=config.tenant_id,
                 api_config_id=config_id,
                 request_url=config.api_url,
                 request_method='POST',
@@ -534,7 +534,7 @@ def test_configuration(config_id):
             
             # Log the failed request
             log_entry = APIRequestLog(
-                tenant_id=current_user.tenant_id,
+                tenant_id=config.tenant_id,
                 api_config_id=config_id,
                 request_url=config.api_url,
                 request_method='POST',
@@ -560,28 +560,34 @@ def test_configuration(config_id):
 
 @api_management_bp.route('/logs')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def request_logs():
-    """View API request logs"""
+    """View API request logs - Super Admin Only"""
     try:
         # Get filter parameters
         config_id = request.args.get('config_id', '').strip()
         status_filter = request.args.get('status', '').strip()
+        tenant_id = request.args.get('tenant_id', '').strip()
         date_from = request.args.get('date_from', '').strip()
         date_to = request.args.get('date_to', '').strip()
         page = request.args.get('page', 1, type=int)
         per_page = 50
         
-        # Base query
+        # Base query - no tenant filtering for super admin
         query = APIRequestLog.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
         
         # Apply filters
         if config_id:
             try:
                 uuid.UUID(config_id)
                 query = query.filter_by(api_config_id=config_id)
+            except ValueError:
+                pass
+        
+        if tenant_id:
+            try:
+                uuid.UUID(tenant_id)
+                query = query.filter_by(tenant_id=tenant_id)
             except ValueError:
                 pass
         
@@ -609,18 +615,17 @@ def request_logs():
             page=page, per_page=per_page, error_out=False
         )
         
-        # Get available configurations for filter
-        configs_query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            configs_query = configs_query.filter_by(tenant_id=current_user.tenant_id)
-        
-        available_configs = configs_query.all()
+        # Get all configurations and tenants for filters
+        available_configs = APIConfiguration.query.all()
+        tenants = Tenant.query.order_by(Tenant.tenant_name).all()
         
         return render_template('api_management/logs.html',
                              logs=logs,
                              available_configs=available_configs,
+                             tenants=tenants,
                              filters={
                                  'config_id': config_id,
+                                 'tenant_id': tenant_id,
                                  'status': status_filter,
                                  'date_from': date_from,
                                  'date_to': date_to
@@ -633,15 +638,12 @@ def request_logs():
 
 @api_management_bp.route('/export/configurations')
 @login_required
-@admin_required
+@super_admin_only_required  # Changed to super admin only
 def export_configurations():
-    """Export API configurations to CSV"""
+    """Export API configurations to CSV - Super Admin Only"""
     try:
-        query = APIConfiguration.query
-        if current_user.role != UserRoleType.SUPER_ADMIN:
-            query = query.filter_by(tenant_id=current_user.tenant_id)
-        
-        configs = query.order_by(APIConfiguration.service_type, APIConfiguration.provider).all()
+        # No tenant filtering for super admin
+        configs = APIConfiguration.query.order_by(APIConfiguration.service_type, APIConfiguration.provider).all()
         
         # Create CSV
         output = io.StringIO()
@@ -649,13 +651,15 @@ def export_configurations():
         
         # Write header
         writer.writerow([
-            'Service Type', 'Provider', 'API URL', 'Status', 'Priority',
+            'Tenant', 'Service Type', 'Provider', 'API URL', 'Status', 'Priority',
             'Rate Limit', 'Timeout (s)', 'Retry Count', 'Created At'
         ])
         
         # Write data
         for config in configs:
+            tenant_name = config.tenant.tenant_name if config.tenant else 'Unknown'
             writer.writerow([
+                tenant_name,
                 config.service_type.value,
                 config.provider,
                 config.api_url,
