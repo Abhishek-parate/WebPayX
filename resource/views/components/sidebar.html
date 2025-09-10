@@ -165,8 +165,6 @@
             </li>
             {% endif %}
 
-<<<<<<< HEAD
-=======
             <!-- Commission & Pricing - Only for ADMIN and SUPER_ADMIN -->
             {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
             <li class="dropdown">
@@ -238,7 +236,6 @@
             </li>
             {% endif %}
 
->>>>>>> 60ee3510a9c8fc6cf770ec9aa60f7aa779e84749
             <!-- System Configuration - Only for SUPER_ADMIN -->
             {% if current_user.role.name == 'SUPER_ADMIN' %}
             <li class="dropdown">
@@ -262,10 +259,6 @@
                             <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> API Request Logs
                         </a>
                     </li>
-<<<<<<< HEAD
-                    <!-- Only add other system config items if routes exist -->
-=======
->>>>>>> 60ee3510a9c8fc6cf770ec9aa60f7aa779e84749
                 </ul>
             </li>
             {% endif %}
