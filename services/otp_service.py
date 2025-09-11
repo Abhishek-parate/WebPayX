@@ -17,6 +17,7 @@ class OTPService:
         return ''.join(random.choices(string.digits, k=length))
     
     @staticmethod
+    
     def send_login_otp(user_id: str, phone_number: str, user_name: str = "User", 
                       session_id: str = None, ip_address: str = None, user_agent: str = None) -> dict:
         """Send OTP for login verification"""

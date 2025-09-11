@@ -1,0 +1,359 @@
+{% extends 'layout/layout.html' %}
+{% block content %}
+
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+.permission-group {
+    transition: all 0.3s ease;
+}
+.permission-item:hover {
+    background-color: #f9fafb;
+}
+</style>
+
+<div class="container-fluid px-4 py-6">
+    
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+                <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+            </div>
+            <div>
+                <a href="{{ url_for('role_permissions.index') }}" 
+                   class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Selection -->
+    <div class="bg-white rounded-lg shadow-md border p-6 mb-6">
+        <div class="flex items-center gap-4">
+            <label class="text-sm font-medium text-gray-700">Select Role:</label>
+            <select id="roleSelect" onchange="loadRolePermissions()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Choose a role...</option>
+                {% for role_type in user_roles %}
+                <option value="{{ role_type.value }}" {% if current_role and current_role == role_type.value %}selected{% endif %}>
+                    {{ role_type.value.replace('_', ' ').title() }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if current_role %}
+            <div class="flex gap-2 ml-auto">
+                <button onclick="applyTemplate()" 
+                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 0a9 9 0 107.5 10.5A9.013 9.013 0 0012 21c-1.052 0-2.062-.18-3-.512M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Apply Template
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if current_role %}
+    <!-- Role Permissions Configuration -->
+    <div class="bg-white rounded-lg shadow-md border">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    Permissions for {{ current_role.replace('_', ' ').title() }}
+                </h3>
+                <div class="flex gap-2">
+                    <button type="button" onclick="selectAll(true)" 
+                            class="px-4 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
+                        Select All
+                    </button>
+                    <button type="button" onclick="selectAll(false)" 
+                            class="px-4 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
+                        Deselect All
+                    </button>
+                    <button type="button" onclick="savePermissions()" 
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            {% for category, permissions in permissions_by_category.items() %}
+            <div class="permission-group mb-6">
+                <h4 class="text-md font-semibold text-gray-700 mb-3 pb-2 border-b">
+                    {{ category }}
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {% for permission in permissions %}
+                    <label class="permission-item flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 border">
+                        <input type="checkbox" 
+                               data-permission-id="{{ permission.id }}"
+                               {% if role_permissions.get(permission.id) and role_permissions.get(permission.id).is_granted %}checked{% endif %}
+                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <div class="ml-3 flex-1">
+                            <div class="font-medium text-gray-900">{{ permission.name }}</div>
+                            {% if permission.description %}
+                            <div class="text-sm text-gray-600">{{ permission.description }}</div>
+                            {% endif %}
+                        </div>
+                        {% if permission.is_system %}
+                        <span class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                            System
+                        </span>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <!-- No Role Selected -->
+    <div class="bg-white rounded-lg shadow-md border p-12 text-center">
+        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-600 mb-2">Select a Role</h3>
+        <p class="text-gray-500">Choose a role from the dropdown above to configure its permissions.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+function loadRolePermissions() {
+    const select = document.getElementById('roleSelect');
+    if (select.value) {
+        window.location.href = `{{ url_for('role_permissions.role_config_page') }}?role=${select.value}`;
+    } else {
+        window.location.href = `{{ url_for('role_permissions.role_config_page') }}`;
+    }
+}
+
+function selectAll(checked) {
+    const checkboxes = document.querySelectorAll('input[data-permission-id]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
+
+function savePermissions() {
+    const role = document.getElementById('roleSelect').value;
+    if (!role) {
+        Toast.fire({
+            icon: 'error',
+            title: 'No role selected'
+        });
+        return;
+    }
+
+    const checkboxes = document.querySelectorAll('input[data-permission-id]');
+    const permissions = [];
+    
+    checkboxes.forEach(checkbox => {
+        permissions.push({
+            permission_id: checkbox.getAttribute('data-permission-id'),
+            is_granted: checkbox.checked
+        });
+    });
+
+    const checkedCount = permissions.filter(p => p.is_granted).length;
+    
+    Swal.fire({
+        title: 'Update Role Permissions?',
+        text: `This will set ${checkedCount} out of ${permissions.length} permissions for ${role.replace('_', ' ').title()}.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, update permissions',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/role-permissions/api/role-permissions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    role: role,
+                    permissions: permissions
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Toast.fire({
+                        icon: 'success',
+                        title: data.message
+                    });
+                } else {
+                    Toast.fire({
+                        icon: 'error',
+                        title: data.error
+                    });
+                }
+            })
+            .catch(error => {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'An error occurred while saving permissions'
+                });
+            });
+        }
+    });
+}
+
+function applyTemplate() {
+    const role = document.getElementById('roleSelect').value;
+    if (!role) {
+        Toast.fire({
+            icon: 'error',
+            title: 'No role selected'
+        });
+        return;
+    }
+
+    // Fetch available templates
+    fetch('/role-permissions/api/permission-templates')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const templates = data.templates;
+                const templateOptions = Object.keys(templates).map(key => ({
+                    value: key,
+                    text: templates[key].name,
+                    description: templates[key].description
+                }));
+
+                Swal.fire({
+                    title: 'Apply Permission Template',
+                    html: `
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Template:</label>
+                                <select id="templateSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="">Choose a template...</option>
+                                    ${templateOptions.map(opt => 
+                                        `<option value="${opt.value}">${opt.text}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <div id="templateDescription" class="text-sm text-gray-600"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mode:</label>
+                                <select id="mergeMode" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="replace">Replace all permissions</option>
+                                    <option value="merge">Merge with existing</option>
+                                </select>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Apply Template',
+                    didOpen: () => {
+                        const select = document.getElementById('templateSelect');
+                        const description = document.getElementById('templateDescription');
+                        
+                        select.addEventListener('change', () => {
+                            const selectedTemplate = templates[select.value];
+                            if (selectedTemplate) {
+                                description.textContent = selectedTemplate.description;
+                            } else {
+                                description.textContent = '';
+                            }
+                        });
+                    },
+                    preConfirm: () => {
+                        const templateName = document.getElementById('templateSelect').value;
+                        const mergeMode = document.getElementById('mergeMode').value;
+                        
+                        if (!templateName) {
+                            Swal.showValidationMessage('Please select a template');
+                            return false;
+                        }
+                        
+                        return { templateName, mergeMode };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('/role-permissions/api/apply-permission-template', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                role: role,
+                                template_name: result.value.templateName,
+                                merge_mode: result.value.mergeMode
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Toast.fire({
+                                    icon: 'success',
+                                    title: data.message
+                                });
+                                // Reload the page to show updated permissions
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 1500);
+                            } else {
+                                Toast.fire({
+                                    icon: 'error',
+                                    title: data.error
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+}
+</script>
+
+{% endblock %}

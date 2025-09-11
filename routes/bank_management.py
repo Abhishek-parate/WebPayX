@@ -9,11 +9,14 @@ from datetime import datetime
 from decimal import Decimal
 import uuid
 
+
 bank_management_bp = Blueprint('bank_management', __name__, url_prefix='/bank-management')
+
 
 # =============================================================================
 # BANK MANAGEMENT PAGES
 # =============================================================================
+
 
 @bank_management_bp.route('/')
 @login_required
@@ -28,6 +31,7 @@ def index():
         subtitle='Manage Organization Bank Accounts'
     )
 
+
 @bank_management_bp.route('/accounts')
 @login_required
 def bank_accounts_page():
@@ -41,6 +45,7 @@ def bank_accounts_page():
         subtitle='Manage Bank Accounts'
     )
 
+
 @bank_management_bp.route('/add-account')
 @login_required
 def add_account_page():
@@ -53,6 +58,7 @@ def add_account_page():
         title='Add Bank Account',
         subtitle='Add New Organization Bank Account'
     )
+
 
 @bank_management_bp.route('/edit-account/<account_id>')
 @login_required
@@ -77,6 +83,7 @@ def edit_account_page(account_id):
         account=account
     )
 
+
 @bank_management_bp.route('/account/<account_id>')
 @login_required
 def account_details_page(account_id):
@@ -96,9 +103,53 @@ def account_details_page(account_id):
         account=account
     )
 
+
+@bank_management_bp.route('/permissions')
+@login_required
+def permissions_page():
+    """Role-based bank permissions page"""
+    if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN']:
+        flash('Access denied', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    return render_template('bank_management/permissions.html',
+        title='Role Permissions',
+        subtitle='Manage Role-based Bank Account Permissions'
+    )
+
+
+@bank_management_bp.route('/transactions')
+@login_required
+def transactions_page():
+    """All transactions page"""
+    if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+        flash('Access denied', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    return render_template('bank_management/transactions.html',
+        title='Transaction History',
+        subtitle='View All Bank Account Transactions'
+    )
+
+
+@bank_management_bp.route('/reconciliation')
+@login_required
+def reconciliation_page():
+    """Bank reconciliation page"""
+    if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+        flash('Access denied', 'error')
+        return redirect(url_for('bank_management.index'))
+    
+    return render_template('bank_management/reconciliation.html',
+        title='Bank Reconciliation',
+        subtitle='Reconcile Bank Account Statements'
+    )
+
+
 # =============================================================================
 # BANK ACCOUNT CRUD API
 # =============================================================================
+
 
 @bank_management_bp.route('/api/accounts', methods=['POST'])
 @login_required
@@ -195,6 +246,7 @@ def create_bank_account():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 @bank_management_bp.route('/api/accounts', methods=['GET'])
 @login_required
 def get_bank_accounts():
@@ -251,8 +303,8 @@ def get_bank_accounts():
             
             account_data['statistics'] = {
                 'total_transactions': total_transactions,
-                'available_daily_limit': float(account.daily_limit - account.daily_used),
-                'available_monthly_limit': float(account.monthly_limit - account.monthly_used)
+                'available_daily_limit': float(account.daily_limit - (account.daily_used if hasattr(account, 'daily_used') else 0)),
+                'available_monthly_limit': float(account.monthly_limit - (account.monthly_used if hasattr(account, 'monthly_used') else 0))
             }
             
             accounts_data.append(account_data)
@@ -271,6 +323,7 @@ def get_bank_accounts():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @bank_management_bp.route('/api/accounts/<account_id>', methods=['GET'])
 @login_required
@@ -319,14 +372,15 @@ def get_bank_account(account_id):
             'total_transactions': total_transactions,
             'total_credits': float(total_credits),
             'total_debits': float(total_debits),
-            'available_daily_limit': float(account.daily_limit - account.daily_used),
-            'available_monthly_limit': float(account.monthly_limit - account.monthly_used)
+            'available_daily_limit': float(account.daily_limit - (account.daily_used if hasattr(account, 'daily_used') else 0)),
+            'available_monthly_limit': float(account.monthly_limit - (account.monthly_used if hasattr(account, 'monthly_used') else 0))
         }
         
         return jsonify({'account': account_data})
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @bank_management_bp.route('/api/accounts/<account_id>', methods=['PUT'])
 @login_required
@@ -426,6 +480,7 @@ def update_bank_account(account_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 @bank_management_bp.route('/api/accounts/<account_id>/toggle-status', methods=['POST'])
 @login_required
 def toggle_account_status(account_id):
@@ -463,9 +518,11 @@ def toggle_account_status(account_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 # =============================================================================
 # BANK ACCOUNT TRANSACTIONS
 # =============================================================================
+
 
 @bank_management_bp.route('/api/accounts/<account_id>/transactions', methods=['GET'])
 @login_required
@@ -525,6 +582,7 @@ def get_account_transactions(account_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @bank_management_bp.route('/api/accounts/<account_id>/transactions', methods=['POST'])
 @login_required
@@ -605,9 +663,103 @@ def create_account_transaction(account_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
+# =============================================================================
+# ALL TRANSACTIONS API
+# =============================================================================
+
+
+@bank_management_bp.route('/api/transactions', methods=['GET'])
+@login_required
+def get_all_transactions():
+    """Get all bank account transactions across organization"""
+    try:
+        if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        transaction_type = request.args.get('type')
+        account_id = request.args.get('account_id')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        search = request.args.get('search', '')
+        
+        # Base query with join
+        query = db.session.query(BankAccountTransaction).join(OrganizationBankAccount).filter(
+            OrganizationBankAccount.tenant_id == current_user.tenant_id
+        )
+        
+        # Apply filters
+        if transaction_type:
+            query = query.filter(BankAccountTransaction.transaction_type == transaction_type.upper())
+        
+        if account_id:
+            query = query.filter(BankAccountTransaction.bank_account_id == account_id)
+        
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                query = query.filter(BankAccountTransaction.created_at >= from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+                query = query.filter(BankAccountTransaction.created_at <= to_date)
+            except ValueError:
+                pass
+        
+        if search:
+            query = query.filter(
+                db.or_(
+                    BankAccountTransaction.description.ilike(f'%{search}%'),
+                    BankAccountTransaction.reference_number.ilike(f'%{search}%'),
+                    BankAccountTransaction.utr_number.ilike(f'%{search}%'),
+                    OrganizationBankAccount.account_name.ilike(f'%{search}%')
+                )
+            )
+        
+        # Paginate results
+        transactions = query.order_by(BankAccountTransaction.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        transactions_data = []
+        for transaction in transactions.items:
+            transaction_data = transaction.to_dict()
+            # Add bank account info
+            account = OrganizationBankAccount.query.get(transaction.bank_account_id)
+            if account:
+                transaction_data['bank_account'] = {
+                    'id': account.id,
+                    'account_name': account.account_name,
+                    'account_number': account.account_number,
+                    'bank_name': account.bank_name
+                }
+            transactions_data.append(transaction_data)
+        
+        return jsonify({
+            'transactions': transactions_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': transactions.total,
+                'pages': transactions.pages,
+                'has_next': transactions.has_next,
+                'has_prev': transactions.has_prev
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # ROLE-BASED BANK PERMISSIONS
 # =============================================================================
+
 
 @bank_management_bp.route('/api/role-permissions', methods=['GET'])
 @login_required
@@ -659,6 +811,7 @@ def get_role_bank_permissions():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @bank_management_bp.route('/api/role-permissions', methods=['POST'])
 @login_required
@@ -733,9 +886,37 @@ def create_role_bank_permission():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
+@bank_management_bp.route('/api/role-permissions/<permission_id>', methods=['DELETE'])
+@login_required
+def delete_role_bank_permission(permission_id):
+    """Delete role-based bank permission"""
+    try:
+        if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        permission = RoleBankPermission.query.filter(
+            RoleBankPermission.id == permission_id,
+            RoleBankPermission.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not permission:
+            return jsonify({'error': 'Permission not found'}), 404
+        
+        db.session.delete(permission)
+        db.session.commit()
+        
+        return jsonify({'message': 'Permission deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # BANK ACCOUNT STATISTICS
 # =============================================================================
+
 
 @bank_management_bp.route('/api/stats', methods=['GET'])
 @login_required
@@ -775,13 +956,31 @@ def get_bank_stats():
             db.func.date(BankAccountTransaction.created_at) == today
         ).count()
         
+        # This week's transactions
+        from datetime import timedelta
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_transactions = BankAccountTransaction.query.join(OrganizationBankAccount).filter(
+            OrganizationBankAccount.tenant_id == current_user.tenant_id,
+            BankAccountTransaction.created_at >= week_ago
+        ).count()
+        
+        # Transaction volume today
+        today_volume = db.session.query(
+            db.func.coalesce(db.func.sum(BankAccountTransaction.amount), 0)
+        ).join(OrganizationBankAccount).filter(
+            OrganizationBankAccount.tenant_id == current_user.tenant_id,
+            db.func.date(BankAccountTransaction.created_at) == today
+        ).scalar()
+        
         stats = {
             'total_accounts': total_accounts,
             'active_accounts': active_accounts,
             'inactive_accounts': inactive_accounts,
             'total_balance': float(total_balance),
             'account_types': account_types,
-            'today_transactions': today_transactions
+            'today_transactions': today_transactions,
+            'week_transactions': week_transactions,
+            'today_volume': float(today_volume)
         }
         
         return jsonify(stats)
@@ -789,9 +988,80 @@ def get_bank_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# =============================================================================
+# RECONCILIATION API
+# =============================================================================
+
+
+@bank_management_bp.route('/api/reconciliation', methods=['GET'])
+@login_required
+def get_reconciliation_data():
+    """Get data for bank reconciliation"""
+    try:
+        if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        account_id = request.args.get('account_id')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        
+        if not account_id:
+            return jsonify({'error': 'Account ID is required'}), 400
+        
+        account = OrganizationBankAccount.query.filter(
+            OrganizationBankAccount.id == account_id,
+            OrganizationBankAccount.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not account:
+            return jsonify({'error': 'Bank account not found'}), 404
+        
+        # Get transactions for reconciliation
+        query = BankAccountTransaction.query.filter_by(bank_account_id=account.id)
+        
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                query = query.filter(BankAccountTransaction.created_at >= from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+                query = query.filter(BankAccountTransaction.created_at <= to_date)
+            except ValueError:
+                pass
+        
+        transactions = query.order_by(BankAccountTransaction.created_at.desc()).all()
+        
+        # Calculate reconciliation summary
+        total_credits = sum(t.amount for t in transactions if t.transaction_type == 'CREDIT')
+        total_debits = sum(t.amount for t in transactions if t.transaction_type == 'DEBIT')
+        net_change = total_credits - total_debits
+        
+        return jsonify({
+            'account': account.to_dict(),
+            'transactions': [t.to_dict() for t in transactions],
+            'summary': {
+                'total_transactions': len(transactions),
+                'total_credits': float(total_credits),
+                'total_debits': float(total_debits),
+                'net_change': float(net_change),
+                'opening_balance': float(account.current_balance - net_change),
+                'closing_balance': float(account.current_balance)
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # BULK OPERATIONS
 # =============================================================================
+
 
 @bank_management_bp.route('/api/accounts/bulk-update', methods=['POST'])
 @login_required
@@ -849,4 +1119,95 @@ def bulk_update_accounts():
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+# =============================================================================
+# EXPORT/IMPORT OPERATIONS
+# =============================================================================
+
+
+@bank_management_bp.route('/api/accounts/export', methods=['GET'])
+@login_required
+def export_accounts():
+    """Export bank accounts to CSV"""
+    try:
+        if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        accounts = OrganizationBankAccount.query.filter(
+            OrganizationBankAccount.tenant_id == current_user.tenant_id
+        ).all()
+        
+        accounts_data = []
+        for account in accounts:
+            account_dict = account.to_dict()
+            # Flatten nested data for CSV export
+            account_dict['purpose'] = ','.join(account_dict.get('purpose', []))
+            account_dict['bank_charges'] = str(account_dict.get('bank_charges', {}))
+            account_dict['additional_info'] = str(account_dict.get('additional_info', {}))
+            accounts_data.append(account_dict)
+        
+        return jsonify({
+            'accounts': accounts_data,
+            'total': len(accounts_data)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bank_management_bp.route('/api/transactions/export', methods=['GET'])
+@login_required
+def export_transactions():
+    """Export transactions to CSV"""
+    try:
+        if current_user.role.value not in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        account_id = request.args.get('account_id')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        
+        # Base query
+        query = db.session.query(BankAccountTransaction).join(OrganizationBankAccount).filter(
+            OrganizationBankAccount.tenant_id == current_user.tenant_id
+        )
+        
+        if account_id:
+            query = query.filter(BankAccountTransaction.bank_account_id == account_id)
+        
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                query = query.filter(BankAccountTransaction.created_at >= from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+                query = query.filter(BankAccountTransaction.created_at <= to_date)
+            except ValueError:
+                pass
+        
+        transactions = query.order_by(BankAccountTransaction.created_at.desc()).all()
+        
+        transactions_data = []
+        for transaction in transactions:
+            transaction_dict = transaction.to_dict()
+            # Add account details
+            account = OrganizationBankAccount.query.get(transaction.bank_account_id)
+            if account:
+                transaction_dict['account_name'] = account.account_name
+                transaction_dict['account_number'] = account.account_number
+                transaction_dict['bank_name'] = account.bank_name
+            transactions_data.append(transaction_dict)
+        
+        return jsonify({
+            'transactions': transactions_data,
+            'total': len(transactions_data)
+        })
+        
+    except Exception as e:
         return jsonify({'error': str(e)}), 500

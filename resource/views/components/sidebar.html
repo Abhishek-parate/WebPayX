@@ -18,6 +18,156 @@
                     <span>Dashboard</span>
                 </a>
             </li>
+              <!-- Role & Permissions Management - Only for ADMIN and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:shield-user-outline" class="menu-icon"></iconify-icon>
+                    <span>Role & Permissions</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('role_permissions.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('role_permissions.permissions_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Manage Permissions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('role_permissions.role_config_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Role Configuration
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="showPermissionTemplates(); return false;">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Permission Templates
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="showRoleHierarchy(); return false;">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Role Hierarchy
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+                <!-- Tenant Management - Only for SUPER_ADMIN and ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:buildings-outline" class="menu-icon"></iconify-icon>
+                    <span>Tenant Management</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('tenant_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('tenant_management.list_tenants') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> All Tenants
+                        </a>
+                    </li>
+                    {% if current_user.role.name == 'SUPER_ADMIN' %}
+                    <li>
+                        <a href="{{ url_for('tenant_management.create_tenant') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Create Tenant
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('tenant_management.bulk_actions') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Bulk Actions
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('tenant_management.export_tenants') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Export Data
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+             <!-- Transaction Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="solar:transfer-outline" class="menu-icon"></iconify-icon>
+                    <span>Transaction Management</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('transaction_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('transaction_management.transactions_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> All Transactions
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('transaction_management.add_transaction_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Transaction
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('transaction_management.reports_page') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Reports & Analytics
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('transaction_management.export_transactions') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Export Data
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+
+            <!-- Bank Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:account-balance" class="menu-icon"></iconify-icon>
+                    <span>Bank Management</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('bank_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('bank_management.bank_accounts_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> All Accounts
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('bank_management.add_account_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Account
+                        </a>
+                    </li>
+                 
+                    {% endif %}
+                   
+                   
+                </ul>
+            </li>
+            {% endif %}
+
+
+            
 
             <!-- Self Services - Available to all roles -->
             <li class="dropdown">
@@ -206,7 +356,7 @@
             {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
             <li class="dropdown">
                 <a href="javascript:void(0)">
-                    <iconify-icon icon="material-symbols:account-balance" class="menu-icon"></iconify-icon>
+                    <iconify-icon icon="material-symbols:credit-card" class="menu-icon"></iconify-icon>
                     <span>Payment Gateways</span>
                 </a>
                 <ul class="sidebar-submenu">
