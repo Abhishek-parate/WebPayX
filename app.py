@@ -37,6 +37,7 @@ from services.otp_service import OTPService
 from routes.payment_gateway_management import payment_gateway_management_bp
 from routes.permissions_management import permissions_management_bp
 from routes.api_management import api_management_bp
+from routes.recharge_management import recharge_management_bp
 
 
 
@@ -124,6 +125,7 @@ def create_app(config_name='development'):
     app.register_blueprint(transaction_management_bp)
     app.register_blueprint(tenant_management_bp)
     app.register_blueprint(api_management_bp)
+    app.register_blueprint(recharge_management_bp)
 
     app.register_blueprint(wallet_management_bp)
     app.register_blueprint(payment_gateway_management_bp)

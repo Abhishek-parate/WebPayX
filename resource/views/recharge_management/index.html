@@ -1,0 +1,487 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Recharge Management{% endblock %}
+
+{% block content %}
+<div x-data="rechargeApp()" class="container-fluid py-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Total Transactions</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ stats.total_transactions }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Success Rate</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ "%.1f"|format(stats.success_rate) }}%</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Today's Volume</h3>
+                    <p class="text-3xl font-bold text-purple-600">₹{{ "{:,.0f}".format(stats.today_amount) }}</p>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Wallet Balance</h3>
+                    <p class="text-3xl font-bold text-orange-600">₹{{ "{:,.2f}".format(stats.wallet_balance) }}</p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Categories -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             @click="openRechargeModal('mobile')">
+            <div class="text-center">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Mobile Recharge</h3>
+                <p class="text-gray-600 text-sm">Prepaid & Postpaid</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             @click="openRechargeModal('dth')">
+            <div class="text-center">
+                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0L6 20a1 1 0 001 1h10a1 1 0 001-1L16 4"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">DTH Recharge</h3>
+                <p class="text-gray-600 text-sm">All DTH Operators</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             @click="openRechargeModal('electricity')">
+            <div class="text-center">
+                <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Electricity Bill</h3>
+                <p class="text-gray-600 text-sm">Pay Electricity Bills</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             @click="openRechargeModal('gas')">
+            <div class="text-center">
+                <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">Gas Bill</h3>
+                <p class="text-gray-600 text-sm">Pay Gas Bills</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+            <a href="{{ url_for('recharge_management.transactions') }}" 
+               class="text-blue-600 hover:text-blue-800 font-medium">View All</a>
+        </div>
+        
+        {% if stats.recent_transactions %}
+        <div class="space-y-3">
+            {% for transaction in stats.recent_transactions %}
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        {% if transaction.service_type.value == 'MOBILERECHARGE' %}
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        {% elif transaction.service_type.value == 'DTHRECHARGE' %}
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">{{ transaction.service_type.value.replace('_', ' ').title() }}</p>
+                        <p class="text-sm text-gray-600">
+                            {% if transaction.customer_details.get('mobile') %}
+                                {{ transaction.customer_details.mobile }}
+                            {% elif transaction.customer_details.get('customer_id') %}
+                                {{ transaction.customer_details.customer_id }}
+                            {% elif transaction.customer_details.get('connection_number') %}
+                                {{ transaction.customer_details.connection_number }}
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ transaction.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-gray-900">₹{{ transaction.amount }}</p>
+                    <span class="px-2 py-1 text-xs rounded-full 
+                               {{ 'bg-green-100 text-green-800' if transaction.status.value == 'SUCCESS' 
+                                  else 'bg-yellow-100 text-yellow-800' if transaction.status.value == 'PROCESSING' 
+                                  else 'bg-red-100 text-red-800' }}">
+                        {{ transaction.status.value }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <p class="text-gray-500">No transactions yet</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recharge Modal -->
+    <div x-show="showModal" 
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto"
+         @click.away="closeModal()">
+        
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
+                 @click.stop>
+                
+                <form method="POST" :action="getFormAction()">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-gray-900" x-text="modalTitle"></h3>
+                            <button type="button" @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Number Input -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span x-text="getNumberLabel()"></span>
+                                </label>
+                                <input type="text" 
+                                       :name="getNumberFieldName()"
+                                       x-model="formData.number"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       :placeholder="getNumberPlaceholder()"
+                                       required>
+                            </div>
+
+                            <!-- Operator Selection -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Operator</label>
+                                <select name="operator"
+                                        x-model="formData.operator" 
+                                        @change="loadPlans()"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
+                                    <option value="">Select Operator</option>
+                                    <template x-for="operator in operators" :key="operator.id">
+                                        <option :value="operator.id" x-text="operator.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- Circle Selection (mobile only) -->
+                            <div x-show="serviceType === 'mobile'">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Circle</label>
+                                <select name="circle"
+                                        x-model="formData.circle" 
+                                        @change="loadPlans()"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
+                                    <option value="">Select Circle</option>
+                                    <template x-for="circle in circles" :key="circle.id">
+                                        <option :value="circle.id" x-text="circle.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- Amount Input -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                                <input type="number" 
+                                       name="amount"
+                                       x-model="formData.amount"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter amount"
+                                       min="10"
+                                       step="0.01"
+                                       required>
+                            </div>
+
+                            <!-- Plans Selection (mobile only) -->
+                            <div x-show="showPlans && serviceType === 'mobile'">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Plan (Optional)</label>
+                                <div class="max-h-60 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
+                                    <template x-for="plan in plans" :key="plan.id">
+                                        <div class="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition-colors"
+                                             @click="selectPlan(plan)"
+                                             :class="{'bg-blue-50 border-blue-300': selectedPlan && selectedPlan.id === plan.id}">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-gray-900" x-text="plan.planName"></p>
+                                                    <p class="text-sm text-gray-600 mt-1" x-text="plan.planDescription"></p>
+                                                    <div class="flex items-center space-x-4 mt-2">
+                                                        <span class="text-xs text-gray-500" x-text="'Validity: ' + plan.validity"></span>
+                                                        <span class="text-xs text-gray-500" x-show="plan.dataBenefit" x-text="'Data: ' + plan.dataBenefit"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right ml-4">
+                                                    <p class="font-bold text-blue-600 text-lg" x-text="'₹' + plan.amount"></p>
+                                                    <span x-show="plan.isPopular" class="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full mt-1">Popular</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Hidden plan fields -->
+                            <input type="hidden" name="plan_id" x-model="selectedPlan ? selectedPlan.id : ''">
+                            <input type="hidden" name="plan_description" x-model="selectedPlan ? selectedPlan.planDescription : ''">
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" 
+                                    @click="closeModal()"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    :disabled="!isFormValid()"
+                                    class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-text="'Pay ₹' + (formData.amount || '0')"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function rechargeApp() {
+    return {
+        showModal: false,
+        serviceType: '',
+        modalTitle: '',
+        showPlans: false,
+        plans: [],
+        selectedPlan: null,
+        operators: [],
+        circles: [
+            {id: '1', name: 'Andhra Pradesh'},
+            {id: '5', name: 'Delhi & NCR'},
+            {id: '10', name: 'Karnataka'},
+            {id: '15', name: 'Mumbai'},
+            {id: '20', name: 'Tamil Nadu'}
+        ],
+        formData: {
+            number: '',
+            operator: '',
+            circle: '',
+            amount: ''
+        },
+
+        openRechargeModal(type) {
+            this.serviceType = type;
+            this.modalTitle = this.getModalTitle(type);
+            this.showModal = true;
+            this.resetForm();
+            this.loadOperators();
+        },
+
+        closeModal() {
+            this.showModal = false;
+            this.resetForm();
+        },
+
+        resetForm() {
+            this.formData = {
+                number: '',
+                operator: '',
+                circle: '',
+                amount: ''
+            };
+            this.selectedPlan = null;
+            this.plans = [];
+            this.showPlans = false;
+        },
+
+        getModalTitle(type) {
+            const titles = {
+                'mobile': 'Mobile Recharge',
+                'dth': 'DTH Recharge',
+                'electricity': 'Electricity Bill Payment',
+                'gas': 'Gas Bill Payment'
+            };
+            return titles[type] || 'Recharge';
+        },
+
+        getNumberLabel() {
+            const labels = {
+                'mobile': 'Mobile Number',
+                'dth': 'Customer ID',
+                'electricity': 'Connection Number',
+                'gas': 'Connection Number'
+            };
+            return labels[this.serviceType] || 'Number';
+        },
+
+        getNumberFieldName() {
+            const names = {
+                'mobile': 'mobile',
+                'dth': 'customer_id',
+                'electricity': 'connection_number',
+                'gas': 'connection_number'
+            };
+            return names[this.serviceType] || 'number';
+        },
+
+        getNumberPlaceholder() {
+            const placeholders = {
+                'mobile': 'Enter mobile number',
+                'dth': 'Enter customer ID',
+                'electricity': 'Enter connection number',
+                'gas': 'Enter connection number'
+            };
+            return placeholders[this.serviceType] || 'Enter number';
+        },
+
+        getFormAction() {
+            const actions = {
+                'mobile': '/recharge-management/mobile-recharge',
+                'dth': '/recharge-management/dth-recharge',
+                'electricity': '/recharge-management/bill-payment',
+                'gas': '/recharge-management/bill-payment'
+            };
+            return actions[this.serviceType] || '/recharge-management/mobile-recharge';
+        },
+
+        loadOperators() {
+            if (this.serviceType === 'mobile') {
+                this.operators = [
+                    {id: '1', name: 'Airtel'},
+                    {id: '2', name: 'Jio'},
+                    {id: '3', name: 'Vi (Vodafone Idea)'},
+                    {id: '4', name: 'BSNL'}
+                ];
+            } else if (this.serviceType === 'dth') {
+                this.operators = [
+                    {id: '32', name: 'Dish TV'},
+                    {id: '33', name: 'Tata Sky'},
+                    {id: '34', name: 'Airtel Digital TV'},
+                    {id: '35', name: 'Sun Direct'}
+                ];
+            } else if (this.serviceType === 'electricity') {
+                this.operators = [
+                    {id: '59', name: 'BESCOM (Karnataka)'},
+                    {id: '31', name: 'MSEDCL (Maharashtra)'},
+                    {id: '132', name: 'TNEB (Tamil Nadu)'}
+                ];
+            } else if (this.serviceType === 'gas') {
+                this.operators = [
+                    {id: '40', name: 'Indane Gas'},
+                    {id: '41', name: 'Bharat Gas'},
+                    {id: '42', name: 'HP Gas'}
+                ];
+            }
+        },
+
+        async loadPlans() {
+            if (this.serviceType !== 'mobile' || !this.formData.operator || !this.formData.circle) return;
+            
+            try {
+                const response = await fetch(`/recharge-management/api/plans/${this.formData.operator}/${this.formData.circle}`);
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.plans) {
+                    this.plans = data.data.plans;
+                    this.showPlans = true;
+                } else {
+                    this.showPlans = false;
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+                this.showPlans = false;
+            }
+        },
+
+        selectPlan(plan) {
+            this.selectedPlan = plan;
+            this.formData.amount = plan.amount;
+        },
+
+        isFormValid() {
+            if (!this.formData.number || !this.formData.operator) return false;
+            if (this.serviceType === 'mobile' && !this.formData.circle) return false;
+            if (!this.formData.amount || parseFloat(this.formData.amount) <= 0) return false;
+            return true;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,521 @@
+{% extends 'layout/layout.html' %}
+
+{% block content %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .user-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+  }
+  .form-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+  }
+  .commission-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+  .commission-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+  .assignment-badge {
+    transition: all 0.3s ease;
+  }
+  .assignment-badge:hover {
+    transform: scale(1.05);
+  }
+</style>
+
+<!-- Assign Commission Plan -->
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="container mx-auto px-4">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Assign Commission Plan</h1>
+          <p class="text-gray-600 mt-2">Assign commission plans to {{ user.full_name }} and manage custom rates</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="{{ url_for('commission_pricing.user_commissions') }}" 
+             class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to User Commissions
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        <!-- Left Column - User Info & Form -->
+        <div class="xl:col-span-2 space-y-6">
+          
+          <!-- User Information Card -->
+          <div class="user-card shadow-xl">
+            <div class="flex items-center space-x-4">
+              <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <span class="text-2xl font-bold text-white">{{ user.full_name[:2].upper() }}</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-white">{{ user.full_name }}</h3>
+                <p class="text-white/80">{{ user.role.value.replace('_', ' ').title() }}</p>
+                {% if user.business_name %}
+                <p class="text-white/60 text-sm">{{ user.business_name }}</p>
+                {% endif %}
+              </div>
+              <div class="text-right">
+                <div class="text-white/80 text-sm">User ID</div>
+                <div class="text-white font-mono text-xs">{{ user.user_code }}</div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20">
+              <div class="text-center">
+                <div class="text-white/80 text-sm">Email</div>
+                <div class="text-white text-sm">{{ user.email or 'Not set' }}</div>
+              </div>
+              <div class="text-center">
+                <div class="text-white/80 text-sm">Phone</div>
+                <div class="text-white text-sm">{{ user.phone }}</div>
+              </div>
+              <div class="text-center">
+                <div class="text-white/80 text-sm">Status</div>
+                <div class="text-white text-sm">
+                  {% if user.is_active %}
+                  <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>
+                  {% else %}
+                  <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Inactive</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignment Form -->
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="form-card">
+              <h3 class="text-xl font-bold text-gray-900 mb-6">
+                <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Assign New Commission Plan
+              </h3>
+              
+              <form method="POST" id="assignment-form">
+                <div class="space-y-6">
+                  
+                  <!-- Commission Plan Selection -->
+                  <div>
+                    <label for="commission_plan_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Select Commission Plan <span class="text-red-500">*</span>
+                    </label>
+                    <select id="commission_plan_id" name="commission_plan_id" required
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            onchange="updatePlanDetails()">
+                      <option value="">Choose a commission plan</option>
+                      {% for plan in available_plans %}
+                      <option value="{{ plan.id }}" 
+                              data-service-type="{{ plan.service_type.value }}"
+                              data-commission-mode="{{ plan.commission_mode.value }}"
+                              data-base-rate="{{ plan.base_rate }}"
+                              data-min-commission="{{ plan.min_commission or '' }}"
+                              data-max-commission="{{ plan.max_commission or '' }}">
+                        {{ plan.plan_name }} ({{ plan.service_type.value.replace('_', ' ').title() }})
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="text-sm text-gray-500 mt-1">Select from available active commission plans</p>
+                  </div>
+
+                  <!-- Plan Details Preview -->
+                  <div id="plan_details" class="bg-blue-50 rounded-lg p-4 hidden">
+                    <h4 class="font-semibold text-blue-900 mb-3">📋 Plan Details</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span class="text-blue-700">Service Type:</span>
+                        <span id="detail_service_type" class="font-medium text-blue-900 ml-2">-</span>
+                      </div>
+                      <div>
+                        <span class="text-blue-700">Commission Mode:</span>
+                        <span id="detail_commission_mode" class="font-medium text-blue-900 ml-2">-</span>
+                      </div>
+                      <div>
+                        <span class="text-blue-700">Base Rate:</span>
+                        <span id="detail_base_rate" class="font-medium text-blue-900 ml-2">-</span>
+                      </div>
+                      <div>
+                        <span class="text-blue-700">Range:</span>
+                        <span id="detail_range" class="font-medium text-blue-900 ml-2">-</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Custom Rate -->
+                  <div>
+                    <label for="custom_rate" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Custom Rate (Optional)
+                    </label>
+                    <input type="number" id="custom_rate" name="custom_rate" step="0.01" min="0"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Leave empty to use plan's base rate">
+                    <p class="text-sm text-gray-500 mt-1">Override the plan's base rate for this user specifically</p>
+                  </div>
+
+                  <!-- Commission Calculator -->
+                  <div id="commission_calculator" class="bg-green-50 rounded-lg p-4 hidden">
+                    <h4 class="font-semibold text-green-900 mb-3">💰 Commission Calculator</h4>
+                    <div class="flex items-center space-x-4">
+                      <div class="flex-1">
+                        <label class="block text-sm text-green-700 mb-1">Test Amount (₹)</label>
+                        <input type="number" id="test_amount" step="0.01" min="1" placeholder="1000"
+                               class="w-full px-3 py-2 border border-green-300 rounded-md text-sm"
+                               oninput="calculateCommission()">
+                      </div>
+                      <div class="flex-1">
+                        <label class="block text-sm text-green-700 mb-1">Commission</label>
+                        <div id="calculated_commission" class="px-3 py-2 bg-green-100 rounded-md text-sm font-medium text-green-900">
+                          ₹0.00
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Form Actions -->
+                  <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{{ url_for('commission_pricing.user_commissions') }}" 
+                       class="px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-all duration-200">
+                      Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg transition-all duration-200">
+                      <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Assign Commission Plan
+                    </button>
+                  </div>
+
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column - Current Assignments -->
+        <div class="xl:col-span-1">
+          <div class="sticky top-6 space-y-6">
+            
+            <!-- Current Assignments -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div class="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                <h3 class="text-lg font-bold text-gray-900">Current Assignments</h3>
+                <p class="text-sm text-gray-600">{{ current_assignments|length }} active assignments</p>
+              </div>
+              
+              <div class="p-6">
+                {% if current_assignments %}
+                <div class="space-y-4">
+                  {% for assignment, plan in current_assignments %}
+                  <div class="commission-card bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-3">
+                      <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900 text-sm">{{ plan.plan_name }}</h4>
+                        <p class="text-xs text-gray-600">{{ plan.service_type.value.replace('_', ' ').title() }}</p>
+                      </div>
+                      <div class="assignment-badge inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        Active
+                      </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span class="text-gray-500">Rate:</span>
+                        <div class="font-medium text-gray-900">
+                          {% if assignment.custom_rate %}
+                          {{ assignment.custom_rate }}{% if plan.commission_mode.value == 'PERCENTAGE' %}%{% else %}₹{% endif %}
+                          <span class="text-green-600">(Custom)</span>
+                          {% else %}
+                          {{ plan.base_rate }}{% if plan.commission_mode.value == 'PERCENTAGE' %}%{% else %}₹{% endif %}
+                          <span class="text-blue-600">(Default)</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div>
+                        <span class="text-gray-500">Assigned:</span>
+                        <div class="font-medium text-gray-900">{{ assignment.assigned_at.strftime('%d %b %Y') }}</div>
+                      </div>
+                    </div>
+                    
+                    <!-- Remove Assignment -->
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                      <form method="POST" action="{{ url_for('commission_pricing.remove_commission', user_id=user.id, assignment_id=assignment.id) }}" 
+                            style="display: inline-block;" onsubmit="return confirmRemoval('{{ plan.plan_name }}')">
+                        <button type="submit" 
+                                class="text-red-600 hover:text-red-800 text-xs font-medium">
+                          <svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                          Remove Assignment
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                  <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                  <p class="text-gray-500 text-sm">No commission plans assigned yet</p>
+                  <p class="text-gray-400 text-xs mt-1">Use the form to assign the first plan</p>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Assignment Tips -->
+            <div class="bg-gradient-to-br from-yellow-50 to-orange-100 rounded-xl p-6">
+              <h4 class="text-lg font-bold text-gray-900 mb-4">💡 Assignment Tips</h4>
+              <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Custom rates override the plan's base rate for this user</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Users can have multiple plans for different services</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Plan limits and conditions still apply to custom rates</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Changes take effect immediately for new transactions</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 4000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+// Update plan details when selection changes
+function updatePlanDetails() {
+  const select = document.getElementById('commission_plan_id');
+  const option = select.options[select.selectedIndex];
+  const detailsDiv = document.getElementById('plan_details');
+  const calculatorDiv = document.getElementById('commission_calculator');
+  
+  if (option.value) {
+    // Show plan details
+    document.getElementById('detail_service_type').textContent = option.dataset.serviceType.replace('_', ' ');
+    document.getElementById('detail_commission_mode').textContent = option.dataset.commissionMode.replace('_', ' ');
+    
+    const baseRate = parseFloat(option.dataset.baseRate);
+    const isPercentage = option.dataset.commissionMode === 'PERCENTAGE';
+    document.getElementById('detail_base_rate').textContent = baseRate + (isPercentage ? '%' : '₹');
+    
+    const minCommission = option.dataset.minCommission;
+    const maxCommission = option.dataset.maxCommission;
+    let range = '';
+    if (minCommission || maxCommission) {
+      range = '₹' + (minCommission || 0) + ' - ₹' + (maxCommission || '∞');
+    } else {
+      range = 'No limits';
+    }
+    document.getElementById('detail_range').textContent = range;
+    
+    detailsDiv.classList.remove('hidden');
+    calculatorDiv.classList.remove('hidden');
+    
+    // Calculate initial commission
+    calculateCommission();
+  } else {
+    detailsDiv.classList.add('hidden');
+    calculatorDiv.classList.add('hidden');
+  }
+}
+
+// Calculate commission for test amount
+function calculateCommission() {
+  const select = document.getElementById('commission_plan_id');
+  const option = select.options[select.selectedIndex];
+  const testAmount = parseFloat(document.getElementById('test_amount').value) || 1000;
+  const customRate = parseFloat(document.getElementById('custom_rate').value);
+  
+  if (option.value) {
+    let rate = customRate || parseFloat(option.dataset.baseRate);
+    const isPercentage = option.dataset.commissionMode === 'PERCENTAGE';
+    
+    let commission = 0;
+    if (isPercentage) {
+      commission = testAmount * (rate / 100);
+    } else {
+      commission = rate; // Flat rate
+    }
+    
+    // Apply min/max limits
+    const minCommission = parseFloat(option.dataset.minCommission);
+    const maxCommission = parseFloat(option.dataset.maxCommission);
+    
+    if (minCommission && commission < minCommission) {
+      commission = minCommission;
+    }
+    if (maxCommission && commission > maxCommission) {
+      commission = maxCommission;
+    }
+    
+    document.getElementById('calculated_commission').textContent = '₹' + commission.toFixed(2);
+    
+    // Update test amount display
+    document.getElementById('test_amount').value = testAmount;
+  }
+}
+
+// Custom rate input handler
+document.getElementById('custom_rate').addEventListener('input', calculateCommission);
+document.getElementById('test_amount').addEventListener('input', calculateCommission);
+
+// Form submission confirmation
+document.getElementById('assignment-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const select = document.getElementById('commission_plan_id');
+  const option = select.options[select.selectedIndex];
+  const customRate = document.getElementById('custom_rate').value;
+  
+  if (!option.value) {
+    Toast.fire({
+      icon: 'error',
+      title: 'Please select a commission plan'
+    });
+    return;
+  }
+  
+  let rateText = '';
+  if (customRate) {
+    const isPercentage = option.dataset.commissionMode === 'PERCENTAGE';
+    rateText = `Custom rate: ${customRate}${isPercentage ? '%' : '₹'}`;
+  } else {
+    rateText = 'Using plan\'s default rate';
+  }
+  
+  Swal.fire({
+    title: 'Assign Commission Plan?',
+    html: `
+      <div class="text-left space-y-2">
+        <p><strong>User:</strong> {{ user.full_name }}</p>
+        <p><strong>Plan:</strong> ${option.text}</p>
+        <p><strong>Rate:</strong> ${rateText}</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#2563eb',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, assign it!',
+    cancelButtonText: 'Review again',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Show loading
+      Swal.fire({
+        title: 'Assigning...',
+        text: 'Please wait while we assign the commission plan',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      });
+      
+      this.submit();
+    }
+  });
+});
+
+// Confirm removal
+function confirmRemoval(planName) {
+  event.preventDefault();
+  const form = event.target;
+  
+  Swal.fire({
+    title: 'Remove Commission Assignment?',
+    text: `Are you sure you want to remove "${planName}" from {{ user.full_name }}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, remove it!',
+    cancelButtonText: 'Keep it',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      form.submit();
+    }
+  });
+  
+  return false;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Set initial test amount
+  document.getElementById('test_amount').value = 1000;
+  
+  console.log('Commission assignment page initialized successfully');
+});
+</script>
+
+{% endblock %}

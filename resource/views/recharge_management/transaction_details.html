@@ -1,0 +1,346 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Transaction Details{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    <!-- Back Button -->
+    <div class="flex items-center space-x-4">
+        <a href="{{ url_for('recharge_management.transactions') }}" 
+           class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-semibold transition-all duration-200 border border-gray-200">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Transactions
+        </a>
+        <div class="flex-1">
+            <nav class="text-sm text-gray-500">
+                <a href="{{ url_for('recharge_management.index') }}" class="hover:text-primary-600">Dashboard</a>
+                <span class="mx-2">›</span>
+                <a href="{{ url_for('recharge_management.transactions') }}" class="hover:text-primary-600">Transactions</a>
+                <span class="mx-2">›</span>
+                <span class="text-gray-900 font-semibold">{{ transaction.transaction_id }}</span>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Transaction Status Card -->
+    <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+        <div class="bg-gradient-to-r 
+                  {{ 'from-green-500 to-green-600' if transaction.status.value == 'SUCCESS' 
+                     else 'from-yellow-500 to-yellow-600' if transaction.status.value == 'PROCESSING' 
+                     else 'from-red-500 to-red-600' }} p-8 text-white">
+            <div class="text-center">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-2xl">
+                    <i class="fas fa-{{ 'check-circle' if transaction.status.value == 'SUCCESS' 
+                                       else 'clock' if transaction.status.value == 'PROCESSING' 
+                                       else 'times-circle' }} text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold mb-2">
+                    {{ 'Transaction Successful!' if transaction.status.value == 'SUCCESS' 
+                       else 'Transaction Processing' if transaction.status.value == 'PROCESSING' 
+                       else 'Transaction Failed' }}
+                </h1>
+                <p class="text-xl opacity-90">₹{{ "{:,.2f}".format(transaction.amount) }}</p>
+                <p class="opacity-75 mt-2">{{ transaction.service_type.value.replace('_', ' ').title() }}</p>
+            </div>
+        </div>
+
+        <!-- Transaction Details Grid -->
+        <div class="p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Left Column -->
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-info-circle mr-3 text-primary-600"></i>Transaction Information
+                        </h3>
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 space-y-4 border border-gray-200">
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Transaction ID:</span>
+                                <span class="font-bold text-gray-900 font-mono">{{ transaction.transaction_id }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Service Type:</span>
+                                <span class="font-bold text-gray-900">{{ transaction.service_type.value.replace('_', ' ').title() }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Amount:</span>
+                                <span class="font-bold text-2xl text-gray-900">₹{{ transaction.amount }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Status:</span>
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-sm
+                                           {{ 'bg-green-100 text-green-800 border border-green-200' if transaction.status.value == 'SUCCESS' 
+                                              else 'bg-yellow-100 text-yellow-800 border border-yellow-200' if transaction.status.value == 'PROCESSING' 
+                                              else 'bg-red-100 text-red-800 border border-red-200' }}">
+                                    <i class="fas fa-{{ 'check' if transaction.status.value == 'SUCCESS' 
+                                                       else 'clock' if transaction.status.value == 'PROCESSING' 
+                                                       else 'times' }} mr-2"></i>
+                                    {{ transaction.status.value.title() }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Date & Time:</span>
+                                <div class="text-right">
+                                    <p class="font-bold text-gray-900">{{ transaction.created_at.strftime('%d %b %Y') }}</p>
+                                    <p class="text-sm text-gray-500">{{ transaction.created_at.strftime('%I:%M %p') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if recharge_details %}
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-mobile-alt mr-3 text-green-600"></i>Recharge Details
+                        </h3>
+                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 space-y-4 border border-green-200">
+                            {% if recharge_details.mobile_number %}
+                            <div class="flex justify-between items-center py-3 border-b border-green-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Mobile Number:</span>
+                                <span class="font-bold text-gray-900 font-mono">{{ recharge_details.mobile_number }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between items-center py-3 border-b border-green-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Operator:</span>
+                                <span class="font-bold text-gray-900">{{ recharge_details.operator_name }}</span>
+                            </div>
+                            {% if recharge_details.circle %}
+                            <div class="flex justify-between items-center py-3 border-b border-green-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Circle:</span>
+                                <span class="font-bold text-gray-900">{{ recharge_details.circle }}</span>
+                            </div>
+                            {% endif %}
+                            {% if recharge_details.plan_description %}
+                            <div class="flex justify-between items-start py-3 border-b border-green-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Plan Details:</span>
+                                <span class="font-bold text-gray-900 text-right max-w-xs">{{ recharge_details.plan_description }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-user mr-3 text-blue-600"></i>Customer Details
+                        </h3>
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 space-y-4 border border-blue-200">
+                            {% for key, value in transaction.customer_details.items() %}
+                            <div class="flex justify-between items-center py-3 border-b border-blue-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium capitalize">{{ key.replace('_', ' ') }}:</span>
+                                <span class="font-bold text-gray-900">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if transaction.service_details %}
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-cogs mr-3 text-purple-600"></i>Service Details
+                        </h3>
+                        <div class="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-6 space-y-4 border border-purple-200">
+                            {% for key, value in transaction.service_details.items() if value %}
+                            <div class="flex justify-between items-start py-3 border-b border-purple-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium capitalize">{{ key.replace('_', ' ') }}:</span>
+                                <span class="font-bold text-gray-900 text-right max-w-xs">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- System Details -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-server mr-3 text-gray-600"></i>System Details
+                        </h3>
+                        <div class="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-6 space-y-4 border border-gray-200">
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Internal ID:</span>
+                                <span class="font-bold text-gray-900 font-mono">#{{ transaction.id }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">IP Address:</span>
+                                <span class="font-bold text-gray-900 font-mono">{{ transaction.ip_address or 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Created:</span>
+                                <span class="font-bold text-gray-900">{{ transaction.created_at.strftime('%d %b %Y at %I:%M %p') }}</span>
+                            </div>
+                            {% if transaction.updated_at and transaction.updated_at != transaction.created_at %}
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+                                <span class="text-gray-600 font-medium">Updated:</span>
+                                <span class="font-bold text-gray-900">{{ transaction.updated_at.strftime('%d %b %Y at %I:%M %p') }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-tools mr-3 text-indigo-600"></i>Actions
+        </h3>
+        <div class="flex flex-wrap gap-4">
+            <button onclick="printReceipt()" 
+                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg">
+                <i class="fas fa-print mr-2"></i>Print Receipt
+            </button>
+            <button onclick="downloadReceipt()" 
+                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg">
+                <i class="fas fa-download mr-2"></i>Download PDF
+            </button>
+            <button onclick="shareReceipt()" 
+                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg">
+                <i class="fas fa-share-alt mr-2"></i>Share Receipt
+            </button>
+            {% if transaction.status.value == 'FAILED' %}
+            <a href="{{ url_for('recharge_management.mobile_recharge') }}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg">
+                <i class="fas fa-redo mr-2"></i>Retry Transaction
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Support Section -->
+    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl p-8 border border-indigo-200">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="bg-indigo-100 p-4 rounded-2xl">
+                    <i class="fas fa-headset text-indigo-600 text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-indigo-900">Need Help?</h3>
+                    <p class="text-indigo-700">Our support team is here to help you with any transaction-related queries</p>
+                    <div class="mt-2 flex items-center space-x-6 text-sm text-indigo-600">
+                        <span><i class="fas fa-phone mr-1"></i>+91 1234567890</span>
+                        <span><i class="fas fa-envelope mr-1"></i>support@webpayx.com</span>
+                        <span><i class="fas fa-clock mr-1"></i>24/7 Available</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="contactSupport()" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg">
+                <i class="fas fa-comments mr-2"></i>Contact Support
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function printReceipt() {
+    window.print();
+}
+
+function downloadReceipt() {
+    // Generate PDF receipt
+    const receiptContent = `
+        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; padding: 40px;">
+            <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #3B82F6; padding-bottom: 20px;">
+                <h1 style="color: #3B82F6; font-size: 28px; margin: 0;">WebPayX</h1>
+                <p style="color: #666; margin: 5px 0 0 0;">Digital Payment Receipt</p>
+            </div>
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="margin: 0 0 20px 0; color: #333;">Transaction Details</h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #ddd;"><strong>Transaction ID:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #ddd; text-align: right;">{{ transaction.transaction_id }}</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #ddd;"><strong>Service:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #ddd; text-align: right;">{{ transaction.service_type.value.replace('_', ' ').title() }}</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #ddd;"><strong>Amount:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #ddd; text-align: right; font-size: 18px; color: #059669;"><strong>₹{{ transaction.amount }}</strong></td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #ddd;"><strong>Status:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #ddd; text-align: right;">{{ transaction.status.value.title() }}</td></tr>
+                    <tr><td style="padding: 10px 0;"><strong>Date:</strong></td><td style="padding: 10px 0; text-align: right;">{{ transaction.created_at.strftime('%d %b %Y, %I:%M %p') }}</td></tr>
+                </table>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p>Thank you for using WebPayX</p>
+                <p>For support: support@webpayx.com | +91 1234567890</p>
+            </div>
+        </div>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Transaction Receipt - ${transaction.transaction_id}</title>
+                <style>
+                    body { margin: 0; padding: 20px; }
+                    @media print { 
+                        body { margin: 0; padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>${receiptContent}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function shareReceipt() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Transaction Receipt',
+            text: 'Transaction ID: {{ transaction.transaction_id }} - Amount: ₹{{ transaction.amount }}',
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        // Copy to clipboard fallback
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            Swal.fire({
+                title: 'Link Copied!',
+                text: 'Transaction link has been copied to clipboard',
+                icon: 'success',
+                confirmButtonColor: '#3B82F6'
+            });
+        });
+    }
+}
+
+function contactSupport() {
+    Swal.fire({
+        title: 'Contact Support',
+        html: `
+            <div class="text-left space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</p>
+                    <p><strong>Amount:</strong> ₹{{ transaction.amount }}</p>
+                    <p><strong>Status:</strong> {{ transaction.status.value.title() }}</p>
+                </div>
+                <div class="space-y-3">
+                    <p><strong>Contact Options:</strong></p>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-phone text-green-600"></i>
+                        <span>Phone: +91 1234567890</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-envelope text-blue-600"></i>
+                        <span>Email: support@webpayx.com</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-comments text-purple-600"></i>
+                        <span>Live Chat: Available 24/7</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Call Support',
+        cancelButtonText: 'Close',
+        confirmButtonColor: '#10B981'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.open('tel:+911234567890');
+        }
+    });
+}
+</script>
+{% endblock %}

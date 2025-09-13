@@ -71,7 +71,7 @@ def init_database_app():
                     user_code='SA000001',
                     username='superadmin',
                     email='admin@example.com',
-                    phone='1234567890',
+                    phone='9860303985',
                     role=UserRoleType.SUPER_ADMIN,
                     full_name='Super Administrator',
                     kyc_status=KYCStatus.APPROVED,

@@ -1,0 +1,409 @@
+{% extends 'layout/layout.html' %}
+
+{% block content %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .form-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .input-group {
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+  }
+  .input-group:hover {
+    transform: translateY(-2px);
+  }
+  .calc-preview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+  }
+  .price-display {
+    font-size: 1.25rem;
+    font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+</style>
+
+<!-- Create Service Pricing -->
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="container mx-auto px-4">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Create Service Pricing</h1>
+          <p class="text-gray-600 mt-2">Configure pricing for a new service and provider combination</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="{{ url_for('commission_pricing.service_pricing') }}" 
+             class="btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Pricing
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Form Section -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="form-card">
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Service Pricing Configuration</h3>
+              <p class="text-gray-600 mb-6">Fill in the details to create a new pricing configuration</p>
+              
+              <form method="POST" id="pricing-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  <!-- Service Type -->
+                  <div class="input-group">
+                    <label for="service_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Service Type <span class="text-red-500">*</span>
+                    </label>
+                    <select id="service_type" name="service_type" required
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                      <option value="">Select a service type</option>
+                      {% for service in service_types %}
+                      <option value="{{ service.value }}">
+                        {{ service.value.replace('_', ' ').title() }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="text-sm text-gray-500 mt-1">Choose the type of service for pricing</p>
+                  </div>
+
+                  <!-- Provider -->
+                  <div class="input-group">
+                    <label for="provider" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Provider Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="provider" name="provider" required
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Enter provider name (e.g., Jio, Airtel, BSNL)">
+                    <p class="text-sm text-gray-500 mt-1">Name of the service provider</p>
+                  </div>
+
+                  <!-- Base Cost -->
+                  <div class="input-group">
+                    <label for="base_cost" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Base Cost (₹) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="base_cost" name="base_cost" step="0.01" min="0" required
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="0.00" oninput="calculateFinalCost()">
+                    <p class="text-sm text-gray-500 mt-1">Base cost per transaction or unit</p>
+                  </div>
+
+                  <!-- Markup Percentage -->
+                  <div class="input-group">
+                    <label for="markup" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Markup Percentage (%)
+                    </label>
+                    <input type="number" id="markup" name="markup" step="0.01" min="0"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="0.00" oninput="calculateFinalCost()">
+                    <p class="text-sm text-gray-500 mt-1">Additional markup percentage over base cost</p>
+                  </div>
+
+                  <!-- Minimum Amount -->
+                  <div class="input-group">
+                    <label for="min_amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Minimum Amount (₹)
+                    </label>
+                    <input type="number" id="min_amount" name="min_amount" step="0.01" min="0"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="10.00">
+                    <p class="text-sm text-gray-500 mt-1">Minimum transaction amount (optional)</p>
+                  </div>
+
+                  <!-- Maximum Amount -->
+                  <div class="input-group">
+                    <label for="max_amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Maximum Amount (₹)
+                    </label>
+                    <input type="number" id="max_amount" name="max_amount" step="0.01" min="0"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Leave empty for no limit">
+                    <p class="text-sm text-gray-500 mt-1">Maximum transaction amount (optional)</p>
+                  </div>
+
+                  <!-- Effective From -->
+                  <div class="input-group">
+                    <label for="effective_from" class="block text-sm font-semibold text-gray-700 mb-2">
+                      Effective From
+                    </label>
+                    <input type="date" id="effective_from" name="effective_from" 
+                           value="{{ now.strftime('%Y-%m-%d') }}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <p class="text-sm text-gray-500 mt-1">Date from which this pricing becomes effective</p>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="input-group flex items-center">
+                    <div class="mt-8">
+                      <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" checked
+                               class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-sm font-semibold text-gray-700">Active Status</span>
+                      </label>
+                      <p class="mt-2 text-sm text-gray-500">Enable this pricing configuration immediately</p>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+                  <a href="{{ url_for('commission_pricing.service_pricing') }}" 
+                     class="px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-all duration-200">
+                    Cancel
+                  </a>
+                  <button type="submit" 
+                          class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-medium shadow-lg transition-all duration-200">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Create Pricing Configuration
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div class="lg:col-span-1">
+          <div class="sticky top-6">
+            
+            <!-- Cost Calculator Preview -->
+            <div id="cost_calculator" class="calc-preview mb-6" style="display: none;">
+              <h4 class="text-lg font-bold mb-4">💰 Cost Calculator Preview</h4>
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-white/80">Base Cost:</span>
+                  <span id="calc_base_cost" class="price-display">₹0.00</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-white/80">Markup:</span>
+                  <span id="calc_markup" class="price-display text-yellow-300">0%</span>
+                </div>
+                <hr class="border-white/30">
+                <div class="flex justify-between items-center">
+                  <span class="text-white/80 font-semibold">Final Cost:</span>
+                  <span id="calc_final_cost" class="price-display text-green-300 text-xl">₹0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6">
+              <h4 class="text-lg font-bold text-gray-900 mb-4">💡 Quick Tips</h4>
+              <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Base cost is the fundamental cost per transaction</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Markup percentage adds profit margin over base cost</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Set limits to control transaction amounts</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Effective date controls when pricing becomes active</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Service Type Info -->
+            <div id="service_info" class="bg-white rounded-xl p-6 shadow-lg mt-6" style="display: none;">
+              <h4 class="text-lg font-bold text-gray-900 mb-3">🔍 Service Information</h4>
+              <div id="service_description" class="text-gray-700">
+                <!-- Dynamic content based on selected service -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 4000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+// Real-time cost calculation
+function calculateFinalCost() {
+  const baseCost = parseFloat(document.getElementById('base_cost').value) || 0;
+  const markup = parseFloat(document.getElementById('markup').value) || 0;
+  
+  if (baseCost > 0) {
+    const finalCost = baseCost * (1 + markup / 100);
+    
+    document.getElementById('calc_base_cost').textContent = '₹' + baseCost.toFixed(2);
+    document.getElementById('calc_markup').textContent = markup.toFixed(2) + '%';
+    document.getElementById('calc_final_cost').textContent = '₹' + finalCost.toFixed(2);
+    
+    document.getElementById('cost_calculator').style.display = 'block';
+  } else {
+    document.getElementById('cost_calculator').style.display = 'none';
+  }
+}
+
+// Service type information
+const serviceInfo = {
+  'MOBILE_RECHARGE': 'Mobile prepaid and postpaid recharge services for all operators',
+  'DTH_RECHARGE': 'Direct-to-Home television recharge and subscription services',
+  'BILL_PAYMENT': 'Utility bill payments including electricity, water, gas, and telecom',
+  'MONEY_TRANSFER': 'Domestic money transfer services through IMPS, NEFT, and UPI',
+  'AEPS': 'Aadhaar Enabled Payment System for banking services',
+  'PAYMENT_GATEWAY': 'Online payment processing and gateway services',
+  'WALLET_TOPUP': 'Digital wallet recharge and top-up services',
+  'SMS_SERVICE': 'SMS notification and messaging services',
+  'OTP_SERVICE': 'One-Time Password generation and delivery services'
+};
+
+// Update service information on selection
+document.getElementById('service_type').addEventListener('change', function() {
+  const selectedService = this.value;
+  const infoDiv = document.getElementById('service_info');
+  const descDiv = document.getElementById('service_description');
+  
+  if (selectedService && serviceInfo[selectedService]) {
+    descDiv.textContent = serviceInfo[selectedService];
+    infoDiv.style.display = 'block';
+  } else {
+    infoDiv.style.display = 'none';
+  }
+});
+
+// Real-time calculation triggers
+document.getElementById('base_cost').addEventListener('input', calculateFinalCost);
+document.getElementById('markup').addEventListener('input', calculateFinalCost);
+
+// Form submission with confirmation
+document.getElementById('pricing-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const serviceType = document.getElementById('service_type').options[document.getElementById('service_type').selectedIndex].text;
+  const provider = document.getElementById('provider').value;
+  const baseCost = document.getElementById('base_cost').value;
+  
+  if (!serviceType || !provider || !baseCost) {
+    Toast.fire({
+      icon: 'error',
+      title: 'Please fill in all required fields'
+    });
+    return;
+  }
+  
+  Swal.fire({
+    title: 'Create Service Pricing?',
+    html: `
+      <div class="text-left space-y-2">
+        <p><strong>Service:</strong> ${serviceType}</p>
+        <p><strong>Provider:</strong> ${provider}</p>
+        <p><strong>Base Cost:</strong> ₹${baseCost}</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#10b981',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, create it!',
+    cancelButtonText: 'Review again',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Show loading
+      Swal.fire({
+        title: 'Creating...',
+        text: 'Please wait while we create the pricing configuration',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      });
+      
+      this.submit();
+    }
+  });
+});
+
+// Auto-focus on provider field after service selection
+document.getElementById('service_type').addEventListener('change', function() {
+  if (this.value) {
+    setTimeout(() => {
+      document.getElementById('provider').focus();
+    }, 100);
+  }
+});
+
+// Input validation and user experience enhancements
+document.addEventListener('DOMContentLoaded', function() {
+  // Add hover effects to form groups
+  const inputGroups = document.querySelectorAll('.input-group');
+  inputGroups.forEach(group => {
+    group.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+    });
+    
+    group.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+  
+  // Initialize tooltips or additional UI enhancements here
+  console.log('Service Pricing Form initialized successfully');
+});
+</script>
+
+{% endblock %}

@@ -11,13 +11,271 @@
     </div>
     <div class="sidebar-menu-area">
         <ul class="sidebar-menu" id="sidebar-menu">
+            
             <!-- Dashboard - Available to all roles -->
             <li>
                 <a href="{{ url_for('dashboard.index') }}">
-                    <iconify-icon icon="mage:email" class="menu-icon"></iconify-icon>
+                    <iconify-icon icon="material-symbols:dashboard" class="menu-icon"></iconify-icon>
                     <span>Dashboard</span>
                 </a>
             </li>
+
+            <!-- Wallet Management - Available to all roles with different access levels -->
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:account-balance-wallet" class="menu-icon"></iconify-icon>
+                    <span>Wallet</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('wallet_management.dashboard') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Wallet Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('wallet_management.transactions') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Transaction History
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['MASTER_DISTRIBUTOR', 'DISTRIBUTOR', 'RETAILER'] %}
+                    <li>
+                        <a href="{{ url_for('wallet_management.topup') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Request Top-up
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('wallet_management.topup_status') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Top-up Status
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+                    <li>
+                        <a href="{{ url_for('wallet_management.pending_approvals') }}">
+                            <i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Pending Approvals
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('wallet_management.all_transactions') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> All Transactions
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('wallet_management.limits') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Limits & Usage
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Recharge Services - Available to all roles -->
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:smartphone" class="menu-icon"></iconify-icon>
+                    <span>Recharge Services</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('recharge_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('recharge_management.mobile_recharge') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Mobile Recharge
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('recharge_management.dth_recharge') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> DTH Recharge
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('recharge_management.bill_payment') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Bill Payment
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('recharge_management.transactions') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Transaction History
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- User Management - Available to all roles with hierarchy-based access -->
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:group" class="menu-icon"></iconify-icon>
+                    <span>User Management</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('user_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user_management.user_list') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> User List
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user_management.user_hierarchy') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> User Hierarchy
+                        </a>
+                    </li>
+                    {% if current_user.role.name != 'RETAILER' %}
+                    <li>
+                        <a href="{{ url_for('user_management.create_user') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Create User
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('user_management.bulk_operations') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Bulk Operations
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </li>
+
+            <!-- Commission & Pricing - Only for ADMIN and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:payments" class="menu-icon"></iconify-icon>
+                    <span>Commission & Pricing</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('commission_pricing.dashboard') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.commission_plans') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Commission Plans
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.user_commissions') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> User Commissions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.service_pricing') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Service Pricing
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('commission_pricing.commission_summary_report') }}">
+                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Commission Reports
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+            <!-- Payment Gateway Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:credit-card" class="menu-icon"></iconify-icon>
+                    <span>Payment Gateways</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.gateways_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Manage Gateways
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.add_gateway_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Gateway
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('payment_gateway_management.webhooks_page') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Webhooks
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+
+            <!-- Bank Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:account-balance" class="menu-icon"></iconify-icon>
+                    <span>Bank Management</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('bank_management.index') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('bank_management.bank_accounts_page') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Bank Accounts
+                        </a>
+                    </li>
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+                    <li>
+                        <a href="{{ url_for('bank_management.add_account_page') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Account
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+
+            <!-- Permissions Management - Only for SUPER_ADMIN and ADMIN -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="material-symbols:security" class="menu-icon"></iconify-icon>
+                    <span>Permissions</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ url_for('permissions_management.list_permissions') }}">
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> All Permissions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('permissions_management.role_permissions') }}">
+                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Role Permissions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('permissions_management.user_permissions') }}">
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> User Permissions
+                        </a>
+                    </li>
+                    {% if current_user.role.name == 'SUPER_ADMIN' %}
+                    <li>
+                        <a href="{{ url_for('permissions_management.create_permission') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Create Permission
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
 
             <!-- Self Services - Available to all roles -->
             <li class="dropdown">
@@ -94,8 +352,8 @@
                 </ul>
             </li>
 
-            <!-- Member Manager - Only for ADMIN, WHITE_LABEL, SUPER_ADMIN, MASTER_DISTRIBUTOR -->
-            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL', 'MASTER_DISTRIBUTOR'] %}
+            <!-- Member Manager - Only for ADMIN, WHITE_LABEL, SUPER_ADMIN, MASTER_DISTRIBUTOR, DISTRIBUTOR -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL', 'MASTER_DISTRIBUTOR', 'DISTRIBUTOR'] %}
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="hugeicons:bitcoin-circle" class="menu-icon"></iconify-icon>
@@ -107,7 +365,7 @@
                             <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Retailer
                         </a>
                     </li>
-                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL', 'MASTER_DISTRIBUTOR'] %}
                     <li>
                         <a href="{{ url_for('membermanager.distributor') }}">
                             <i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Distributor
@@ -123,8 +381,8 @@
             </li>
             {% endif %}
 
-            <!-- Member Report - Only for ADMIN, WHITE_LABEL, SUPER_ADMIN, MASTER_DISTRIBUTOR -->
-            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL', 'MASTER_DISTRIBUTOR'] %}
+            <!-- Member Report - Only for ADMIN, WHITE_LABEL, SUPER_ADMIN, MASTER_DISTRIBUTOR, DISTRIBUTOR -->
+            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL', 'MASTER_DISTRIBUTOR', 'DISTRIBUTOR'] %}
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="hugeicons:ai-brain-03" class="menu-icon"></iconify-icon>
@@ -165,88 +423,17 @@
             </li>
             {% endif %}
 
-            <!-- Commission & Pricing - Only for ADMIN and SUPER_ADMIN -->
-            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
-            <li class="dropdown">
-                <a href="javascript:void(0)">
-                    <iconify-icon icon="material-symbols:payments" class="menu-icon"></iconify-icon>
-                    <span>Commission & Pricing</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ url_for('commission_pricing.dashboard') }}">
-                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('commission_pricing.commission_plans') }}">
-                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Commission Plans
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('commission_pricing.user_commissions') }}">
-                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> User Commissions
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('commission_pricing.service_pricing') }}">
-                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Service Pricing
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('commission_pricing.commission_summary_report') }}">
-                            <i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Commission Reports
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            {% endif %}
-
-            <!-- Payment Gateway Management - Only for ADMIN, WHITE_LABEL, and SUPER_ADMIN -->
-            {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
-            <li class="dropdown">
-                <a href="javascript:void(0)">
-                    <iconify-icon icon="material-symbols:account-balance" class="menu-icon"></iconify-icon>
-                    <span>Payment Gateways</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ url_for('payment_gateway_management.index') }}">
-                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('payment_gateway_management.gateways_page') }}">
-                            <i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Manage Gateways
-                        </a>
-                    </li>
-                    {% if current_user.role.name in ['SUPER_ADMIN', 'ADMIN'] %}
-                    <li>
-                        <a href="{{ url_for('payment_gateway_management.add_gateway_page') }}">
-                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Add Gateway
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li>
-                        <a href="{{ url_for('payment_gateway_management.webhooks_page') }}">
-                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Webhooks
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            {% endif %}
-
-            <!-- System Configuration - Only for SUPER_ADMIN -->
+            <!-- API Management - Only for SUPER_ADMIN -->
             {% if current_user.role.name == 'SUPER_ADMIN' %}
             <li class="dropdown">
                 <a href="javascript:void(0)">
-                    <iconify-icon icon="material-symbols:settings" class="menu-icon"></iconify-icon>
-                    <span>System Configuration</span>
+                    <iconify-icon icon="material-symbols:api" class="menu-icon"></iconify-icon>
+                    <span>API Management</span>
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
                         <a href="{{ url_for('api_management.dashboard') }}">
-                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> API Management
+                            <i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Dashboard
                         </a>
                     </li>
                     <li>
@@ -255,8 +442,13 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ url_for('api_management.create_configuration') }}">
+                            <i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Create Configuration
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ url_for('api_management.request_logs') }}">
-                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> API Request Logs
+                            <i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Request Logs
                         </a>
                     </li>
                 </ul>
@@ -290,7 +482,7 @@
             </li>
             {% endif %}
 
-            <!-- Wallet Top-up - Available to all roles -->
+            <!-- Legacy Routes - Keep for backward compatibility -->
             <li>
                 <a href="{{ url_for('wallettopup.index') }}">
                     <iconify-icon icon="bi:chat-dots" class="menu-icon"></iconify-icon>
@@ -298,7 +490,6 @@
                 </a>
             </li>
 
-            <!-- Profile Setting - Available to all roles -->
             <li>
                 <a href="{{ url_for('profilesetting.index') }}">
                     <iconify-icon icon="ic:baseline-group" class="menu-icon"></iconify-icon>
@@ -306,7 +497,6 @@
                 </a>
             </li>
 
-            <!-- Complaint - Available to all roles -->
             <li>
                 <a href="{{ url_for('complaint.index') }}">
                     <iconify-icon icon="material-symbols:map-outline" class="menu-icon"></iconify-icon>
@@ -314,7 +504,6 @@
                 </a>
             </li>
 
-            <!-- Privacy Policy - Available to all roles -->
             <li>
                 <a href="{{ url_for('privacypolicy.index') }}">
                     <iconify-icon icon="solar:gallery-wide-linear" class="menu-icon"></iconify-icon>
@@ -322,7 +511,6 @@
                 </a>
             </li>
 
-            <!-- Terms & Condition - Available to all roles -->
             <li>
                 <a href="{{ url_for('terms_condition.index') }}">
                     <iconify-icon icon="hugeicons:money-send-square" class="menu-icon"></iconify-icon>
@@ -332,7 +520,7 @@
 
             <!-- Logout - Available to all roles -->
             <li>
-                <a href="{{ url_for('logout.logout_user') }}" onclick="return confirm('Are you sure you want to logout?')">
+                <a href="{{ url_for('authentication.logout_page') }}" onclick="return confirm('Are you sure you want to logout?')">
                     <iconify-icon icon="mdi:logout" class="menu-icon"></iconify-icon>
                     <span>Logout</span>
                 </a>

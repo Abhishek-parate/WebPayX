@@ -1,0 +1,207 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Edit Payment Gateway{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                    <p class="text-gray-600 mt-2">{{ subtitle }}</p>
+                </div>
+                <a href="{{ url_for('payment_gateway_management.gateways_page') }}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Back to Gateways
+                </a>
+            </div>
+        </div>
+
+        <!-- Edit Gateway Form -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Gateway Configuration</h2>
+            </div>
+            
+            <form method="POST" class="p-6 space-y-6">
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gateway Name</label>
+                        <input type="text" name="gateway_name" value="{{ gateway.gateway_name }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gateway Type</label>
+                        <select name="gateway_type" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                            <option value="{{ gateway.gateway_type.value }}">{{ gateway.gateway_type.value }}</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Gateway type cannot be changed after creation</p>
+                    </div>
+                </div>
+
+                <!-- API Configuration -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Merchant ID</label>
+                        <input type="text" name="merchant_id" value="{{ gateway.merchant_id }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                        <input type="text" name="api_key" value="{{ gateway.api_key }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Secret</label>
+                        <input type="password" name="api_secret" value="{{ gateway.api_secret }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Webhook Secret</label>
+                        <input type="text" name="webhook_secret" value="{{ gateway.webhook_secret }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- URLs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Callback URL</label>
+                        <input type="url" name="callback_url" value="{{ gateway.callback_url or '' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+                        <input type="url" name="webhook_url" value="{{ gateway.webhook_url or '' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Configuration -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="ACTIVE" {{ 'selected' if gateway.status == 'ACTIVE' else '' }}>Active</option>
+                            <option value="INACTIVE" {{ 'selected' if gateway.status == 'INACTIVE' else '' }}>Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                        <input type="number" name="priority" value="{{ gateway.priority }}" min="1" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Settlement Time (Hours)</label>
+                        <input type="number" name="settlement_time_hours" value="{{ gateway.settlement_time_hours }}" min="0" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Amount Limits -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Amount (₹)</label>
+                        <input type="number" name="min_amount" value="{{ gateway.min_amount }}" min="0" step="0.01" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Amount (₹)</label>
+                        <input type="number" name="max_amount" value="{{ gateway.max_amount }}" min="0" step="0.01" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Processing Fees -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Processing Fee (%)</label>
+                        <input type="number" name="processing_fee_percentage" value="{{ gateway.processing_fee_percentage }}" 
+                               min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fixed Processing Fee (₹)</label>
+                        <input type="number" name="processing_fee_fixed" value="{{ gateway.processing_fee_fixed }}" 
+                               min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Supported Payment Methods -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Supported Payment Methods</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {% set methods = ['card', 'netbanking', 'wallet', 'upi', 'emi'] %}
+                        {% for method in methods %}
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="supported_methods" value="{{ method }}" 
+                                   {{ 'checked' if method in gateway.supported_methods else '' }}
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700 capitalize">{{ method }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Advanced Settings</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rate Limit (per minute)</label>
+                            <input type="number" name="rate_limit_per_minute" value="{{ gateway.rate_limit_per_minute }}" 
+                                   min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="sandbox_mode" {{ 'checked' if gateway.sandbox_mode else '' }}
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Enable Sandbox Mode</span>
+                            </label>
+                            
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="auto_settlement" {{ 'checked' if gateway.auto_settlement else '' }}
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Enable Auto Settlement</span>
+                            </label>
+                            
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="is_default" {{ 'checked' if gateway.is_default else '' }}
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Set as Default Gateway</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 pt-6 border-t">
+                    <a href="{{ url_for('payment_gateway_management.gateway_details_page', gateway_id=gateway.id) }}" 
+                       class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Update Gateway
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

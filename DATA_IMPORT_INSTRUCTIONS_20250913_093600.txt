@@ -1,0 +1,126 @@
+
+📊 Data-Only Import Instructions for phpPgAdmin
+===============================================
+
+Database: saas_platform
+Export Date: 2025-09-13 09:36:00
+Format: INSERT statements
+Files to Import: 1
+
+⚠️  IMPORTANT: DATA-ONLY IMPORT
+===============================================
+This export contains ONLY data (INSERT/COPY statements).
+The target database MUST already have the correct table structure!
+
+If you need the schema:
+1. Export schema separately, or
+2. Create tables manually before importing this data
+
+📋 STEP-BY-STEP IMPORT PROCESS:
+===============================================
+
+1. ✅ VERIFY TARGET DATABASE HAS TABLES
+   - Make sure saas_platform database exists
+   - Verify all tables exist with correct structure
+   - Check column names and data types match
+
+2. 📁 PREPARE FILES
+   Files to import in order:
+   1. saas_platform_data_only_insert_20250913_093559.sql (0.31 MB)
+
+3. 🌐 ACCESS PHPPGADMIN
+   - Login to cPanel → phpPgAdmin
+   - Connect to PostgreSQL server
+   - Select database: saas_platform
+
+4. 📥 IMPORT DATA FILES
+
+   SINGLE FILE IMPORT:
+   - Click "SQL" tab
+   - Open saas_platform_data_only_insert_20250913_093559.sql in text editor
+   - Copy ALL content and paste into SQL box
+   - Click "Execute"
+   - Wait for completion
+
+5. ✅ VERIFY DATA IMPORT
+   - Check row counts in each table
+   - Spot-check data integrity
+   - Test your application
+
+🔧 ALTERNATIVE IMPORT METHODS:
+===============================================
+
+💻 Command Line (if available):
+   psql -h localhost -U username -d saas_platform < filename.sql
+
+🌐 pgAdmin:
+   - Use Query Tool
+   - Copy/paste file contents
+   - Execute SQL
+
+📊 DATA VERIFICATION:
+===============================================
+After import, verify row counts match:
+   api_configurations: 1 rows
+   api_request_logs: 0 rows
+   audit_logs: 0 rows
+   bank_account_transactions: 0 rows
+   bank_statement_imports: 0 rows
+   bill_payment_transactions: 0 rows
+   commission_distributions: 0 rows
+   commission_plans: 6 rows
+   daily_summaries: 0 rows
+   error_logs: 0 rows
+   money_transfer_transactions: 0 rows
+   notification_queue: 0 rows
+   notification_templates: 0 rows
+   organization_bank_accounts: 3 rows
+   otp_verifications: 55 rows
+   payment_gateway_logs: 0 rows
+   payment_gateways: 2 rows
+   payment_webhooks: 0 rows
+   permissions: 13 rows
+   recharge_transactions: 2 rows
+   role_bank_permissions: 0 rows
+   role_permissions: 0 rows
+   service_pricing: 0 rows
+   tenants: 4 rows
+   topup_refunds: 0 rows
+   transactions: 135 rows
+   user_bank_preferences: 0 rows
+   user_commissions: 1 rows
+   user_permissions: 0 rows
+   user_sessions: 17 rows
+   users: 21 rows
+   wallet_topup_requests: 40 rows
+   wallet_transactions: 123 rows
+   wallets: 21 rows
+
+🚨 TROUBLESHOOTING:
+===============================================
+
+❌ "Table does not exist" errors:
+   - You're importing data-only export
+   - Create tables first or import schema
+
+❌ "Column does not exist" errors:
+   - Table structure doesn't match
+   - Check column names and types
+
+❌ Data type errors:
+   - Source and target schemas differ
+   - Verify table definitions match
+
+❌ Constraint violations:
+   - Foreign key constraints may fail
+   - Consider disabling constraints during import
+
+💡 BEST PRACTICES:
+===============================================
+   - Backup target database before import
+   - Import during low-traffic hours  
+   - Monitor database space during import
+   - Keep original export files as backup
+
+Generated: 2025-09-13 09:36:00
+Tool: Data-Only PostgreSQL Exporter

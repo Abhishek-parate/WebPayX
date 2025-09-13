@@ -186,6 +186,7 @@ def commission_plans():
                              plans=plans,
                              service_types=ServiceType,
                              commission_modes=CommissionMode,
+                             now=datetime.utcnow(),  # ADD THIS LINE
                              filters={
                                  'search': search,
                                  'service_type': service_type,
@@ -225,6 +226,7 @@ def create_plan():
                                      service_types=ServiceType,
                                      commission_modes=CommissionMode,
                                      now=datetime.now())
+            
             
             # Validate enums
             try:

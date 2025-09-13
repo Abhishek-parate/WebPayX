@@ -1,7 +1,6 @@
-<!-- templates/commission_pricing/edit_plan.html -->
 {% extends 'layout/layout.html' %}
-{% block content %}
 
+{% block content %}
 <!-- SweetAlert2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
 
@@ -276,7 +275,7 @@ const Toast = Swal.mixin({
   }
 })
 
-// Show flash messages
+// ✅ FIXED: Show flash messages using Flask's get_flashed_messages()
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     document.addEventListener('DOMContentLoaded', function() {
@@ -291,6 +290,9 @@ const Toast = Swal.mixin({
 {% endwith %}
 
 let slabCounter = 0;
+
+// ✅ FIXED: Get current datetime for comparisons without moment.js
+const currentDateTime = new Date('{{ now.isoformat() }}');
 
 // Load existing slabs on page load
 document.addEventListener('DOMContentLoaded', function() {

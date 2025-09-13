@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Cashfree Payment - WebPayX{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold text-center mb-6">Complete Payment</h2>
+        
+        <div class="mb-4 p-4 bg-gray-50 rounded">
+            <p><strong>Amount:</strong> ₹{{ "%.2f"|format(topup_request.amount) }}</p>
+            <p><strong>Request ID:</strong> {{ topup_request.request_id }}</p>
+        </div>
+
+        <div id="payment-container">
+            <button id="pay-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+                Pay ₹{{ "%.2f"|format(topup_request.amount) }}
+            </button>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('wallet_management.topup_status') }}" class="text-gray-600 hover:text-gray-800">
+                ← Back to Topup Status
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cashfree = Cashfree({
+        mode: "{{ checkout_data.environment }}" // 'sandbox' or 'production'
+    });
+    
+    document.getElementById('pay-button').addEventListener('click', function() {
+        const checkoutOptions = {
+            paymentSessionId: "{{ checkout_data.payment_session_id }}",
+            redirectTarget: "_self"
+        };
+        
+        cashfree.checkout(checkoutOptions).then(function(result) {
+            if (result.error) {
+                alert('Payment failed: ' + result.error.message);
+            }
+            if (result.redirect) {
+                console.log("Redirection");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

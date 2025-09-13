@@ -1,0 +1,639 @@
+{% extends 'layout/layout.html' %}
+
+{% block content %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+
+<style>
+  .pricing-card {
+    transition: all 0.3s ease;
+  }
+  .pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+  .filter-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+  }
+  .stats-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+  .provider-badge {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .provider-badge:hover {
+    transform: scale(1.05);
+  }
+  .action-btn {
+    transition: all 0.3s ease;
+  }
+  .action-btn:hover {
+    transform: scale(1.1);
+  }
+</style>
+
+<!-- Service Pricing Management -->
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="container mx-auto px-4">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Service Pricing Management</h1>
+          <p class="text-gray-600 mt-2">Configure base costs and markup for different services and providers</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="{{ url_for('commission_pricing.create_pricing') }}" 
+             class="btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Add New Pricing
+          </a>
+          <a href="{{ url_for('commission_pricing.dashboard') }}" 
+             class="btn bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5v6m8-6v6"></path>
+            </svg>
+            Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      
+      <!-- Total Pricing Configs -->
+      <div class="stats-card bg-white rounded-xl shadow-lg border p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 mr-4">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">{{ pricing.total }}</h3>
+            <p class="text-sm text-gray-600">Total Configurations</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Configs -->
+      <div class="stats-card bg-white rounded-xl shadow-lg border p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-gradient-to-r from-green-500 to-green-600 mr-4">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">
+              {% set active_count = pricing.items | selectattr('is_active', 'equalto', true) | list | length %}
+              {{ active_count }}
+            </h3>
+            <p class="text-sm text-gray-600">Active Configs</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Types -->
+      <div class="stats-card bg-white rounded-xl shadow-lg border p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 mr-4">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">
+              {% set unique_services = pricing.items | map(attribute='service_type') | unique | list | length %}
+              {{ unique_services }}
+            </h3>
+            <p class="text-sm text-gray-600">Service Types</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Providers -->
+      <div class="stats-card bg-white rounded-xl shadow-lg border p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 mr-4">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">
+              {% set unique_providers = pricing.items | map(attribute='provider') | unique | list | length %}
+              {{ unique_providers }}
+            </h3>
+            <p class="text-sm text-gray-600">Unique Providers</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-card shadow-xl mb-8">
+      <h3 class="text-xl font-bold text-white mb-6">🔍 Filter Pricing Configurations</h3>
+      <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        
+        <!-- Search Provider -->
+        <div>
+          <label class="block text-sm font-medium text-white mb-2">Search Provider</label>
+          <input type="text" name="search" value="{{ filters.search }}"
+                 placeholder="Provider name or keyword"
+                 class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/70 focus:bg-white/20 focus:border-white transition-all">
+        </div>
+
+        <!-- Service Type -->
+        <div>
+          <label class="block text-sm font-medium text-white mb-2">Service Type</label>
+          <select name="service_type" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:bg-white/20 focus:border-white transition-all">
+            <option value="">All Service Types</option>
+            {% for service in service_types %}
+            <option value="{{ service.value }}" {% if filters.service_type == service.value %}selected{% endif %}>
+              {{ service.value.replace('_', ' ').title() }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block text-sm font-medium text-white mb-2">Status</label>
+          <select name="status" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:bg-white/20 focus:border-white transition-all">
+            <option value="">All Status</option>
+            <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="flex items-end gap-3">
+          <button type="submit" class="bg-white text-purple-600 px-6 py-3 rounded-lg hover:bg-gray-100 font-medium transition-all shadow-lg flex-1">
+            <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Filter
+          </button>
+          <a href="{{ url_for('commission_pricing.service_pricing') }}" 
+             class="bg-white/20 border border-white/30 text-white px-4 py-3 rounded-lg hover:bg-white/30 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </a>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Service Pricing Cards/Table -->
+    {% if pricing.items %}
+    
+    <!-- Desktop View - Table -->
+    <div class="hidden lg:block bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="p-6 border-b bg-gradient-to-r from-gray-50 to-white">
+        <h3 class="text-xl font-bold text-gray-900">Service Pricing Configurations</h3>
+        <p class="text-sm text-gray-600 mt-1">Manage pricing for different services and providers</p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Service & Provider</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pricing Details</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Limits</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Effective Date</th>
+              <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for price in pricing.items %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              
+              <!-- Service & Provider -->
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="p-2 rounded-lg bg-blue-100 mr-3">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="text-sm font-semibold text-gray-900">{{ price.service_type.value.replace('_', ' ').title() }}</div>
+                    <div class="provider-badge inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 mt-1">
+                      {{ price.provider }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Pricing Details -->
+              <td class="px-6 py-4">
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                  <div class="text-center">
+                    <span class="text-xs text-gray-500 block">Base Cost</span>
+                    <div class="font-bold text-green-600 text-lg">₹{{ "%.2f"|format(price.base_cost) }}</div>
+                  </div>
+                  <div class="text-center">
+                    <span class="text-xs text-gray-500 block">Markup</span>
+                    <div class="font-bold text-blue-600 text-lg">{{ "%.2f"|format(price.markup) }}%</div>
+                  </div>
+                  <div class="text-center">
+                    <span class="text-xs text-gray-500 block">Final Cost</span>
+                    <div class="font-bold text-gray-900 text-lg">₹{{ "%.2f"|format(price.base_cost * (1 + price.markup / 100)) }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Limits -->
+              <td class="px-6 py-4">
+                {% if price.min_amount or price.max_amount %}
+                <div class="text-sm space-y-1">
+                  {% if price.min_amount %}
+                  <div class="flex items-center">
+                    <span class="text-xs text-gray-500 w-8">Min:</span>
+                    <span class="font-medium text-gray-900">₹{{ "%.0f"|format(price.min_amount) }}</span>
+                  </div>
+                  {% endif %}
+                  {% if price.max_amount %}
+                  <div class="flex items-center">
+                    <span class="text-xs text-gray-500 w-8">Max:</span>
+                    <span class="font-medium text-gray-900">₹{{ "%.0f"|format(price.max_amount) }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="text-gray-400 text-sm italic">No limits set</span>
+                {% endif %}
+              </td>
+
+              <!-- Status -->
+              <td class="px-6 py-4">
+                {% if price.is_active %}
+                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 shadow-sm">
+                  <svg class="w-3 h-3 mr-1 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  Active
+                </span>
+                {% else %}
+                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 shadow-sm">
+                  <svg class="w-3 h-3 mr-1 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                  </svg>
+                  Inactive
+                </span>
+                {% endif %}
+              </td>
+
+              <!-- Effective Date -->
+              <td class="px-6 py-4 text-sm text-gray-600">
+                <div class="font-medium">{{ price.effective_from.strftime('%d %b %Y') if price.effective_from else 'Not set' }}</div>
+                <div class="text-xs text-gray-500">{{ price.created_at.strftime('%I:%M %p') }}</div>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4">
+                <div class="flex justify-center space-x-2">
+                  
+                  <!-- Edit Pricing -->
+                  <a href="{{ url_for('commission_pricing.edit_pricing', pricing_id=price.id) }}" 
+                     class="action-btn text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 shadow-sm" 
+                     title="Edit Pricing">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </a>
+
+                  <!-- Toggle Status -->
+                  <form method="POST" action="{{ url_for('commission_pricing.service_pricing') }}" style="display: inline-block;">
+                    <input type="hidden" name="action" value="toggle_status">
+                    <input type="hidden" name="pricing_id" value="{{ price.id }}">
+                    <button type="button" 
+                            class="action-btn text-yellow-600 hover:text-yellow-900 p-2 rounded-full hover:bg-yellow-50 shadow-sm" 
+                            title="Toggle Status"
+                            onclick="toggleStatus('{{ price.id }}', '{{ price.provider }}', {{ 'true' if price.is_active else 'false' }}, this.form)">
+                      {% if price.is_active %}
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+                      </svg>
+                      {% else %}
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      {% endif %}
+                    </button>
+                  </form>
+
+                  <!-- Delete Pricing (Super Admin Only) -->
+                  {% if current_user.role.value == 'SUPER_ADMIN' %}
+                  <form method="POST" action="{{ url_for('commission_pricing.delete_pricing', pricing_id=price.id) }}" 
+                        style="display: inline-block;">
+                    <button type="button" 
+                            class="action-btn text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 shadow-sm" 
+                            title="Delete Pricing"
+                            onclick="confirmDelete('{{ price.provider }}', '{{ price.service_type.value }}', this.form)">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </form>
+                  {% endif %}
+
+                </div>
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile View - Cards -->
+    <div class="lg:hidden space-y-4">
+      {% for price in pricing.items %}
+      <div class="pricing-card bg-white rounded-xl shadow-lg border overflow-hidden">
+        <div class="p-6">
+          
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">{{ price.service_type.value.replace('_', ' ').title() }}</h3>
+              <div class="provider-badge inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 mt-1">
+                {{ price.provider }}
+              </div>
+            </div>
+            <div class="text-right">
+              {% if price.is_active %}
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+              {% else %}
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Pricing Grid -->
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="text-center">
+              <span class="text-xs text-gray-500 block">Base Cost</span>
+              <div class="font-bold text-green-600">₹{{ "%.2f"|format(price.base_cost) }}</div>
+            </div>
+            <div class="text-center">
+              <span class="text-xs text-gray-500 block">Markup</span>
+              <div class="font-bold text-blue-600">{{ "%.2f"|format(price.markup) }}%</div>
+            </div>
+            <div class="text-center">
+              <span class="text-xs text-gray-500 block">Final Cost</span>
+              <div class="font-bold text-gray-900">₹{{ "%.2f"|format(price.base_cost * (1 + price.markup / 100)) }}</div>
+            </div>
+          </div>
+
+          <!-- Limits -->
+          {% if price.min_amount or price.max_amount %}
+          <div class="text-sm mb-4">
+            <span class="text-gray-500">Limits: </span>
+            {% if price.min_amount %}₹{{ "%.0f"|format(price.min_amount) }} min{% endif %}
+            {% if price.min_amount and price.max_amount %} - {% endif %}
+            {% if price.max_amount %}₹{{ "%.0f"|format(price.max_amount) }} max{% else %}{% if price.min_amount %}+{% endif %}{% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Effective Date -->
+          <div class="text-sm text-gray-600 mb-4">
+            <span class="font-medium">Effective:</span> {{ price.effective_from.strftime('%d %b %Y') if price.effective_from else 'Not set' }}
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200">
+            <a href="{{ url_for('commission_pricing.edit_pricing', pricing_id=price.id) }}" 
+               class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </a>
+            {% if current_user.role.value == 'SUPER_ADMIN' %}
+            <button onclick="confirmDelete('{{ price.provider }}', '{{ price.service_type.value }}', null, '{{ price.id }}')" 
+                    class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pricing.pages > 1 %}
+    <div class="flex items-center justify-between mt-8 bg-white rounded-xl shadow-lg px-6 py-4">
+      <div class="text-sm text-gray-700">
+        Showing {{ pricing.per_page * (pricing.page - 1) + 1 }} to 
+        {{ pricing.per_page * (pricing.page - 1) + pricing.items|length }} of 
+        {{ pricing.total }} results
+      </div>
+      <div class="flex space-x-2">
+        {% if pricing.has_prev %}
+        <a href="{{ url_for('commission_pricing.service_pricing', page=pricing.prev_num, search=filters.search, service_type=filters.service_type, status=filters.status) }}" 
+           class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+          Previous
+        </a>
+        {% endif %}
+        
+        {% for page_num in pricing.iter_pages() %}
+          {% if page_num %}
+            {% if page_num != pricing.page %}
+            <a href="{{ url_for('commission_pricing.service_pricing', page=page_num, search=filters.search, service_type=filters.service_type, status=filters.status) }}" 
+               class="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+              {{ page_num }}
+            </a>
+            {% else %}
+            <span class="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-600 to-blue-700 border border-blue-600 rounded-lg shadow-md">
+              {{ page_num }}
+            </span>
+            {% endif %}
+          {% else %}
+          <span class="px-4 py-2 text-sm text-gray-400">…</span>
+          {% endif %}
+        {% endfor %}
+        
+        {% if pricing.has_next %}
+        <a href="{{ url_for('commission_pricing.service_pricing', page=pricing.next_num, search=filters.search, service_type=filters.service_type, status=filters.status) }}" 
+           class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+          Next
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-16 bg-white rounded-xl shadow-lg">
+      <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+      </svg>
+      <h3 class="mt-4 text-xl font-semibold text-gray-900">No Service Pricing Found</h3>
+      <p class="mt-2 text-gray-600 max-w-md mx-auto">
+        {% if filters.search or filters.service_type or filters.status %}
+        No service pricing configurations match your current filters. Try adjusting your search criteria or create a new configuration.
+        {% else %}
+        Get started by creating your first service pricing configuration to manage costs and markup for different providers.
+        {% endif %}
+      </p>
+      <div class="mt-8 flex justify-center gap-4">
+        {% if filters.search or filters.service_type or filters.status %}
+        <a href="{{ url_for('commission_pricing.service_pricing') }}" 
+           class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200">
+          Clear Filters
+        </a>
+        {% endif %}
+        <a href="{{ url_for('commission_pricing.create_pricing') }}" 
+           class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Create First Pricing Config
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// SweetAlert Toast Configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 4000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+})
+
+// Show flash messages
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for category, message in messages %}
+        Toast.fire({
+          icon: '{{ "success" if category == "success" else "error" }}',
+          title: '{{ message }}'
+        });
+      {% endfor %}
+    });
+  {% endif %}
+{% endwith %}
+
+// Toggle Status
+function toggleStatus(pricingId, providerName, isActive, form) {
+  const action = isActive ? 'deactivate' : 'activate';
+  const actionText = isActive ? 'Deactivate' : 'Activate';
+  
+  Swal.fire({
+    title: `${actionText} Service Pricing?`,
+    text: `Are you sure you want to ${action} pricing for ${providerName}?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: isActive ? '#dc2626' : '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: `Yes, ${action} it!`,
+    cancelButtonText: 'Cancel',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      form.submit();
+    }
+  });
+}
+
+// Confirm deletion
+function confirmDelete(provider, serviceType, form, pricingId) {
+  Swal.fire({
+    title: 'Delete Service Pricing?',
+    html: `
+      <div class="text-left space-y-2">
+        <p><strong>Provider:</strong> ${provider}</p>
+        <p><strong>Service:</strong> ${serviceType.replace('_', ' ')}</p>
+        <p class="text-red-600 text-sm mt-4">⚠️ This action cannot be undone!</p>
+      </div>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      if (form) {
+        form.submit();
+      } else if (pricingId) {
+        // For mobile cards
+        const deleteForm = document.createElement('form');
+        deleteForm.method = 'POST';
+        deleteForm.action = `/commission-pricing/service-pricing/${pricingId}/delete`;
+        document.body.appendChild(deleteForm);
+        deleteForm.submit();
+      }
+    }
+  });
+}
+
+// Auto-submit form on filter changes
+document.addEventListener('DOMContentLoaded', function() {
+  const filterSelects = document.querySelectorAll('select[name="service_type"], select[name="status"]');
+  filterSelects.forEach(select => {
+    select.addEventListener('change', function() {
+      this.form.submit();
+    });
+  });
+
+  // Add search input debounce
+  const searchInput = document.querySelector('input[name="search"]');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        if (this.value.length >= 3 || this.value.length === 0) {
+          this.form.submit();
+        }
+      }, 500);
+    });
+  }
+
+  console.log('Service Pricing Management initialized successfully');
+});
+</script>
+
+{% endblock %}
