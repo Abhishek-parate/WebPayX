@@ -28,6 +28,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.types import TypeDecorator, VARCHAR
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+
 # =============================================================================
 # CRITICAL FIX: Create and export the db instance
 # =============================================================================
