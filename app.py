@@ -44,7 +44,7 @@
 # # Import new enhanced routes
 # from routes.user_management import user_management_bp
 # from routes.bank_management import bank_management_bp
-# from routes.role_permissions import role_permissions_bp
+# from routes.role_permissions import role_permissions_bp # Fixed import statement
 
 # # Database and models
 # from models import db, User, UserSession, Tenant, create_tables, create_default_permissions
