@@ -1,361 +1,332 @@
 {% extends 'layout/layout.html' %}
-
-{% block title %}DTH Recharge{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-8">
-    <!-- Wallet Balance Card -->
-    <div class="bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-2xl shadow-xl p-8 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-lg opacity-90 mb-2">💳 Available Balance</h3>
-                <p class="text-4xl font-bold">₹{{ "{:,.2f}".format(wallet_balance) }}</p>
-                <button onclick="addMoney()" class="mt-4 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm">
-                    <i class="fas fa-plus mr-2"></i>Add Money
-                </button>
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{{ url_for('recharge_management.index') }}" class="text-gray-400 hover:text-gray-500">
+                        <svg class="flex-shrink-0 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                        </svg>
+                        <span class="sr-only">Home</span>
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="flex-shrink-0 h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-4 text-sm font-medium text-gray-500">DTH Recharge</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4 md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                <p class="mt-1 text-sm text-gray-600">{{ subtitle }}</p>
             </div>
-            <div class="bg-white/20 p-6 rounded-2xl backdrop-blur-sm">
-                <i class="fas fa-satellite-dish text-4xl"></i>
-            </div>
+           
         </div>
     </div>
 
-    <!-- DTH Recharge Form -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-        <!-- Form Header -->
-        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-8 border-b border-green-100">
-            <div class="flex items-center">
-                <div class="bg-green-500 p-4 rounded-2xl mr-6 shadow-lg">
-                    <i class="fas fa-satellite-dish text-white text-2xl"></i>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- DTH Recharge Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">DTH Recharge</h3>
+                    <p class="text-sm text-gray-600">Recharge your DTH connection instantly</p>
                 </div>
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-900">DTH Recharge</h2>
-                    <p class="text-gray-600 mt-1">Instant DTH recharge for all major service providers</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Body -->
-        <div class="p-8">
-            <form method="POST" onsubmit="return validateDTHForm(event)" class="space-y-8">
-                <!-- Customer ID -->
-                <div class="space-y-3">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-id-card mr-3 text-green-600"></i>Customer ID / Subscriber ID
-                    </label>
-                    <input type="text" 
-                           name="customer_id" 
-                           id="customerId"
-                           class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                           placeholder="Enter your DTH customer ID"
-                           required>
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <p class="text-sm text-blue-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            You can find your Customer ID on your DTH setup box, remote control, or monthly recharge voucher
-                        </p>
-                    </div>
-                </div>
-
-                <!-- DTH Operator Selection -->
-                <div class="space-y-3">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-tv mr-3 text-blue-600"></i>Select DTH Operator
-                    </label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {% for operator in dth_operators %}
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-green-300 hover:bg-green-50 cursor-pointer transition-all duration-200 group">
-                            <input type="radio" name="operator" value="{{ operator.id }}" class="sr-only" onchange="selectOperator(this)">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gray-100 group-hover:bg-green-100 rounded-xl flex items-center justify-center transition-colors duration-200">
-                                    <i class="fas fa-tv text-gray-600 group-hover:text-green-600"></i>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">{{ operator.name }}</p>
-                                    <p class="text-sm text-gray-500">DTH Service Provider</p>
-                                </div>
-                            </div>
-                            <div class="ml-auto">
-                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
-                                    <div class="w-3 h-3 bg-green-500 rounded-full hidden"></div>
-                                </div>
-                            </div>
+                
+                <form method="POST" class="p-6 space-y-6" id="dthForm">
+                    <!-- Customer ID -->
+                    <div>
+                        <label for="customer_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Customer ID / Subscriber ID *
                         </label>
-                        {% endfor %}
+                        <div class="relative">
+                            <input type="text" 
+                                   id="customer_id" 
+                                   name="customer_id" 
+                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Enter your DTH customer ID"
+                                   required>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <div class="hidden" id="customerIdValidIcon">
+                                    <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Find this on your DTH card or previous recharge receipt</p>
                     </div>
-                </div>
 
-                <!-- Amount Section -->
-                <div class="space-y-6">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-rupee-sign mr-3 text-purple-600"></i>Recharge Amount
-                    </label>
-                    
-                    <!-- Popular DTH Plans -->
-                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">🔥 Popular DTH Plans</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <button type="button" onclick="setAmount(299)" 
-                                    class="bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-700 hover:text-purple-700 py-4 px-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
-                                <div class="text-center">
-                                    <p class="text-xl font-bold">₹299</p>
-                                    <p class="text-xs text-gray-500">1 Month</p>
+                    <!-- DTH Operator -->
+                    <div>
+                        <label for="operator" class="block text-sm font-medium text-gray-700 mb-2">
+                            DTH Operator *
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            {% for operator in dth_operators %}
+                            <label class="relative cursor-pointer">
+                                <input type="radio" 
+                                       name="operator" 
+                                       value="{{ operator.id }}" 
+                                       class="sr-only peer" 
+                                       required>
+                                <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:bg-gray-50 peer-checked:border-purple-500 peer-checked:bg-purple-50 transition-all duration-200">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ operator.name }}</div>
+                                        <div class="text-xs text-gray-500">DTH Service</div>
+                                    </div>
                                 </div>
-                            </button>
-                            <button type="button" onclick="setAmount(499)" 
-                                    class="bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-700 hover:text-purple-700 py-4 px-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
-                                <div class="text-center">
-                                    <p class="text-xl font-bold">₹499</p>
-                                    <p class="text-xs text-gray-500">2 Months</p>
-                                </div>
-                            </button>
-                            <button type="button" onclick="setAmount(999)" 
-                                    class="bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-700 hover:text-purple-700 py-4 px-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md relative">
-                                <div class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">Popular</div>
-                                <div class="text-center">
-                                    <p class="text-xl font-bold">₹999</p>
-                                    <p class="text-xs text-gray-500">3 Months</p>
-                                </div>
-                            </button>
-                            <button type="button" onclick="setAmount(1999)" 
-                                    class="bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-700 hover:text-purple-700 py-4 px-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
-                                <div class="text-center">
-                                    <p class="text-xl font-bold">₹1999</p>
-                                    <p class="text-xs text-gray-500">6 Months</p>
-                                </div>
-                            </button>
+                            </label>
+                            {% endfor %}
                         </div>
                     </div>
 
-                    <!-- Custom Amount Input -->
-                    <input type="number" 
-                           name="amount" 
-                           id="amountInput"
-                           class="w-full px-6 py-4 text-xl border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white font-semibold"
-                           placeholder="Enter custom amount"
-                           min="100"
-                           max="10000"
-                           step="1"
-                           required>
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-500">Minimum ₹100, Maximum ₹10,000</p>
-                        <span id="amountValidation" class="text-sm"></span>
+                    <!-- Amount Input -->
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                            Recharge Amount *
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" 
+                                   id="amount" 
+                                   name="amount" 
+                                   min="100" 
+                                   max="10000" 
+                                   step="1"
+                                   class="block w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Enter recharge amount"
+                                   required>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Minimum ₹100, Maximum ₹10,000</p>
+                    </div>
+
+                    <!-- Customer Info Card (Optional) -->
+                    <div id="customerInfo" class="hidden bg-purple-50 border border-purple-200 rounded-md p-4">
+                        <h4 class="text-sm font-semibold text-purple-900 mb-2">Customer Information</h4>
+                        <div id="customerDetails" class="text-sm text-purple-800">
+                            <!-- Customer details will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-6 border-t border-gray-200">
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="w-full bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <div class="flex items-center justify-center">
+                                <span id="submitText">Proceed to Recharge</span>
+                                <div class="hidden ml-2" id="submitLoader">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="space-y-6">
+                <!-- Quick Amounts -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Popular Amounts</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            {% for amount in [200, 300, 500, 800, 1000, 1500] %}
+                            <button type="button" 
+                                    onclick="setAmount({{ amount }})"
+                                    class="quick-amount-btn px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200">
+                                ₹{{ amount }}
+                            </button>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="pt-8">
-                    <button type="submit" 
-                            id="submitButton"
-                            class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-6 px-8 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-                        <i class="fas fa-satellite-dish mr-3"></i>
-                        <span id="buttonText">Proceed to DTH Recharge</span>
-                    </button>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        <i class="fas fa-shield-alt mr-1"></i>
-                        Your DTH will be recharged instantly after payment
-                    </p>
+                <!-- Recent DTH Recharges -->
+                {% if recent_recharges %}
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Recent DTH Recharges</h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        {% for recharge in recent_recharges %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
+                             onclick="repeatRecharge('{{ recharge.customer_details.customer_id }}', '{{ recharge.customer_details.operator }}', '{{ recharge.amount }}')">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ recharge.customer_details.customer_id }}</div>
+                                <div class="text-xs text-gray-500">{{ recharge.created_at.strftime('%d %b, %H:%M') }}</div>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-700">₹{{ "{:,.0f}".format(recharge.amount) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
+                {% endif %}
 
-    <!-- DTH Info Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6 text-center">
-            <div class="bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-clock text-white"></i>
+                <!-- DTH Operators Guide -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">How to Find Customer ID</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li><strong>Dish TV:</strong> 14-digit VC number on smart card</li>
+                                    <li><strong>Tata Sky:</strong> 10-digit subscriber ID</li>
+                                    <li><strong>Airtel Digital TV:</strong> 10-digit customer ID</li>
+                                    <li><strong>Sun Direct:</strong> 11-digit subscriber ID</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benefits -->
+                <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Why Choose Us?</h3>
+                            <div class="mt-2 text-sm text-green-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Instant recharge activation</li>
+                                    <li>100% secure transactions</li>
+                                    <li>24/7 customer support</li>
+                                    <li>Transaction history</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h4 class="font-semibold text-gray-900 mb-2">Instant Activation</h4>
-            <p class="text-sm text-gray-600">Your DTH service will be activated within 5 minutes</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 text-center">
-            <div class="bg-green-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-tv text-white"></i>
-            </div>
-            <h4 class="font-semibold text-gray-900 mb-2">All Operators</h4>
-            <p class="text-sm text-gray-600">Support for all major DTH service providers in India</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6 text-center">
-            <div class="bg-purple-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-gift text-white"></i>
-            </div>
-            <h4 class="font-semibold text-gray-900 mb-2">Exclusive Offers</h4>
-            <p class="text-sm text-gray-600">Get cashback and special discounts on DTH recharge</p>
         </div>
     </div>
 </div>
 
 <script>
-let walletBalance = {{ wallet_balance }};
+document.addEventListener('DOMContentLoaded', function() {
+    const customerIdInput = document.getElementById('customer_id');
+    const dthForm = document.getElementById('dthForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitLoader = document.getElementById('submitLoader');
 
-// Set amount function
-function setAmount(amount) {
-    document.getElementById('amountInput').value = amount;
-    validateAmount();
-}
-
-// Select operator function
-function selectOperator(radio) {
-    // Remove selection from all operators
-    document.querySelectorAll('input[name="operator"]').forEach(input => {
-        const label = input.closest('label');
-        const circle = label.querySelector('.w-6.h-6 div');
-        label.classList.remove('border-green-500', 'bg-green-50');
-        label.classList.add('border-gray-200');
-        circle.classList.add('hidden');
+    // Customer ID validation
+    customerIdInput.addEventListener('input', function() {
+        const customerId = this.value.trim();
+        const validIcon = document.getElementById('customerIdValidIcon');
+        
+        if (customerId.length >= 8) {
+            validIcon.classList.remove('hidden');
+            this.classList.remove('border-red-300');
+            this.classList.add('border-green-300');
+            
+            // Simulate customer info fetch
+            fetchCustomerInfo(customerId);
+        } else {
+            validIcon.classList.add('hidden');
+            this.classList.remove('border-green-300');
+            hideCustomerInfo();
+        }
     });
-    
-    // Add selection to clicked operator
-    const label = radio.closest('label');
-    const circle = label.querySelector('.w-6.h-6 div');
-    label.classList.add('border-green-500', 'bg-green-50');
-    label.classList.remove('border-gray-200');
-    circle.classList.remove('hidden');
-}
 
-// Amount validation
-function validateAmount() {
-    const amount = parseFloat(document.getElementById('amountInput').value);
-    const validation = document.getElementById('amountValidation');
-    
-    if (!amount) {
-        validation.textContent = '';
-        validation.className = 'text-sm';
-    } else if (amount < 100) {
-        validation.textContent = '❌ Minimum amount is ₹100';
-        validation.className = 'text-sm text-red-500';
-    } else if (amount > 10000) {
-        validation.textContent = '❌ Maximum amount is ₹10,000';
-        validation.className = 'text-sm text-red-500';
-    } else if (amount > walletBalance) {
-        validation.textContent = '❌ Insufficient wallet balance';
-        validation.className = 'text-sm text-red-500';
-    } else {
-        validation.textContent = '✅ Valid amount';
-        validation.className = 'text-sm text-green-500';
-    }
-}
+    // Form submission
+    dthForm.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitText.textContent = 'Processing Recharge...';
+        submitLoader.classList.remove('hidden');
+    });
 
-document.getElementById('amountInput').addEventListener('input', validateAmount);
+    function fetchCustomerInfo(customerId) {
+        // Simulate API call to fetch customer info
+        setTimeout(() => {
+            showCustomerInfo({
+                name: 'Sample Customer',
+                status: 'Active',
+                lastRecharge: '15 Dec 2024',
+                balance: 'Available'
+            });
+        }, 1000);
+    }
 
-// Form validation
-function validateDTHForm(event) {
-    event.preventDefault();
-    
-    const customerId = document.getElementById('customerId').value;
-    const operator = document.querySelector('input[name="operator"]:checked');
-    const amount = parseFloat(document.getElementById('amountInput').value);
-    
-    // Validate customer ID
-    if (!customerId || customerId.length < 3) {
-        Swal.fire({
-            title: 'Invalid Customer ID',
-            text: 'Please enter a valid DTH customer ID',
-            icon: 'error',
-            confirmButtonColor: '#10B981'
-        });
-        document.getElementById('customerId').focus();
-        return false;
-    }
-    
-    // Validate operator
-    if (!operator) {
-        Swal.fire({
-            title: 'Select DTH Operator',
-            text: 'Please select your DTH service provider',
-            icon: 'warning',
-            confirmButtonColor: '#10B981'
-        });
-        return false;
-    }
-    
-    // Validate amount
-    if (!amount || amount < 100 || amount > 10000) {
-        Swal.fire({
-            title: 'Invalid Amount',
-            text: 'Please enter amount between ₹100 and ₹10,000',
-            icon: 'error',
-            confirmButtonColor: '#10B981'
-        });
-        document.getElementById('amountInput').focus();
-        return false;
-    }
-    
-    // Check wallet balance
-    if (amount > walletBalance) {
-        Swal.fire({
-            title: 'Insufficient Balance',
-            html: `Your wallet balance is ₹${walletBalance.toFixed(2)}<br>Required amount: ₹${amount.toFixed(2)}`,
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonText: 'Add Money',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#10B981'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                addMoney();
-            }
-        });
-        return false;
-    }
-    
-    // Show confirmation dialog
-    const operatorName = operator.closest('label').querySelector('p').textContent;
-    
-    Swal.fire({
-        title: 'Confirm DTH Recharge',
-        html: `
-            <div class="text-left space-y-3">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p><strong>Customer ID:</strong> ${customerId}</p>
-                    <p><strong>DTH Operator:</strong> ${operatorName}</p>
-                    <p><strong>Amount:</strong> ₹${amount}</p>
+    function showCustomerInfo(info) {
+        const customerInfo = document.getElementById('customerInfo');
+        const customerDetails = document.getElementById('customerDetails');
+        
+        customerDetails.innerHTML = `
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="font-medium">Customer Name:</span><br>
+                    <span>${info.name}</span>
                 </div>
-                <p class="text-center font-semibold text-green-600">
-                    New balance will be: ₹${(walletBalance - amount).toFixed(2)}
-                </p>
+                <div>
+                    <span class="font-medium">Status:</span><br>
+                    <span class="text-green-600">${info.status}</span>
+                </div>
             </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Confirm & Pay',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#10B981',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            processDTHRecharge();
-        }
+        `;
+        
+        customerInfo.classList.remove('hidden');
+    }
+
+    function hideCustomerInfo() {
+        document.getElementById('customerInfo').classList.add('hidden');
+    }
+});
+
+// Quick amount selection
+function setAmount(amount) {
+    document.getElementById('amount').value = amount;
+    
+    // Visual feedback
+    document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+        btn.classList.remove('bg-purple-600', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
     });
     
-    return false;
+    event.target.classList.remove('bg-gray-100', 'text-gray-700');
+    event.target.classList.add('bg-purple-600', 'text-white');
 }
 
-// Process DTH recharge
-function processDTHRecharge() {
-    // Show processing dialog
-    Swal.fire({
-        title: 'Processing DTH Recharge',
-        html: `
-            <div class="text-center">
-                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-                <p>Please wait while we process your DTH recharge...</p>
-                <p class="text-sm text-gray-500 mt-2">Your DTH service will be activated shortly</p>
-            </div>
-        `,
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            // Simulate processing time
-            setTimeout(() => {
-                // Submit the form
-                document.querySelector('form').submit();
-            }, 3000);
-        }
-    });
+// Repeat recharge
+function repeatRecharge(customerId, operator, amount) {
+    document.getElementById('customer_id').value = customerId;
+    document.querySelector(`input[name="operator"][value="${operator}"]`).checked = true;
+    document.getElementById('amount').value = amount;
+    
+    // Trigger validation
+    document.getElementById('customer_id').dispatchEvent(new Event('input'));
 }
 </script>
 {% endblock %}

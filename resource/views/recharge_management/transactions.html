@@ -1,162 +1,379 @@
 {% extends 'layout/layout.html' %}
-
-{% block title %}Transaction History{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <!-- Filters Section -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Filter Transactions</h2>
-                <p class="text-gray-600">Find specific transactions using filters below</p>
-            </div>
-            <button onclick="clearFilters()" class="text-primary-600 hover:text-primary-800 font-semibold">
-                <i class="fas fa-undo mr-2"></i>Clear All
-            </button>
-        </div>
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{{ url_for('recharge_management.index') }}" class="text-gray-400 hover:text-gray-500">
+                        <svg class="flex-shrink-0 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                        </svg>
+                        <span class="sr-only">Home</span>
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="flex-shrink-0 h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-4 text-sm font-medium text-gray-500">Transactions</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
         
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <!-- Status Filter -->
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">Status</label>
-                <select name="status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 bg-gray-50 focus:bg-white">
-                    <option value="">All Status</option>
-                    <option value="success" {{ 'selected' if current_status == 'success' }}>Success</option>
-                    <option value="processing" {{ 'selected' if current_status == 'processing' }}>Processing</option>
-                    <option value="failed" {{ 'selected' if current_status == 'failed' }}>Failed</option>
-                </select>
+        <div class="mt-4">
+            <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="mt-1 text-sm text-gray-600">{{ subtitle }}</p>
+        </div>
+    </div>
+
+    <!-- Filter Summary Stats -->
+    <div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Transactions</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ filtered_stats.total_transactions }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Service Filter -->
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">Service</label>
-                <select name="service" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 bg-gray-50 focus:bg-white">
-                    <option value="">All Services</option>
-                    <option value="mobile_recharge" {{ 'selected' if current_service == 'mobile_recharge' }}>Mobile Recharge</option>
-                    <option value="dth_recharge" {{ 'selected' if current_service == 'dth_recharge' }}>DTH Recharge</option>
-                    <option value="bill_payment" {{ 'selected' if current_service == 'bill_payment' }}>Bill Payment</option>
-                </select>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Success Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ "{:.1f}%".format(filtered_stats.success_rate) }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Search -->
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">Search</label>
-                <input type="text" name="search" value="{{ current_search }}" 
-                       placeholder="Transaction ID, Mobile, etc."
-                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 bg-gray-50 focus:bg-white">
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Amount</dt>
+                            <dd class="text-lg font-medium text-gray-900">₹{{ "{:,.0f}".format(filtered_stats.total_amount) }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Date From -->
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">From Date</label>
-                <input type="date" name="date_from" value="{{ current_date_from }}"
-                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 bg-gray-50 focus:bg-white">
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.586-3L11 21l-3-3"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Successful</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ filtered_stats.successful_transactions }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Date To -->
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">To Date</label>
-                <input type="date" name="date_to" value="{{ current_date_to }}"
-                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 bg-gray-50 focus:bg-white">
-            </div>
-            
-            <!-- Filter Button -->
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg">
-                    <i class="fas fa-search mr-2"></i>Apply Filters
-                </button>
-            </div>
-        </form>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-xl shadow-sm mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Search & Filter Transactions</h3>
+        </div>
+        <div class="p-6">
+            <form method="GET" class="space-y-4">
+                <!-- Search and Status Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-1">
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" 
+                               id="search" 
+                               name="search" 
+                               value="{{ filters.search }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Transaction ID, Mobile, Customer ID">
+                    </div>
+                    
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="status" name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Statuses</option>
+                            <option value="SUCCESS" {% if filters.status == 'SUCCESS' %}selected{% endif %}>Success</option>
+                            <option value="PROCESSING" {% if filters.status == 'PROCESSING' %}selected{% endif %}>Processing</option>
+                            <option value="FAILED" {% if filters.status == 'FAILED' %}selected{% endif %}>Failed</option>
+                            <option value="CANCELLED" {% if filters.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="service" class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+                        <select id="service" name="service" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Services</option>
+                            <option value="MOBILE_RECHARGE" {% if filters.service == 'MOBILE_RECHARGE' %}selected{% endif %}>Mobile Recharge</option>
+                            <option value="DTH_RECHARGE" {% if filters.service == 'DTH_RECHARGE' %}selected{% endif %}>DTH Recharge</option>
+                            <option value="BILL_PAYMENT" {% if filters.service == 'BILL_PAYMENT' %}selected{% endif %}>Bill Payment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date and Amount Range Row -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                        <input type="date" 
+                               id="date_from" 
+                               name="date_from" 
+                               value="{{ filters.date_from }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                        <input type="date" 
+                               id="date_to" 
+                               name="date_to" 
+                               value="{{ filters.date_to }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="amount_from" class="block text-sm font-medium text-gray-700 mb-2">Min Amount</label>
+                        <input type="number" 
+                               id="amount_from" 
+                               name="amount_from" 
+                               value="{{ filters.amount_from }}"
+                               min="0"
+                               step="1"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="₹0">
+                    </div>
+
+                    <div>
+                        <label for="amount_to" class="block text-sm font-medium text-gray-700 mb-2">Max Amount</label>
+                        <input type="number" 
+                               id="amount_to" 
+                               name="amount_to" 
+                               value="{{ filters.amount_to }}"
+                               min="0"
+                               step="1"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="₹50000">
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"></path>
+                        </svg>
+                        Apply Filters
+                    </button>
+                    
+                    <a href="{{ url_for('recharge_management.transactions') }}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Clear All
+                    </a>
+
+                    <button type="button" 
+                            onclick="exportTransactions()"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export CSV
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Transactions Table -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Transactions</h3>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">
+                        Showing {{ transactions.items|length }} of {{ transactions.total }} results
+                    </span>
+                </div>
+            </div>
+        </div>
+        
         {% if transactions.items %}
         <div class="overflow-x-auto">
-            <table class="min-w-full">
-                <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Transaction</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Service</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Details</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Amount</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Transaction Details
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Customer Info
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Service
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Amount
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date & Time
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200">
                     {% for transaction in transactions.items %}
-                    <tr class="hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-200">
-                        <td class="px-6 py-4">
-                            <div>
-                                <p class="font-bold text-gray-900">{{ transaction.transaction_id }}</p>
-                                <p class="text-sm text-gray-500">ID: #{{ transaction.id }}</p>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md
-                                          {{ 'bg-gradient-to-br from-blue-500 to-blue-600' if transaction.service_type.value == 'MOBILE_RECHARGE'
-                                             else 'bg-gradient-to-br from-green-500 to-green-600' if transaction.service_type.value == 'DTH_RECHARGE'
-                                             else 'bg-gradient-to-br from-yellow-500 to-yellow-600' }}">
-                                    {% if transaction.service_type.value == 'MOBILE_RECHARGE' %}
-                                        <i class="fas fa-mobile-alt text-white"></i>
-                                    {% elif transaction.service_type.value == 'DTH_RECHARGE' %}
-                                        <i class="fas fa-satellite-dish text-white"></i>
-                                    {% else %}
-                                        <i class="fas fa-bolt text-white"></i>
-                                    {% endif %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-10 h-10">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center
+                                        {% if transaction.service_type.value == 'MOBILE_RECHARGE' %}bg-blue-100
+                                        {% elif transaction.service_type.value == 'DTH_RECHARGE' %}bg-purple-100
+                                        {% elif transaction.service_type.value == 'BILL_PAYMENT' %}bg-green-100
+                                        {% endif %}">
+                                        {% if transaction.service_type.value == 'MOBILE_RECHARGE' %}
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                        {% elif transaction.service_type.value == 'DTH_RECHARGE' %}
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                        {% elif transaction.service_type.value == 'BILL_PAYMENT' %}
+                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">{{ transaction.service_type.value.replace('_', ' ').title() }}</p>
-                                    <p class="text-sm text-gray-500">Digital Service</p>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ transaction.transaction_id }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        ID: {{ transaction.id }}
+                                    </div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            <div>
-                                <p class="font-semibold text-gray-900">
-                                    {% if transaction.customer_details.get('mobile') %}
-                                        {{ transaction.customer_details.mobile }}
-                                    {% elif transaction.customer_details.get('customer_id') %}
-                                        {{ transaction.customer_details.customer_id }}
-                                    {% elif transaction.customer_details.get('connection_number') %}
-                                        {{ transaction.customer_details.connection_number }}
-                                    {% endif %}
-                                </p>
-                                <p class="text-sm text-gray-500">
-                                    {% if transaction.customer_details.get('operator') %}
-                                        Operator: {{ transaction.customer_details.operator }}
-                                    {% endif %}
-                                </p>
+
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {% if transaction.customer_details.mobile %}
+                                    <div class="font-medium">{{ transaction.customer_details.mobile }}</div>
+                                    <div class="text-xs text-gray-500">Mobile</div>
+                                {% elif transaction.customer_details.customer_id %}
+                                    <div class="font-medium">{{ transaction.customer_details.customer_id }}</div>
+                                    <div class="text-xs text-gray-500">Customer ID</div>
+                                {% elif transaction.customer_details.connection_number %}
+                                    <div class="font-medium">{{ transaction.customer_details.connection_number }}</div>
+                                    <div class="text-xs text-gray-500">Connection</div>
+                                {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            <p class="text-xl font-bold text-gray-900">₹{{ transaction.amount }}</p>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-3 py-2 rounded-full text-sm font-bold shadow-sm
-                                       {{ 'bg-green-100 text-green-800 border border-green-200' if transaction.status.value == 'SUCCESS' 
-                                          else 'bg-yellow-100 text-yellow-800 border border-yellow-200' if transaction.status.value == 'PROCESSING' 
-                                          else 'bg-red-100 text-red-800 border border-red-200' }}">
-                                <i class="fas fa-{{ 'check-circle' if transaction.status.value == 'SUCCESS' 
-                                                   else 'clock' if transaction.status.value == 'PROCESSING' 
-                                                   else 'times-circle' }} mr-1"></i>
-                                {{ transaction.status.value.title() }}
+
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if transaction.service_type.value == 'MOBILE_RECHARGE' %}bg-blue-100 text-blue-800
+                                {% elif transaction.service_type.value == 'DTH_RECHARGE' %}bg-purple-100 text-purple-800
+                                {% elif transaction.service_type.value == 'BILL_PAYMENT' %}bg-green-100 text-green-800
+                                {% endif %}">
+                                {{ transaction.service_type.value.replace('_', ' ') }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            <div>
-                                <p class="font-semibold text-gray-900">{{ transaction.created_at.strftime('%d %b %Y') }}</p>
-                                <p class="text-sm text-gray-500">{{ transaction.created_at.strftime('%I:%M %p') }}</p>
+
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-gray-900">
+                                ₹{{ "{:,.2f}".format(transaction.amount) }}
                             </div>
+                            {% if transaction.commission > 0 %}
+                            <div class="text-xs text-green-600">
+                                Comm: ₹{{ "{:.2f}".format(transaction.commission) }}
+                            </div>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4">
+
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if transaction.status.value == 'SUCCESS' %}bg-green-100 text-green-800
+                                {% elif transaction.status.value == 'PROCESSING' %}bg-yellow-100 text-yellow-800
+                                {% elif transaction.status.value == 'FAILED' %}bg-red-100 text-red-800
+                                {% elif transaction.status.value == 'CANCELLED' %}bg-gray-100 text-gray-800
+                                {% else %}bg-blue-100 text-blue-800
+                                {% endif %}">
+                                <svg class="w-1.5 h-1.5 mr-1.5" fill="currentColor" viewBox="0 0 8 8">
+                                    <circle cx="4" cy="4" r="3"></circle>
+                                </svg>
+                                {{ transaction.status.value }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>{{ transaction.created_at.strftime('%d %b %Y') }}</div>
+                            <div class="text-xs">{{ transaction.created_at.strftime('%H:%M:%S') }}</div>
+                        </td>
+
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a href="{{ url_for('recharge_management.transaction_details', transaction_id=transaction.id) }}" 
-                               class="inline-flex items-center px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 hover:text-primary-800 rounded-xl font-semibold transition-all duration-200 border border-primary-200">
-                                <i class="fas fa-eye mr-2"></i>View
+                               class="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                View
                             </a>
                         </td>
                     </tr>
@@ -167,65 +384,95 @@
 
         <!-- Pagination -->
         {% if transactions.pages > 1 %}
-        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-600">
-                    Showing {{ transactions.per_page * (transactions.page - 1) + 1 }} to 
-                    {{ transactions.per_page * transactions.page if transactions.page < transactions.pages else transactions.total }} 
-                    of {{ "{:,}".format(transactions.total) }} results
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if transactions.has_prev %}
+                <a href="{{ url_for('recharge_management.transactions', page=transactions.prev_num, **request.args) }}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </a>
+                {% endif %}
+                {% if transactions.has_next %}
+                <a href="{{ url_for('recharge_management.transactions', page=transactions.next_num, **request.args) }}" 
+                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing
+                        <span class="font-medium">{{ ((transactions.page - 1) * transactions.per_page) + 1 }}</span>
+                        to
+                        <span class="font-medium">{{ ((transactions.page - 1) * transactions.per_page) + transactions.items|length }}</span>
+                        of
+                        <span class="font-medium">{{ transactions.total }}</span>
+                        results
+                    </p>
                 </div>
-                <nav class="flex items-center space-x-2">
-                    {% if transactions.has_prev %}
-                        <a href="{{ url_for('recharge_management.transactions', page=transactions.prev_num, status=current_status, service=current_service, search=current_search, date_from=current_date_from, date_to=current_date_to) }}" 
-                           class="px-4 py-2 text-sm bg-white border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 font-semibold">
-                            <i class="fas fa-chevron-left mr-1"></i>Previous
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if transactions.has_prev %}
+                        <a href="{{ url_for('recharge_management.transactions', page=transactions.prev_num, **request.args) }}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
                         </a>
-                    {% endif %}
-                    
-                    {% for page_num in transactions.iter_pages() %}
-                        {% if page_num %}
-                            {% if page_num != transactions.page %}
-                                <a href="{{ url_for('recharge_management.transactions', page=page_num, status=current_status, service=current_service, search=current_search, date_from=current_date_from, date_to=current_date_to) }}" 
-                                   class="px-4 py-2 text-sm bg-white border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 font-semibold">
+                        {% endif %}
+                        
+                        {% for page_num in transactions.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num != transactions.page %}
+                                <a href="{{ url_for('recharge_management.transactions', page=page_num, **request.args) }}" 
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                                     {{ page_num }}
                                 </a>
-                            {% else %}
-                                <span class="px-4 py-2 text-sm bg-gradient-to-r from-primary-500 to-primary-600 text-white border-2 border-primary-500 rounded-xl font-bold shadow-lg">
+                                {% else %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
                                     {{ page_num }}
                                 </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
                             {% endif %}
-                        {% else %}
-                            <span class="px-2 py-2 text-sm text-gray-400">…</span>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if transactions.has_next %}
-                        <a href="{{ url_for('recharge_management.transactions', page=transactions.next_num, status=current_status, service=current_service, search=current_search, date_from=current_date_from, date_to=current_date_to) }}" 
-                           class="px-4 py-2 text-sm bg-white border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 font-semibold">
-                            Next<i class="fas fa-chevron-right ml-1"></i>
+                        {% endfor %}
+                        
+                        {% if transactions.has_next %}
+                        <a href="{{ url_for('recharge_management.transactions', page=transactions.next_num, **request.args) }}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
                         </a>
-                    {% endif %}
-                </nav>
+                        {% endif %}
+                    </nav>
+                </div>
             </div>
         </div>
         {% endif %}
 
         {% else %}
-        <div class="text-center py-16">
-            <div class="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                <i class="fas fa-search text-gray-400 text-4xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-4">No transactions found</h3>
-            <p class="text-gray-600 mb-8 max-w-md mx-auto">Try adjusting your search criteria or start a new transaction to see results here</p>
-            <div class="flex justify-center space-x-4">
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No transactions found</h3>
+            <p class="mt-1 text-sm text-gray-500">No transactions match your current filters. Try adjusting your search criteria.</p>
+            <div class="mt-6">
                 <a href="{{ url_for('recharge_management.mobile_recharge') }}" 
-                   class="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg">
-                    <i class="fas fa-mobile-alt mr-2"></i>Start Recharge
+                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Start New Transaction
                 </a>
-                <button onclick="clearFilters()" 
-                        class="bg-gray-100 text-gray-700 px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all duration-200 border-2 border-gray-200">
-                    <i class="fas fa-undo mr-2"></i>Clear Filters
-                </button>
             </div>
         </div>
         {% endif %}
@@ -233,27 +480,43 @@
 </div>
 
 <script>
-function clearFilters() {
-    window.location.href = "{{ url_for('recharge_management.transactions') }}";
+function exportTransactions() {
+    // Get current filter parameters
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'csv');
+    
+    // Create download link
+    const exportUrl = `${window.location.pathname}?${params.toString()}`;
+    window.open(exportUrl, '_blank');
 }
 
-// Auto-submit form on filter change
-document.querySelectorAll('select[name], input[name]').forEach(element => {
-    element.addEventListener('change', function() {
-        // Don't auto-submit for search field
-        if (this.name !== 'search') {
-            this.form.submit();
+// Set today as default date if no filters are applied
+document.addEventListener('DOMContentLoaded', function() {
+    const hasFilters = {{ 'true' if filters.search or filters.status or filters.service or filters.date_from or filters.date_to else 'false' }};
+    
+    if (!hasFilters) {
+        const today = new Date().toISOString().split('T')[0];
+        const dateFromInput = document.getElementById('date_from');
+        if (!dateFromInput.value) {
+            // Set default to 30 days ago
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            dateFromInput.value = thirtyDaysAgo.toISOString().split('T')[0];
         }
-    });
+    }
 });
 
-// Search with debounce
-let searchTimeout;
-document.querySelector('input[name="search"]').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
+// Auto-submit form when status or service filter changes
+document.getElementById('status').addEventListener('change', function() {
+    if (this.value) {
         this.form.submit();
-    }, 1000);
+    }
+});
+
+document.getElementById('service').addEventListener('change', function() {
+    if (this.value) {
+        this.form.submit();
+    }
 });
 </script>
 {% endblock %}

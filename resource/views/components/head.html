@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <!-- remix icon font css  -->
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/remixicon.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <!-- Apex Chart css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/lib/apexcharts.css') }}">
     <!-- Data Table css -->
@@ -34,5 +35,52 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/tailwindcss.css') }}">
         <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+          <!-- Custom Styles -->
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Loading animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-break-after {
+                page-break-after: always;
+            }
+            .print-break-inside-avoid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 
 </head>

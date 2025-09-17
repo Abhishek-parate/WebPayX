@@ -1,482 +1,442 @@
 {% extends 'layout/layout.html' %}
-
-{% block title %}Bill Payment{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-8">
-    <!-- Wallet Balance Card -->
-    <div class="bg-gradient-to-r from-yellow-500 via-yellow-600 to-orange-600 rounded-2xl shadow-xl p-8 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-lg opacity-90 mb-2">💳 Available Balance</h3>
-                <p class="text-4xl font-bold">₹{{ "{:,.2f}".format(wallet_balance) }}</p>
-                <button onclick="addMoney()" class="mt-4 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm">
-                    <i class="fas fa-plus mr-2"></i>Add Money
-                </button>
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{{ url_for('recharge_management.index') }}" class="text-gray-400 hover:text-gray-500">
+                        <svg class="flex-shrink-0 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                        </svg>
+                        <span class="sr-only">Home</span>
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="flex-shrink-0 h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-4 text-sm font-medium text-gray-500">Bill Payment</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4 md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                <p class="mt-1 text-sm text-gray-600">{{ subtitle }}</p>
             </div>
-            <div class="bg-white/20 p-6 rounded-2xl backdrop-blur-sm">
-                <i class="fas fa-file-invoice-dollar text-4xl"></i>
-            </div>
+           
         </div>
     </div>
 
-    <!-- Bill Payment Form -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-        <!-- Form Header -->
-        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-8 border-b border-yellow-100">
-            <div class="flex items-center">
-                <div class="bg-yellow-500 p-4 rounded-2xl mr-6 shadow-lg">
-                    <i class="fas fa-file-invoice-dollar text-white text-2xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-900">Bill Payment</h2>
-                    <p class="text-gray-600 mt-1">Quick and secure bill payments for electricity, gas, water & more</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Body -->
-        <div class="p-8">
-            <form method="POST" onsubmit="return validateBillForm(event)" class="space-y-8">
-                <!-- Bill Type Selection -->
-                <div class="space-y-4">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-list-alt mr-3 text-indigo-600"></i>Select Bill Type
-                    </label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-yellow-300 hover:bg-yellow-50 cursor-pointer transition-all duration-200 group">
-                            <input type="radio" name="bill_type" value="electricity" class="sr-only" onchange="selectBillType(this)">
-                            <div class="flex items-center space-x-4 w-full">
-                                <div class="w-12 h-12 bg-yellow-100 group-hover:bg-yellow-200 rounded-xl flex items-center justify-center transition-colors duration-200">
-                                    <i class="fas fa-bolt text-yellow-600"></i>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">Electricity Bill</p>
-                                    <p class="text-sm text-gray-500">Pay your electricity bill instantly</p>
-                                </div>
-                            </div>
-                            <div class="ml-auto">
-                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
-                                    <div class="w-3 h-3 bg-yellow-500 rounded-full hidden"></div>
-                                </div>
-                            </div>
-                        </label>
-
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 cursor-pointer transition-all duration-200 group">
-                            <input type="radio" name="bill_type" value="gas" class="sr-only" onchange="selectBillType(this)">
-                            <div class="flex items-center space-x-4 w-full">
-                                <div class="w-12 h-12 bg-red-100 group-hover:bg-red-200 rounded-xl flex items-center justify-center transition-colors duration-200">
-                                    <i class="fas fa-fire text-red-600"></i>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">Gas Bill</p>
-                                    <p class="text-sm text-gray-500">Pay your gas bill with ease</p>
-                                </div>
-                            </div>
-                            <div class="ml-auto">
-                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
-                                    <div class="w-3 h-3 bg-red-500 rounded-full hidden"></div>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Connection Number -->
-                <div class="space-y-3">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-plug mr-3 text-green-600"></i>Connection Number
-                    </label>
-                    <input type="text" 
-                           name="connection_number" 
-                           id="connectionNumber"
-                           class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                           placeholder="Enter your connection number"
-                           required>
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <p class="text-sm text-blue-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            You can find your connection number on your electricity/gas bill or payment receipt
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Service Provider Selection -->
-                <div class="space-y-3">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-building mr-3 text-blue-600"></i>Select Service Provider
-                    </label>
-                    <select name="operator" 
-                            id="operatorSelect"
-                            class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                            required>
-                        <option value="">Choose your service provider</option>
-                        {% for operator in bill_operators %}
-                            <option value="{{ operator.id }}" data-type="{{ operator.type }}">{{ operator.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Bill Fetch Section -->
-                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-200 rounded-2xl p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="text-lg font-semibold text-indigo-900 flex items-center">
-                                <i class="fas fa-search mr-3"></i>Fetch Bill Details
-                            </h4>
-                            <p class="text-indigo-700 mt-1">Get your exact bill amount and due date automatically</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Bill Payment Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <img src="https://tse3.mm.bing.net/th/id/OIP.vLVtuwdwoihT2Vlx4KagewHaCz?rs=1&pid=ImgDetMain&o=7&rm=3" alt="BBPS" class="w-8 h-8 rounded">
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-gray-900">BBPS Bill Payment</h3>
+                            <p class="text-sm text-gray-600">Pay electricity, gas, water and other utility bills</p>
                         </div>
-                        <button type="button" 
-                                onclick="fetchBill()"
-                                id="fetchButton"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-search mr-2"></i>Fetch Bill
+                    </div>
+                </div>
+                
+                <form method="POST" class="p-6 space-y-6" id="billPaymentForm">
+                    <!-- Bill Provider -->
+                    <div>
+                        <label for="operator" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Bill Provider *
+                        </label>
+                        <select id="operator" 
+                                name="operator" 
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                required>
+                            <option value="">Choose your bill provider</option>
+                            {% for operator in bill_operators %}
+                            <option value="{{ operator.id }}" data-type="{{ operator.type }}">
+                                {{ operator.name }} ({{ operator.state }}) - {{ operator.type.title() }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Connection Number -->
+                    <div>
+                        <label for="connection_number" class="block text-sm font-medium text-gray-700 mb-2">
+                            Connection Number / Account Number *
+                        </label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="connection_number" 
+                                   name="connection_number" 
+                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                   placeholder="Enter your connection/account number"
+                                   required>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <button type="button" 
+                                        id="viewBillBtn"
+                                        class="hidden text-green-600 hover:text-green-800 text-sm font-medium"
+                                        onclick="fetchBillDetails()">
+                                    View Bill
+                                </button>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Find this on your electricity/utility bill</p>
+                    </div>
+
+                    <!-- Bill Details Card -->
+                    <div id="billDetails" class="hidden bg-green-50 border border-green-200 rounded-md p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="text-sm font-semibold text-green-900">Bill Information</h4>
+                            <span id="billStatus" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Bill Found
+                            </span>
+                        </div>
+                        <div id="billInfo" class="text-sm text-green-800">
+                            <!-- Bill details will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Customer Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Customer Name
+                            </label>
+                            <input type="text" 
+                                   id="customer_name" 
+                                   name="customer_name" 
+                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                   placeholder="Enter customer name">
+                        </div>
+
+                        <div>
+                            <label for="due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                Due Date
+                            </label>
+                            <input type="date" 
+                                   id="due_date" 
+                                   name="due_date" 
+                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                            Bill Amount *
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" 
+                                   id="amount" 
+                                   name="amount" 
+                                   min="1" 
+                                   max="50000" 
+                                   step="0.01"
+                                   class="block w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                   placeholder="Enter bill amount"
+                                   required>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Minimum ₹1, Maximum ₹50,000</p>
+                    </div>
+
+                    <!-- Confirmation Checkbox -->
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="confirm" 
+                                   name="confirm" 
+                                   type="checkbox" 
+                                   class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                                   required>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="confirm" class="font-medium text-gray-700">
+                                I confirm that the above details are correct *
+                            </label>
+                            <p class="text-gray-500">Please verify all details before proceeding with payment</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-6 border-t border-gray-200">
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <div class="flex items-center justify-center">
+                                <span id="submitText">Proceed to Pay Bill</span>
+                                <div class="hidden ml-2" id="submitLoader">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                </div>
+                            </div>
                         </button>
                     </div>
-                    
-                    <!-- Bill Details Display -->
-                    <div id="billDetails" class="mt-6 hidden">
-                        <div class="bg-white rounded-xl p-4 space-y-3 shadow-sm">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Customer Name:</span>
-                                <span class="font-semibold" id="customerName">-</span>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="space-y-6">
+                <!-- BBPS Benefits -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center">
+                            <img src="https://tse3.mm.bing.net/th/id/OIP.vLVtuwdwoihT2Vlx4KagewHaCz?rs=1&pid=ImgDetMain&o=7&rm=3" alt="BBPS" class="w-6 h-6 rounded">
+                            <h3 class="text-lg font-semibold text-gray-900 ml-2">BBPS Certified</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Secure & Reliable
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Instant Payment
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Official Receipt
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                24/7 Support
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Recent Bill Payments -->
+                {% if recent_payments %}
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Recent Payments</h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        {% for payment in recent_payments %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
+                             onclick="repeatPayment('{{ payment.customer_details.connection_number }}', '{{ payment.customer_details.operator }}', '{{ payment.amount }}')">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ payment.customer_details.connection_number }}</div>
+                                <div class="text-xs text-gray-500">{{ payment.created_at.strftime('%d %b, %H:%M') }}</div>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Bill Amount:</span>
-                                <span class="font-semibold text-green-600 text-lg" id="billAmount">-</span>
+                            <div class="text-sm font-semibold text-gray-700">₹{{ "{:,.0f}".format(payment.amount) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bill Categories -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Supported Bills</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center p-3 border rounded-lg">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700">Electricity</div>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Due Date:</span>
-                                <span class="font-semibold text-red-600" id="dueDate">-</span>
+                            <div class="text-center p-3 border rounded-lg">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z"></path>
+                                    </svg>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700">Gas</div>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Bill Date:</span>
-                                <span class="font-semibold" id="billDate">-</span>
+                            <div class="text-center p-3 border rounded-lg">
+                                <div class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z"></path>
+                                    </svg>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700">Water</div>
+                            </div>
+                            <div class="text-center p-3 border rounded-lg">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700">Other Bills</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Amount Input -->
-                <div class="space-y-3">
-                    <label class="flex items-center text-lg font-semibold text-gray-800">
-                        <i class="fas fa-rupee-sign mr-3 text-purple-600"></i>Bill Amount
-                    </label>
-                    <input type="number" 
-                           name="amount" 
-                           id="amountInput"
-                           class="w-full px-6 py-4 text-xl border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white font-semibold"
-                           placeholder="Enter bill amount"
-                           min="50"
-                           max="50000"
-                           step="0.01"
-                           required>
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-500">Minimum ₹50, Maximum ₹50,000</p>
-                        <span id="amountValidation" class="text-sm"></span>
+                <!-- Help & Support -->
+                <div class="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-orange-800">Need Help?</h3>
+                            <div class="mt-2 text-sm text-orange-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Double-check connection number</li>
+                                    <li>Verify bill amount</li>
+                                    <li>Keep transaction receipt</li>
+                                    <li>Contact support for issues</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Submit Button -->
-                <div class="pt-8">
-                    <button type="submit" 
-                            id="submitButton"
-                            class="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white py-6 px-8 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-                        <i class="fas fa-credit-card mr-3"></i>
-                        <span id="buttonText">Pay Bill Now</span>
-                    </button>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        <i class="fas fa-shield-alt mr-1"></i>
-                        Your payment will be processed instantly and securely
-                    </p>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Benefits Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 text-center">
-            <div class="bg-green-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-bolt text-white"></i>
             </div>
-            <h4 class="font-semibold text-gray-900 mb-2">Instant Payment</h4>
-            <p class="text-sm text-gray-600">Your bill is paid instantly with immediate confirmation</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6 text-center">
-            <div class="bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-shield-alt text-white"></i>
-            </div>
-            <h4 class="font-semibold text-gray-900 mb-2">Secure Transactions</h4>
-            <p class="text-sm text-gray-600">Bank-grade security with encrypted payment processing</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6 text-center">
-            <div class="bg-purple-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-receipt text-white"></i>
-            </div>
-            <h4 class="font-semibold text-gray-900 mb-2">Digital Receipt</h4>
-            <p class="text-sm text-gray-600">Get instant digital receipt for all your payments</p>
         </div>
     </div>
 </div>
 
 <script>
-let walletBalance = {{ wallet_balance }};
+document.addEventListener('DOMContentLoaded', function() {
+    const operatorSelect = document.getElementById('operator');
+    const connectionInput = document.getElementById('connection_number');
+    const viewBillBtn = document.getElementById('viewBillBtn');
+    const billPaymentForm = document.getElementById('billPaymentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitLoader = document.getElementById('submitLoader');
 
-// Select bill type function
-function selectBillType(radio) {
-    // Remove selection from all bill types
-    document.querySelectorAll('input[name="bill_type"]').forEach(input => {
-        const label = input.closest('label');
-        const circle = label.querySelector('.w-6.h-6 div');
-        label.classList.remove('border-yellow-500', 'bg-yellow-50', 'border-red-500', 'bg-red-50');
-        label.classList.add('border-gray-200');
-        circle.classList.add('hidden');
-    });
-    
-    // Add selection to clicked bill type
-    const label = radio.closest('label');
-    const circle = label.querySelector('.w-6.h-6 div');
-    const billType = radio.value;
-    
-    if (billType === 'electricity') {
-        label.classList.add('border-yellow-500', 'bg-yellow-50');
-    } else {
-        label.classList.add('border-red-500', 'bg-red-50');
-    }
-    label.classList.remove('border-gray-200');
-    circle.classList.remove('hidden');
-    
-    // Filter operators based on bill type
-    filterOperators(billType);
-}
-
-// Filter operators function
-function filterOperators(billType) {
-    const operatorSelect = document.getElementById('operatorSelect');
-    const options = operatorSelect.querySelectorAll('option[data-type]');
-    
-    options.forEach(option => {
-        if (option.dataset.type === billType) {
-            option.style.display = 'block';
+    // Show view bill button when operator and connection are selected
+    function checkViewBillStatus() {
+        if (operatorSelect.value && connectionInput.value.trim().length > 5) {
+            viewBillBtn.classList.remove('hidden');
         } else {
-            option.style.display = 'none';
+            viewBillBtn.classList.add('hidden');
+            hideBillDetails();
         }
-    });
-    
-    operatorSelect.value = ''; // Reset selection
-}
+    }
 
-// Fetch bill function
-function fetchBill() {
-    const connectionNumber = document.getElementById('connectionNumber').value;
-    const operator = document.getElementById('operatorSelect').value;
-    const billType = document.querySelector('input[name="bill_type"]:checked');
+    operatorSelect.addEventListener('change', checkViewBillStatus);
+    connectionInput.addEventListener('input', checkViewBillStatus);
+
+    // Form submission
+    billPaymentForm.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitText.textContent = 'Processing Payment...';
+        submitLoader.classList.remove('hidden');
+    });
+});
+
+// Fetch bill details
+function fetchBillDetails() {
+    const operator = document.getElementById('operator').value;
+    const connectionNumber = document.getElementById('connection_number').value;
     
-    if (!connectionNumber || !operator || !billType) {
-        Swal.fire({
-            title: 'Missing Information',
-            text: 'Please select bill type, enter connection number and select service provider first',
-            icon: 'warning',
-            confirmButtonColor: '#EAB308'
-        });
+    if (!operator || !connectionNumber) {
+        alert('Please select operator and enter connection number');
         return;
     }
-    
-    const fetchButton = document.getElementById('fetchButton');
-    fetchButton.disabled = true;
-    fetchButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Fetching...';
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Mock bill data
-        const mockBill = {
-            customerName: 'John Doe',
-            billAmount: Math.floor(Math.random() * 2000) + 500, // Random amount between 500-2500
-            dueDate: '25 Dec 2025',
-            billDate: '15 Nov 2025'
-        };
-        
-        // Display bill details
-        document.getElementById('customerName').textContent = mockBill.customerName;
-        document.getElementById('billAmount').textContent = '₹' + mockBill.billAmount.toFixed(2);
-        document.getElementById('dueDate').textContent = mockBill.dueDate;
-        document.getElementById('billDate').textContent = mockBill.billDate;
-        document.getElementById('amountInput').value = mockBill.billAmount;
-        
-        document.getElementById('billDetails').classList.remove('hidden');
-        
-        fetchButton.disabled = false;
-        fetchButton.innerHTML = '<i class="fas fa-check mr-2"></i>Bill Fetched';
-        fetchButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-        fetchButton.classList.add('bg-green-600', 'hover:bg-green-700');
-        
-        validateAmount();
-        
-        Swal.fire({
-            title: 'Bill Details Fetched!',
-            text: `Bill amount: ₹${mockBill.billAmount}`,
-            icon: 'success',
-            confirmButtonColor: '#10B981'
-        });
-    }, 2000);
-}
 
-// Amount validation
-function validateAmount() {
-    const amount = parseFloat(document.getElementById('amountInput').value);
-    const validation = document.getElementById('amountValidation');
-    
-    if (!amount) {
-        validation.textContent = '';
-        validation.className = 'text-sm';
-    } else if (amount < 50) {
-        validation.textContent = '❌ Minimum amount is ₹50';
-        validation.className = 'text-sm text-red-500';
-    } else if (amount > 50000) {
-        validation.textContent = '❌ Maximum amount is ₹50,000';
-        validation.className = 'text-sm text-red-500';
-    } else if (amount > walletBalance) {
-        validation.textContent = '❌ Insufficient wallet balance';
-        validation.className = 'text-sm text-red-500';
-    } else {
-        validation.textContent = '✅ Valid amount';
-        validation.className = 'text-sm text-green-500';
-    }
-}
+    // Show loading state
+    const viewBillBtn = document.getElementById('viewBillBtn');
+    const originalText = viewBillBtn.textContent;
+    viewBillBtn.textContent = 'Loading...';
+    viewBillBtn.disabled = true;
 
-document.getElementById('amountInput').addEventListener('input', validateAmount);
-
-// Form validation
-function validateBillForm(event) {
-    event.preventDefault();
-    
-    const billType = document.querySelector('input[name="bill_type"]:checked');
-    const connectionNumber = document.getElementById('connectionNumber').value;
-    const operator = document.getElementById('operatorSelect').value;
-    const amount = parseFloat(document.getElementById('amountInput').value);
-    
-    // Validate bill type
-    if (!billType) {
-        Swal.fire({
-            title: 'Select Bill Type',
-            text: 'Please select whether you want to pay electricity or gas bill',
-            icon: 'warning',
-            confirmButtonColor: '#EAB308'
-        });
-        return false;
-    }
-    
-    // Validate connection number
-    if (!connectionNumber) {
-        Swal.fire({
-            title: 'Enter Connection Number',
-            text: 'Please enter your connection number',
-            icon: 'error',
-            confirmButtonColor: '#EAB308'
-        });
-        document.getElementById('connectionNumber').focus();
-        return false;
-    }
-    
-    // Validate operator
-    if (!operator) {
-        Swal.fire({
-            title: 'Select Service Provider',
-            text: 'Please select your service provider',
-            icon: 'warning',
-            confirmButtonColor: '#EAB308'
-        });
-        document.getElementById('operatorSelect').focus();
-        return false;
-    }
-    
-    // Validate amount
-    if (!amount || amount < 50 || amount > 50000) {
-        Swal.fire({
-            title: 'Invalid Amount',
-            text: 'Please enter amount between ₹50 and ₹50,000',
-            icon: 'error',
-            confirmButtonColor: '#EAB308'
-        });
-        document.getElementById('amountInput').focus();
-        return false;
-    }
-    
-    // Check wallet balance
-    if (amount > walletBalance) {
-        Swal.fire({
-            title: 'Insufficient Balance',
-            html: `Your wallet balance is ₹${walletBalance.toFixed(2)}<br>Required amount: ₹${amount.toFixed(2)}`,
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonText: 'Add Money',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#10B981'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                addMoney();
-            }
-        });
-        return false;
-    }
-    
-    // Show confirmation dialog
-    const operatorName = document.getElementById('operatorSelect').selectedOptions[0].text;
-    const billTypeName = billType.value === 'electricity' ? 'Electricity' : 'Gas';
-    
-    Swal.fire({
-        title: 'Confirm Bill Payment',
-        html: `
-            <div class="text-left space-y-3">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p><strong>Bill Type:</strong> ${billTypeName} Bill</p>
-                    <p><strong>Connection:</strong> ${connectionNumber}</p>
-                    <p><strong>Provider:</strong> ${operatorName}</p>
-                    <p><strong>Amount:</strong> ₹${amount}</p>
-                </div>
-                <p class="text-center font-semibold text-green-600">
-                    New balance will be: ₹${(```            <p class="text-center font-semibold text-green-600">
-                New balance will be: ₹${(walletBalance - amount).toFixed(2)}
-            </p>
-        </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Confirm & Pay',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#10B981',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            processBillPayment();
+    // Simulate API call to fetch bill details
+    fetch('/recharge-management/api/view-bill', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            operator_id: operator,
+            connection_number: connectionNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showBillDetails(data.data);
+        } else {
+            alert('Unable to fetch bill details. Please try again.');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching bill details');
+    })
+    .finally(() => {
+        viewBillBtn.textContent = originalText;
+        viewBillBtn.disabled = false;
     });
-    
-    return false;
 }
 
-// Process bill payment
-function processBillPayment() {
-    Swal.fire({
-        title: 'Processing Payment',
-        html: `
-            <div class="text-center">
-                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-                <p>Please wait while we process your payment...</p>
-                <p class="text-sm text-gray-500">Almost done!</p>
+function showBillDetails(billData) {
+    const billDetails = document.getElementById('billDetails');
+    const billInfo = document.getElementById('billInfo');
+    
+    billInfo.innerHTML = `
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <span class="font-medium">Bill Amount:</span><br>
+                <span class="text-lg font-bold">₹${billData.billAmount}</span>
             </div>
-        `,
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            setTimeout(() => {
-                document.querySelector('form').submit();
-            }, 3000);
-        }
-    });
+            <div>
+                <span class="font-medium">Due Date:</span><br>
+                <span>${new Date(billData.dueDate).toLocaleDateString()}</span>
+            </div>
+            <div>
+                <span class="font-medium">Customer Name:</span><br>
+                <span>${billData.customerName || 'Not Available'}</span>
+            </div>
+            <div>
+                <span class="font-medium">Status:</span><br>
+                <span class="text-green-600">Payment Accepted</span>
+            </div>
+        </div>
+    `;
+    
+    // Auto-fill form fields
+    document.getElementById('amount').value = billData.billAmount;
+    document.getElementById('customer_name').value = billData.customerName || '';
+    document.getElementById('due_date').value = billData.dueDate;
+    
+    billDetails.classList.remove('hidden');
+}
+
+function hideBillDetails() {
+    document.getElementById('billDetails').classList.add('hidden');
+}
+
+// Repeat payment
+function repeatPayment(connectionNumber, operator, amount) {
+    document.getElementById('connection_number').value = connectionNumber;
+    document.getElementById('operator').value = operator;
+    document.getElementById('amount').value = amount;
+    
+    // Trigger validation
+    document.getElementById('connection_number').dispatchEvent(new Event('input'));
 }
 </script>
 {% endblock %}
