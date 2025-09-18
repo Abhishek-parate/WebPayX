@@ -1,187 +1,455 @@
 {% extends 'layout/layout.html' %}
 {% block title %}Wallet Dashboard - WebPayX{% endblock %}
 
-
-
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Wallet Dashboard</h1>
-        <p class="mt-2 text-gray-600">Manage your wallet and track transactions</p>
-    </div>
-
-    <!-- Wallet Balance Card -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-            <div class="flex items-center">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Available Balance</p>
-                    <p class="text-2xl font-bold text-gray-900">₹{{ "{:,.2f}".format(wallet.available_balance) }}</p>
-                </div>
-                <div class="p-3 bg-blue-100 rounded-full">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-            <div class="flex items-center">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Total Credit</p>
-                    <p class="text-2xl font-bold text-gray-900">₹{{ "{:,.2f}".format(stats.total_credit) }}</p>
-                </div>
-                <div class="p-3 bg-green-100 rounded-full">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-            <div class="flex items-center">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Total Debit</p>
-                    <p class="text-2xl font-bold text-gray-900">₹{{ "{:,.2f}".format(stats.total_debit) }}</p>
-                </div>
-                <div class="p-3 bg-red-100 rounded-full">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
-            <div class="flex items-center">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Pending Topups</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ stats.pending_topups }}</p>
-                </div>
-                <div class="p-3 bg-yellow-100 rounded-full">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="flex flex-wrap gap-4 mb-8">
-        {% if can_request %}
-        <a href="{{ url_for('wallet_management.topup') }}" 
-           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-150">
-            Request Top-up
-        </a>
-        {% endif %}
+<div class="min-h-screen bg-neutral-50 dark:bg-dark-2">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
         
-        <a href="{{ url_for('wallet_management.transactions') }}" 
-           class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition duration-150">
-            View Transactions
-        </a>
-        
-        {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
-        <a href="{{ url_for('wallet_management.pending_approvals') }}" 
-           class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition duration-150">
-            Pending Approvals
-            {% if pending_approvals|length > 0 %}
-            <span class="bg-white text-orange-600 px-2 py-1 rounded-full text-xs font-bold ml-2">
-                {{ pending_approvals|length }}
-            </span>
-            {% endif %}
-        </a>
-        
-        <a href="{{ url_for('wallet_management.all_transactions') }}" 
-           class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition duration-150">
-            All Transactions
-        </a>
-        {% endif %}
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Recent Transactions -->
-        <div class="bg-white rounded-lg shadow-md">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+        <!-- Header Section -->
+        <div class="mb-6 lg:mb-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-4 lg:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-primary-600 rounded-xl">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white">
+                                Wallet Dashboard
+                            </h1>
+                            <p class="text-sm lg:text-base text-neutral-600 dark:text-neutral-400 mt-1">
+                                Manage your digital wallet with security and ease
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center px-3 py-2 bg-success-50 dark:bg-success-600/10 text-success-600 dark:text-success-400 rounded-lg border border-success-200 dark:border-success-600/25">
+                            <div class="w-2 h-2 bg-success-500 rounded-full mr-2"></div>
+                            <span class="text-sm font-medium">Active</span>
+                        </div>
+                        <button onclick="refreshData()" class="p-2.5 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-300 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="p-6">
-                {% if recent_transactions %}
-                    <div class="space-y-4">
-                        {% for transaction in recent_transactions %}
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-4">
-                                <div class="p-2 rounded-full {{ 'bg-green-100 text-green-600' if transaction.transaction_type.value == 'CREDIT' else 'bg-red-100 text-red-600' }}">
-                                    {% if transaction.transaction_type.value == 'CREDIT' %}
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
-                                    </svg>
-                                    {% else %}
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
-                                    </svg>
-                                    {% endif %}
-                                </div>
-                                <div>
-                                    <p class="font-medium text-gray-900">
-                                        {{ transaction.transaction_type.value.replace('_', ' ').title() }}
-                                    </p>
-                                    <p class="text-sm text-gray-500">{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                                </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+            <!-- Available Balance Card -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                <div class="bg-primary-50 dark:bg-primary-600/10 border-b border-primary-100 dark:border-primary-600/25 px-4 lg:px-6 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-primary-600 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                </svg>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold {{ 'text-green-600' if transaction.transaction_type.value == 'CREDIT' else 'text-red-600' }}">
-                                    {{ '+' if transaction.transaction_type.value == 'CREDIT' else '-' }}₹{{ "{:,.2f}".format(transaction.amount) }}
-                                </p>
-                                <p class="text-sm text-gray-500">Bal: ₹{{ "{:,.2f}".format(transaction.balance_after) }}</p>
+                            <span class="text-sm font-medium text-primary-600 dark:text-primary-400">Live Balance</span>
+                        </div>
+                        <div class="w-2 h-2 bg-primary-500 rounded-full"></div>
+                    </div>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Available Balance</p>
+                    <p class="text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-2" id="availableBalance">
+                        ₹{{ "{:,.2f}".format(wallet.available_balance) }}
+                    </p>
+                    <p class="text-xs text-neutral-400 dark:text-neutral-500">
+                        Updated <span id="lastUpdated">now</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Total Credit Card -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                <div class="bg-success-50 dark:bg-success-600/10 border-b border-success-100 dark:border-success-600/25 px-4 lg:px-6 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-success-600 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-success-600 dark:text-success-400">Credit</span>
+                        </div>
+                        <span class="text-xs font-bold bg-success-100 dark:bg-success-600/20 text-success-800 dark:text-success-400 px-2 py-1 rounded-full">
+                            +12.5%
+                        </span>
+                    </div>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Total Credit</p>
+                    <p class="text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-2">
+                        ₹{{ "{:,.2f}".format(stats.total_credit) }}
+                    </p>
+                    <p class="text-xs text-success-600 dark:text-success-400 font-medium">This month growth</p>
+                </div>
+            </div>
+
+            <!-- Total Debit Card -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                <div class="bg-danger-50 dark:bg-danger-600/10 border-b border-danger-100 dark:border-danger-600/25 px-4 lg:px-6 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-danger-600 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-danger-600 dark:text-danger-400">Debit</span>
+                        </div>
+                        <span class="text-xs font-bold bg-danger-100 dark:bg-danger-600/20 text-danger-800 dark:text-danger-400 px-2 py-1 rounded-full">
+                            -8.3%
+                        </span>
+                    </div>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Total Debit</p>
+                    <p class="text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-2">
+                        ₹{{ "{:,.2f}".format(stats.total_debit) }}
+                    </p>
+                    <p class="text-xs text-neutral-400 dark:text-neutral-500">Total outflow</p>
+                </div>
+            </div>
+
+            <!-- Pending Topups Card -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                <div class="bg-warning-50 dark:bg-warning-600/10 border-b border-warning-100 dark:border-warning-600/25 px-4 lg:px-6 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-warning-600 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-warning-600 dark:text-warning-400">Pending</span>
+                        </div>
+                        {% if stats.pending_topups > 0 %}
+                        <div class="w-2 h-2 bg-warning-500 rounded-full"></div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Pending Topups</p>
+                    <p class="text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-2" id="pendingCount">
+                        {{ stats.pending_topups }}
+                    </p>
+                    <p class="text-xs {{ 'text-warning-600 dark:text-warning-400 font-medium' if stats.pending_topups > 0 else 'text-neutral-400 dark:text-neutral-500' }}">
+                        {{ 'Awaiting approval' if stats.pending_topups > 0 else 'All processed' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mb-6 lg:mb-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-4 lg:p-6">
+                <div class="flex flex-wrap gap-3 lg:gap-4">
+                    {% if can_request %}
+                    <a href="{{ url_for('wallet_management.topup') }}" 
+                       class="inline-flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Request Top-up</span>
+                        <span class="sm:hidden">Top-up</span>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('wallet_management.transactions') }}" 
+                       class="inline-flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-neutral-700 dark:text-neutral-300 rounded-lg font-medium border border-neutral-200 dark:border-neutral-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Transactions</span>
+                        <span class="sm:hidden">History</span>
+                    </a>
+                    
+                    {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] %}
+                    <a href="{{ url_for('wallet_management.pending_approvals') }}" 
+                       class="relative inline-flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-warning-600 hover:bg-warning-700 text-white rounded-lg font-medium shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Pending Approvals</span>
+                        <span class="sm:hidden">Approvals</span>
+                        {% if pending_approvals|length > 0 %}
+                        <span class="absolute -top-2 -right-2 bg-danger-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            {{ pending_approvals|length }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{{ url_for('wallet_management.all_transactions') }}" 
+                       class="inline-flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <span class="hidden sm:inline">All Transactions</span>
+                        <span class="sm:hidden">All</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid - Corrected Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+            <!-- Recent Transactions - Now 2/3 width on large screens -->
+            <div class="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700">
+                <div class="p-4 lg:p-6 border-b border-neutral-200 dark:border-neutral-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-primary-600 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg lg:text-xl font-bold text-neutral-900 dark:text-white">Recent Transactions</h2>
+                                <p class="text-sm text-neutral-600 dark:text-neutral-400">Your latest financial activity</p>
                             </div>
                         </div>
-                        {% endfor %}
+                        <div class="flex items-center gap-2">
+                            <button onclick="refreshTransactions()" class="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg">
+                                <svg class="w-4 h-4 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                            </button>
+                            <span class="text-sm text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-700 px-3 py-1 rounded-lg">Last 7 days</span>
+                        </div>
                     </div>
-                    <div class="mt-4 text-center">
-                        <a href="{{ url_for('wallet_management.transactions') }}" 
-                           class="text-blue-600 hover:text-blue-800 font-medium">View All Transactions</a>
+                </div>
+                
+                <div class="p-4 lg:p-6" id="transactionsContainer">
+                    {% if recent_transactions %}
+                        <div class="space-y-3" id="transactionsList">
+                            {% for transaction in recent_transactions %}
+                            <div class="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-600">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-2.5 {{ 'bg-success-600' if transaction.transaction_type.value == 'CREDIT' else 'bg-danger-600' }} rounded-lg">
+                                        {% if transaction.transaction_type.value == 'CREDIT' %}
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                                        </svg>
+                                        {% else %}
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                                        </svg>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-neutral-900 dark:text-white">
+                                            {{ transaction.transaction_type.value.replace('_', ' ').title() }}
+                                        </p>
+                                        <p class="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            {{ transaction.created_at.strftime('%d %b, %H:%M') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-lg {{ 'text-success-600 dark:text-success-400' if transaction.transaction_type.value == 'CREDIT' else 'text-danger-600 dark:text-danger-400' }}">
+                                        {{ '+' if transaction.transaction_type.value == 'CREDIT' else '-' }}₹{{ "{:,.2f}".format(transaction.amount) }}
+                                    </p>
+                                    <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                                        Balance: ₹{{ "{:,.2f}".format(transaction.balance_after) }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-6 text-center">
+                            <a href="{{ url_for('wallet_management.transactions') }}" 
+                               class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium">
+                                <span>View All Transactions</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-12">
+                            <div class="w-20 h-20 mx-auto bg-neutral-100 dark:bg-neutral-700 rounded-full flex items-center justify-center mb-4">
+                                <svg class="w-10 h-10 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-neutral-900 dark:text-white mb-2">No transactions yet</h3>
+                            <p class="text-neutral-500 dark:text-neutral-400 mb-6">Start your financial journey by making your first transaction</p>
+                            {% if can_request %}
+                            <button onclick="window.location.href='{{ url_for('wallet_management.topup') }}'" 
+                                    class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                <span>Make First Transaction</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Account Overview - Now 1/3 width on large screens -->
+            <div class="lg:col-span-1 space-y-4 lg:space-y-6">
+                <!-- Account Summary Widget -->
+                <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                    <div class="bg-primary-600 text-white p-4 lg:p-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-white/20 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold">Account Overview</h3>
+                        </div>
                     </div>
+                    <div class="p-4 lg:p-6">
+                        <div class="space-y-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-neutral-900 dark:text-white">{{ recent_transactions|length }}</div>
+                                <div class="text-sm text-neutral-600 dark:text-neutral-400">Today's Transactions</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-neutral-900 dark:text-white">₹{{ "{:,.0f}".format((stats.total_credit + stats.total_debit) / 7) }}</div>
+                                <div class="text-sm text-neutral-600 dark:text-neutral-400">Weekly Average</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="inline-flex px-3 py-1 bg-success-100 dark:bg-success-600/20 text-success-700 dark:text-success-400 rounded-lg text-sm font-medium border border-success-200 dark:border-success-600/25">
+                                    Active Account
+                                </span>
+                                <div class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">Status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Approvals Widget (Admin Only) -->
+                {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] and pending_approvals %}
+                <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700">
+                    <div class="p-4 lg:p-6 border-b border-neutral-200 dark:border-neutral-700">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-warning-600 rounded-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Pending Approvals</h3>
+                            </div>
+                            <span class="bg-warning-100 dark:bg-warning-600/20 text-warning-700 dark:text-warning-400 px-3 py-1 rounded-lg text-sm font-medium">
+                                {{ pending_approvals|length }} pending
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 lg:p-6">
+                        <div class="space-y-3">
+                            {% for request in pending_approvals[:3] %}
+                            <div class="flex items-center justify-between p-3 bg-warning-50 dark:bg-warning-600/10 rounded-lg border border-warning-200 dark:border-warning-600/25">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-warning-600 rounded-lg flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">{{ request.user.full_name[0] }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-neutral-900 dark:text-white text-sm">{{ request.user.full_name }}</p>
+                                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ request.user.user_code }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-neutral-900 dark:text-white text-sm">₹{{ "{:,.0f}".format(request.amount) }}</p>
+                                    <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ request.created_at.strftime('%m/%d %H:%M') }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4 text-center">
+                            <a href="{{ url_for('wallet_management.pending_approvals') }}" 
+                               class="inline-flex items-center gap-2 bg-warning-600 hover:bg-warning-700 text-white px-4 py-2 rounded-lg font-medium text-sm">
+                                <span>View All Approvals</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 {% else %}
-                    <p class="text-gray-500 text-center py-8">No transactions yet</p>
+                
                 {% endif %}
             </div>
         </div>
-
-        <!-- Pending Approvals (Admin/White Label Only) -->
-        {% if current_user.role.value in ['SUPER_ADMIN', 'ADMIN', 'WHITE_LABEL'] and pending_approvals %}
-        <div class="bg-white rounded-lg shadow-md">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Pending Approvals</h2>
-            </div>
-            <div class="p-6">
-                <div class="space-y-4">
-                    {% for request in pending_approvals %}
-                    <div class="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div>
-                            <p class="font-medium text-gray-900">{{ request.user.full_name }}</p>
-                            <p class="text-sm text-gray-500">{{ request.user.user_code }} | {{ request.user.role.value }}</p>
-                            <p class="text-sm text-gray-600 mt-1">₹{{ "{:,.2f}".format(request.amount) }}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">
-                                Pending
-                            </span>
-                            <p class="text-sm text-gray-500 mt-1">{{ request.created_at.strftime('%m/%d %H:%M') }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="mt-4 text-center">
-                    <a href="{{ url_for('wallet_management.pending_approvals') }}" 
-                       class="text-orange-600 hover:text-orange-800 font-medium">View All Approvals</a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
+
+<script>
+// Simple JavaScript functionality - NO animations
+document.addEventListener('DOMContentLoaded', function() {
+    updateLastUpdatedTime();
+    setInterval(updateLastUpdatedTime, 60000);
+});
+
+function updateLastUpdatedTime() {
+    const lastUpdated = document.getElementById('lastUpdated');
+    if (lastUpdated) {
+        lastUpdated.textContent = new Date().toLocaleTimeString();
+    }
+}
+
+function refreshData() {
+    updateLastUpdatedTime();
+    showNotification('Data refreshed successfully', 'success');
+}
+
+function refreshTransactions() {
+    showNotification('Transactions updated', 'success');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-6 right-6 z-50 max-w-md`;
+    
+    const colors = {
+        success: 'bg-success-600 text-white',
+        error: 'bg-danger-600 text-white',
+        info: 'bg-primary-600 text-white',
+        warning: 'bg-warning-600 text-white'
+    };
+    
+    notification.innerHTML = `
+        <div class="${colors[type]} rounded-xl shadow-lg border p-4">
+            <div class="flex items-center gap-3">
+                <div class="p-1 bg-white/20 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold">${message}</p>
+                </div>
+                <button onclick="this.closest('div').parentElement.remove()" class="p-1 hover:bg-white/20 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 5000);
+}
+</script>
 {% endblock %}

@@ -91,7 +91,8 @@
 #     login_manager.init_app(app)
 #     login_manager.login_view = 'authentication.login_page'
 #     login_manager.login_message = 'Please log in to access this page.'
-#     login_manager.login_message_category = 'info'
+#     login_manager.login_message_category = 'success'
+#
 
 #     @login_manager.user_loader
 #     def load_user(user_id):
@@ -786,7 +787,7 @@ def create_app(config_name='development'):
     login_manager.init_app(app)
     login_manager.login_view = 'authentication.login_page'
     login_manager.login_message = 'Please log in to access this page.'
-    login_manager.login_message_category = 'info'
+    login_manager.login_message_category = 'success'
 
     @login_manager.user_loader
     def load_user(user_id):
